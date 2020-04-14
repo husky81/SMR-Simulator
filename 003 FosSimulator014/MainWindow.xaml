@@ -1,0 +1,217 @@
+﻿<Window x:Name="window" x:Class="_003_FosSimulator014.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:_003_FosSimulator014"
+        mc:Ignorable="d"
+        Title="SMR simulator 2.0" Height="570" Width="908" Icon="SMR.png">
+
+    <DockPanel x:Name="baseDockPanel">
+
+        <Menu DockPanel.Dock ="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" HorizontalAlignment="Left"/>
+                <MenuItem Header="E_xit" HorizontalAlignment="Left" Click="ExitApplication"/>
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="_Redraw" Click="RedrawShapes"></MenuItem>
+                <MenuItem Header="Base plane _grid" Click="ViewBasePlaneGrid" IsCheckable="True" IsChecked="True"></MenuItem>
+                <MenuItem Header="_3D Orbit">
+                    <MenuItem Header="_Top" Click="ViewTop" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_Front" Click="ViewFront" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_Left" Click="ViewLeft" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_Right" Click="ViewRight" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_Back" Click="ViewBack" HorizontalAlignment="Left"/>
+                    <MenuItem Header="B_ottom" Click="ViewBottom" HorizontalAlignment="Left"/>
+                    <Separator Height="1" />
+                    <MenuItem Header="_S-W" Click="ViewSW" HorizontalAlignment="Left"/>
+                    <MenuItem Header="S-_E" Click="ViewSE" HorizontalAlignment="Left"/>
+                    <MenuItem Header="N-_W" Click="ViewNW" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_N-E" Click="ViewNE" HorizontalAlignment="Left"/>
+                </MenuItem>
+                <MenuItem Header="_Zoom" HorizontalAlignment="Left">
+                    <MenuItem Header="_In" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_Out" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_Extend" Click="ViewZoomExtend" HorizontalAlignment="Left"/>
+                </MenuItem>
+                <MenuItem x:Name="mnuCoordinateSystem" Header="Coordinate _system" Click="ViewCoordinateSystem" HorizontalAlignment="Left" IsChecked="True" IsCheckable="True"/>
+                <MenuItem Header="_Camera control pannel" Click="OpenPannelCameraControl" HorizontalAlignment="Left"/>
+                <MenuItem Header="_Fem Works Pannel" Click="OpenPannelFemWorks" HorizontalAlignment="Left"/>
+
+            </MenuItem>
+            <MenuItem Header="_Structure" >
+                <MenuItem Header="_Concrete" Click="OpenPannelConcreteSetting" HorizontalAlignment="Left"/>
+            </MenuItem>
+            <MenuItem Header="F_EM">
+                <MenuItem Header="_View">
+                    <MenuItem Header="_Node" Click="ViewNode" IsCheckable="True" IsChecked="True"/>
+                    <MenuItem Header="No_de Number" Click="ViewNodeNumber" IsCheckable="True" IsChecked="False"/>
+                    <MenuItem Header="_Element" Click="ViewElement" IsCheckable="True" IsChecked="True"/>
+                    <MenuItem Header="E_lement Number" Click="ViewElementNumber" IsCheckable="True" IsChecked="False"/>
+                </MenuItem>
+                <MenuItem Header="Add _Node" Click="StartAddNode"/>
+                <MenuItem Header="T_esting" />
+                <MenuItem Header="_Test">
+                    <MenuItem Header="0_1 SimpleBeamLoadZ" Click="FemTest_SimpleBeamLoadZ" HorizontalAlignment="Left"/>
+                    <MenuItem Header="0_2 SimpleBeamLoadY" Click="FemTest_SimpleBeamLoadY" HorizontalAlignment="Left"/>
+                    <MenuItem Header="0_3 SolidExample" Click="FemTest_Solid003" HorizontalAlignment="Left"/>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Draw" >
+                <MenuItem Header="_3D Solid" HorizontalAlignment="Left" >
+                    <MenuItem Header="_Sphere" Click="DrawSphere" HorizontalAlignment="Left"/>
+                    <MenuItem Header="Co_ne" Click="DrawCone" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_Line" Click="Draw3dLine" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_Coordination Mark" Click="DrawCoordinationMark" HorizontalAlignment="Left"/>
+                    <MenuItem Header ="Performance test" Click="PerformanceTest" HorizontalAlignment="Left"/>
+                </MenuItem>
+                <MenuItem Header="_2D Example" >
+                    <MenuItem Header="gradation" Click="DrawSampleGradient" HorizontalAlignment="Left"/>
+                    <MenuItem Header="line" Click="DrawLine" HorizontalAlignment="Left"/>
+                </MenuItem>
+
+            </MenuItem>
+            <MenuItem Header="Ab_out" />
+        </Menu>
+
+        <StackPanel x:Name="dkpFemWorks" DockPanel.Dock="Left" Width="156" MinWidth="143" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+            <StackPanel.Effect>
+                <DropShadowEffect/>
+            </StackPanel.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="137*"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition Width="25"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="FEM Works" VerticalAlignment="Top" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Grid.ColumnSpan="3" Margin="0,0,0,-0.4"/>
+                <Button Content="X" Click="ClosePannelFemWorks" Grid.Column="2" Background="{x:Null}" BorderBrush="{x:Null}" />
+
+            </Grid>
+            <TreeView x:Name="treeViewFemWorks" Height="405" />
+        </StackPanel>
+
+        <StackPanel x:Name="dkpStructureConcrete" DockPanel.Dock="Left" Width="156" MinWidth="143" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+            <StackPanel.Effect>
+                <DropShadowEffect/>
+            </StackPanel.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="137*"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition Width="25"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="Concrete structure" VerticalAlignment="Top" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Grid.ColumnSpan="3" Margin="0,0,0,-0.4"/>
+                <Button Content="X" Click="ClosePannelConcreteSetting" Grid.Column="2" Background="{x:Null}" BorderBrush="{x:Null}" />
+
+            </Grid>
+            <Grid Margin="0,10,0,0">
+                <Label Content="length[m]" HorizontalAlignment="Left" VerticalAlignment="Top" Height="26"/>
+                <TextBox x:Name="tbxLength" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" TextAlignment="Right" Margin="70,4,10,0"/>
+            </Grid>
+            <Grid>
+                <Label Content="width[m]" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                <TextBox x:Name="tbxWidth" Margin="70,4,10,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" TextAlignment="Right"/>
+            </Grid>
+            <Grid>
+                <Label Content="height[m]" HorizontalAlignment="Left" Margin="0" VerticalAlignment="Top" Height="26"/>
+                <TextBox x:Name="tbxHeight" Margin="70,4,10,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" TextAlignment="Right"/>
+            </Grid>
+            <Grid Margin="0,10,0,0">
+                <Button Content="_Apply" Click="SetConcrete" HorizontalAlignment="Right" Margin="0,0,75,-0.2" Width="60" Height="19" VerticalAlignment="Top"/>
+                <Button Content="_Close" Click="ClosePannelConcreteSetting" HorizontalAlignment="Right" Width="60" Margin="0,0,10,0"/>
+            </Grid>
+        </StackPanel>
+        
+        <StackPanel x:Name="dkpCameraControl" DockPanel.Dock="Left" MinWidth="143" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Margin="0,0.4,0,0" Width="155">
+            <StackPanel.Effect>
+                <DropShadowEffect/>
+            </StackPanel.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="137*"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition Width="25"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="Camera control" VerticalAlignment="Top" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Grid.ColumnSpan="3" Margin="0"/>
+                <Button Content="X" Click="ClosePannelCameraControl" Grid.Column="2" Background="{x:Null}" BorderBrush="{x:Null}" />
+            </Grid>
+            <Label Content="Position"/>
+            <Grid Margin="5,0,5,-2">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="16*"/>
+                    <ColumnDefinition Width="127*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock TextWrapping="Wrap" Text="x:"/>
+                <TextBlock Grid.Row="1" TextWrapping="Wrap" Text="y:" />
+                <TextBlock Grid.Row="2" TextWrapping="Wrap" Text="z:"/>
+                <TextBox x:Name="tbxCameraPositionX" Grid.Column="1" TextWrapping="Wrap" Text="TextBox"/>
+                <TextBox x:Name="tbxCameraPositionY" Grid.Column="1" Grid.Row="1" TextWrapping="Wrap" Text="TextBox"/>
+                <TextBox x:Name="tbxCameraPositionZ" Grid.Column="1" Grid.Row="2" TextWrapping="Wrap" Text="TextBox"/>
+            </Grid>
+            <Label Content="LookDirection "/>
+            <Grid Margin="5,0,5,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="16*"/>
+                    <ColumnDefinition Width="127*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock TextWrapping="Wrap" Text="x:"/>
+                <TextBlock Grid.Row="1" TextWrapping="Wrap" Text="y:" />
+                <TextBlock Grid.Row="2" TextWrapping="Wrap" Text="z:"/>
+                <TextBox x:Name="tbxCameraLookDirectionX" Grid.Column="1" TextWrapping="Wrap" Text="TextBox"/>
+                <TextBox x:Name="tbxCameraLookDirectionY" Grid.Column="1" Grid.Row="1" TextWrapping="Wrap" Text="TextBox"/>
+                <TextBox x:Name="tbxCameraLookDirectionZ" Grid.Column="1" Grid.Row="2" TextWrapping="Wrap" Text="TextBox"/>
+            </Grid>
+            <Label Content="UpDirection "/>
+            <Grid Margin="5,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="16*"/>
+                    <ColumnDefinition Width="127*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock TextWrapping="Wrap" Text="x:"/>
+                <TextBlock Grid.Row="1" TextWrapping="Wrap" Text="y:" />
+                <TextBlock Grid.Row="2" TextWrapping="Wrap" Text="z:"/>
+                <TextBox x:Name="tbxCameraUpDirectionX" Grid.Column="1" TextWrapping="Wrap" Text="TextBox"/>
+                <TextBox x:Name="tbxCameraUpDirectionY" Grid.Column="1" Grid.Row="1" TextWrapping="Wrap" Text="TextBox"/>
+                <TextBox x:Name="tbxCameraUpDirectionZ" Grid.Column="1" Grid.Row="2" TextWrapping="Wrap" Text="TextBox"/>
+            </Grid>
+            <Label Content="FieldOfView "/>
+            <TextBox x:Name="tbxCameraFieldOfView" TextWrapping="Wrap" Margin="5,0" />
+            <Label Content="NearPlaneDistance "/>
+            <TextBox x:Name="tbxCameraNearPlaneDistance" TextWrapping="Wrap" Margin="5,0" />
+            <Label Content="FarPlaneDistance "/>
+            <TextBox x:Name="tbxCameraFarPlaneDistance" TextWrapping="Wrap" Margin="5,0" />
+            <Button Content="_Apply" Click="SetCameraInfo" Margin="5,10,5,0"/>
+
+
+
+
+
+        </StackPanel>
+
+        <StatusBar DockPanel.Dock="Bottom">
+            <Label x:Name="stbLabel" Content="Label1"/>
+        </StatusBar>
+
+
+        <Grid x:Name="grdMain"/>
+
+    </DockPanel>
+
+</Window>
