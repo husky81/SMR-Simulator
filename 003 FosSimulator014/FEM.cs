@@ -48,7 +48,6 @@ namespace _003_FosSimulator014
             loads.Clear();
             loads.maxNum = 1;
 
-
             solved = false;
         }
 
@@ -631,7 +630,7 @@ namespace _003_FosSimulator014
         public int[] id;
         public double[] gloF;
         internal double[] gloD;
-        internal double[] reactionForce;
+        internal double[] reactionForce = { 0, 0, 0, 0, 0, 0 };
 
         public Node(Point3D point)
         {

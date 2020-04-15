@@ -123,7 +123,7 @@
                 <Button Content="_Close" Click="ClosePannelConcreteSetting" HorizontalAlignment="Right" Width="60" Margin="0,0,10,0"/>
             </Grid>
         </StackPanel>
-        
+
         <StackPanel x:Name="dkpCameraControl" DockPanel.Dock="Left" MinWidth="143" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Margin="0,0.4,0,0" Width="155">
             <StackPanel.Effect>
                 <DropShadowEffect/>
@@ -209,8 +209,11 @@
             <Label x:Name="stbLabel" Content="Label1"/>
         </StatusBar>
 
+        <Grid DockPanel.Dock="Bottom" Height="50" Margin="-0.2,0,-0.4,0" >
+            <TextBox x:Name="tbxCommand" TextWrapping="Wrap" Text="&gt; " RenderTransformOrigin="0.5,0.5" ForceCursor="True" AcceptsReturn="True" VerticalScrollBarVisibility="Visible"/>
+        </Grid>
 
-        <Grid x:Name="grdMain"/>
+        <Grid x:Name="grdMain" Margin="0" DockPanel.Dock="Top"/>
 
     </DockPanel>
 

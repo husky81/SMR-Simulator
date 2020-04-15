@@ -10,7 +10,7 @@ namespace _003_FosSimulator014
 {
     partial class Bck3D // 기본
     {
-        public Grid Grid { get; set; }
+        public readonly Grid grid;
 
         public Shapes shapes;
         public Texts texts = new Texts();
@@ -68,7 +68,7 @@ namespace _003_FosSimulator014
                 position = instance.Get3dPiontByMousePosition(point);
 
                 markerShapes.transform = new TranslateTransform3D(position.X, position.Y, position.Z);
-                modelVisual3D.Content = markerShapes.GetModel3DGroup();
+                modelVisual3D.Content = markerShapes.Model3DGroup();
                 return position;
             }
 
@@ -83,8 +83,8 @@ namespace _003_FosSimulator014
         public Point3D Get3dPiontByMousePosition(Point mousePosition)
         {
             //Grid의 마우스 포인트
-            double gridHeight = Grid.ActualHeight;
-            double gridWidth = Grid.ActualWidth;
+            double gridHeight = grid.ActualHeight;
+            double gridWidth = grid.ActualWidth;
             Point gridCenter = new Point(gridWidth / 2, gridHeight / 2);
             Vector p = mousePosition - gridCenter;
 
@@ -134,7 +134,7 @@ namespace _003_FosSimulator014
         public Bck3D(Grid grid)
         {
             //생성자
-            Grid = grid;
+            this.grid = grid;
             shapes = new Shapes();
             viewport.Camera = MyPCamera;
 
@@ -142,7 +142,7 @@ namespace _003_FosSimulator014
             SetBasePlaneGrid002();
             pointMarker = new PointMarker(this);
 
-            RedrawShapes();
+            RedrawShapes001();
         }
         public PerspectiveCamera MyPCamera { get; set; } = new PerspectiveCamera
         {
@@ -154,31 +154,23 @@ namespace _003_FosSimulator014
             NearPlaneDistance = 1
         };
 
-        public void RedrawShapes()
+        public void RedrawShapes001()
         {
             model3DGroup.Children.Clear();
             model3DGroup.Children.Add(myDirLight);
-            foreach (Shape shape in shapes)
-            {
-                model3DGroup.Children.Add(shape.GeoModel());
-            }
-            foreach (Text text in texts)
-            {
-                model3DGroup.Children.Add(text.GeoModel());
-            }
-            ModelVisual3D modelVisual = new ModelVisual3D
-            {
-                Content = model3DGroup
-            };
+            ModelVisual3D modelVisual = new ModelVisual3D();
+            modelVisual.Content = model3DGroup;
 
             viewport.Children.Clear();
             viewport.Children.Add(modelVisual);
+            viewport.Children.Add(shapes.ModelVisual3D());
+            viewport.Children.Add(texts.ModelVisual3D());
             if (showBasePlaneGrid) viewport.Children.Add(modelVisual_BasePlaneGrid);
             if (showCoordinateSystem) viewport.Children.Add(modelVisual_CoordinateSystem);
             if (pointMarker.visibility) viewport.Children.Add(pointMarker.modelVisual3D);
 
-            Grid.Children.Clear();
-            Grid.Children.Add(viewport);
+            grid.Children.Clear();
+            grid.Children.Add(viewport);
         }
 
         internal void DrawLine(double x1, double x2, double y1, double y2, double thickness)
@@ -194,7 +186,7 @@ namespace _003_FosSimulator014
                 //VerticalAlignment = VerticalAlignment.Center,
                 StrokeThickness = thickness
             };
-            Grid.Children.Add(myLine);
+            grid.Children.Add(myLine);
         }
         internal void DrawLine(double x1, double x2, double y1, double y2)
         {
@@ -334,7 +326,7 @@ namespace _003_FosSimulator014
 
             // Apply the viewport to the page so it will be rendered.
             //this.Content = myViewport3D;
-            Grid.Children.Add(myViewport3D);
+            grid.Children.Add(myViewport3D);
 
             //grdBackground.Visibility = Visibility.Hidden;
 
@@ -402,8 +394,8 @@ namespace _003_FosSimulator014
             viewport.Children.Add(model);
             viewport.Camera = MyPCamera;
 
-            Grid.Children.Clear();
-            Grid.Children.Add(viewport);
+            grid.Children.Clear();
+            grid.Children.Add(viewport);
         }
 
         internal void SetCoordinateSystem()
@@ -872,7 +864,33 @@ namespace _003_FosSimulator014
         }
         internal void ViewZoomExtend()
         {
+            Point3D pos = MyPCamera.Position;
+            Vector3D dir = MyPCamera.LookDirection;
+            Vector3D up = MyPCamera.UpDirection;
+            dir.Normalize();
+            up.Normalize();
+            double fov = MyPCamera.FieldOfView;
 
+            double width = grid.ActualWidth;
+            double height = grid.ActualHeight;
+
+            if (shapes.Count == 0)
+            {
+                double initialCameraDistance = 20;
+                pos = new Point3D(0, 0, 0) - dir * initialCameraDistance;
+                MyPCamera.Position = pos;
+            }
+
+            if(shapes.Count == 1)
+            {
+
+            }
+
+            foreach (Shape shape in shapes)
+            {
+                Point3D p = shape.BasePoint;
+
+            }
         }
         internal void ViewSE()
         {
@@ -956,8 +974,25 @@ namespace _003_FosSimulator014
             base.Add(t);
             return t;
         }
+        internal Model3DGroup Model3DGroup()
+        {
+            Model3DGroup model3DGroup = new Model3DGroup();
+            foreach (Text text in this)
+            {
+                model3DGroup.Children.Add(text.GeoModel());
+            }
+            //model3DGroup.Transform = transform;
+            return model3DGroup;
+        }
+
+        internal ModelVisual3D ModelVisual3D()
+        {
+            ModelVisual3D modelVisual3D = new ModelVisual3D();
+            modelVisual3D.Content = Model3DGroup();
+            return modelVisual3D;
+        }
     }
-    class Text
+    class Text : Shape
     {
         string caption;
         Point3D position;
@@ -972,7 +1007,7 @@ namespace _003_FosSimulator014
             this.color = color;
         }
 
-        internal GeometryModel3D GeoModel()
+        internal new GeometryModel3D GeoModel()
         {
             GeometryModel3D geo3D;
             geo3D = Bck3D.CreateTextLabel3D(caption, Brushes.Red, true, 1, position,
@@ -1083,7 +1118,7 @@ namespace _003_FosSimulator014
 
         }
 
-        internal Model3DGroup GetModel3DGroup()
+        internal Model3DGroup Model3DGroup()
         {
             Model3DGroup model3DGroup = new Model3DGroup();
             foreach (Shape shape in this)
@@ -1092,6 +1127,13 @@ namespace _003_FosSimulator014
             }
             model3DGroup.Transform = transform;
             return model3DGroup;
+        }
+
+        internal ModelVisual3D ModelVisual3D()
+        {
+            ModelVisual3D modelVisual3D = new ModelVisual3D();
+            modelVisual3D.Content = this.Model3DGroup();
+            return modelVisual3D;
         }
     }
     class Shape
@@ -1108,6 +1150,18 @@ namespace _003_FosSimulator014
         private GeometryModel3D geoModel;
 
         private Point3D basePoint;
+        public Point3D BasePoint
+        {
+            get
+            {
+                return basePoint;
+            }
+            set
+            {
+                basePoint = value;
+                SetTransforms(basePoint, direction);
+            }
+        }
         private Vector3D direction;
         public Shape()
         {
@@ -1169,12 +1223,6 @@ namespace _003_FosSimulator014
         internal void Move(Vector3D moveVector)
         {
             basePoint += moveVector;
-            SetTransforms(basePoint, direction);
-        }
-
-        internal void BasePoint(Point3D p3d)
-        {
-            basePoint = p3d;
             SetTransforms(basePoint, direction);
         }
     }
@@ -1796,7 +1844,6 @@ namespace _003_FosSimulator014
             mesh.Normals.Add(normal);
             return mesh;
         }
-
         internal static MeshGeometry3D Polygon(SectionPoly poly, double length)
         {
             MeshGeometry3D mesh = new MeshGeometry3D();
