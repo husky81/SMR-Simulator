@@ -41,6 +41,14 @@ namespace _003_FosSimulator014
 
             TurnMouseEventGrdMain3dScroll(true);
 
+
+            fem.model.nodes.Add(0, 0, 0);
+            fem.model.nodes.Add(-10, 0, 0);
+            fem.model.nodes.Add(10, 0, 0);
+            fem.model.nodes.Add(0, +10, 0);
+            fem.model.nodes.Add(0, -10, 0);
+
+            RedrawFemModel();
         }
 
         class CommandWindow

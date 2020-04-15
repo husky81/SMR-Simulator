@@ -864,33 +864,97 @@ namespace _003_FosSimulator014
         }
         internal void ViewZoomExtend()
         {
+            double initialCameraDistance = 20;
+
             Point3D pos = MyPCamera.Position;
             Vector3D dir = MyPCamera.LookDirection;
             Vector3D up = MyPCamera.UpDirection;
             dir.Normalize();
             up.Normalize();
-            double fov = MyPCamera.FieldOfView;
+            Vector3D camY = Vector3D.CrossProduct(up, dir);
+            camY.Normalize();
 
             double width = grid.ActualWidth;
             double height = grid.ActualHeight;
 
+            double fovW = MyPCamera.FieldOfView;
+            double fovH = Math.Atan(Math.Tan(fovW / 2 / 180 * Math.PI) / width * height) * 2 * 180 / Math.PI;
+
             if (shapes.Count == 0)
             {
-                double initialCameraDistance = 20;
                 pos = new Point3D(0, 0, 0) - dir * initialCameraDistance;
                 MyPCamera.Position = pos;
+                return;
             }
 
             if(shapes.Count == 1)
             {
-
+                pos = shapes[0].BasePoint - dir * initialCameraDistance;
+                MyPCamera.Position = pos;
+                return;
             }
 
+            Vector3D lPlane = GF.Rotation3D(camY, up, fovW / 2);
+            Vector3D rPlane = GF.Rotation3D(-camY, up, -fovW / 2);
+            Vector3D uPlane = GF.Rotation3D(up, camY, -fovH / 2);
+            Vector3D bPlane = GF.Rotation3D(-up, camY, fovH / 2);
+
+            double lPosition = PlanePosition(lPlane, shapes[0].BasePoint);
+            double rPosition = PlanePosition(rPlane, shapes[0].BasePoint);
+            double uPosition = PlanePosition(uPlane, shapes[0].BasePoint);
+            double bPosition = PlanePosition(bPlane, shapes[0].BasePoint);
+            
             foreach (Shape shape in shapes)
             {
-                Point3D p = shape.BasePoint;
-
+                lPosition = Math.Max(PlanePosition(lPlane, shape.BasePoint), lPosition);
+                rPosition = Math.Max(PlanePosition(rPlane, shape.BasePoint), rPosition);
+                uPosition = Math.Max(PlanePosition(uPlane, shape.BasePoint), uPosition);
+                bPosition = Math.Max(PlanePosition(bPlane, shape.BasePoint), bPosition);
             }
+
+            Point3D lPoint = new Point3D(0, 0, 0) + lPlane * lPosition;
+            Point3D rPoint = new Point3D(0, 0, 0) + rPlane * rPosition;
+            Point3D uPoint = new Point3D(0, 0, 0) + uPlane * uPosition;
+            Point3D bPoint = new Point3D(0, 0, 0) + bPlane * bPosition;
+
+            Point3D p1 = GF.CrossPoint_3Planes(uPlane, uPoint, bPlane, bPoint, lPlane, lPoint);
+            Point3D p2 = GF.CrossPoint_3Planes(uPlane, uPoint, bPlane, bPoint, rPlane, rPoint);
+            Point3D p3 = GF.CrossPoint_3Planes(lPlane, lPoint, rPlane, rPoint, uPlane, uPoint);
+            Point3D p4 = GF.CrossPoint_3Planes(lPlane, lPoint, rPlane, rPoint, bPlane, bPoint);
+
+            Point3D cp12 = new Point3D((p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2, (p1.Z + p2.Z) / 2);
+            Point3D cp34 = new Point3D((p3.X + p4.X) / 2, (p3.Y + p4.Y) / 2, (p3.Z + p4.Z) / 2);
+            double cp12pos = PlanePosition(dir, cp12);
+            double cp34pos = PlanePosition(dir, cp34);
+
+            Point3D newPos;
+            if (cp12pos > cp34pos)
+            {
+                newPos = cp34;
+            }
+            else
+            {
+                newPos = cp12;
+            }
+
+            MyPCamera.Position = newPos;
+        }
+        private double PlanePosition(Vector3D planeVector, Point3D point)
+        {
+            //ref. https://m.blog.naver.com/PostView.nhn?blogId=joy3x94&logNo=70145080536&proxyReferer=https:%2F%2Fwww.google.com%2F
+            Point3D P = new Point3D(0, 0, 0);
+            Point3D A = point;
+            Vector3D u = planeVector;
+
+            Vector3D PA = A - P;
+            if (PA.Length == 0) return 0;
+
+            double d = Vector3D.CrossProduct(PA, u).Length / u.Length;
+
+            double theta = GF.Angle2Vector(PA, u);
+
+            double lengthPH = d / Math.Tan(theta);
+            return lengthPH;
         }
         internal void ViewSE()
         {

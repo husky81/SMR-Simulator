@@ -5,12 +5,12 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media.Media3D;
 
 namespace _003_FosSimulator014
 {
     static class GF
     {
-
         public static double MatrixDeterminant(double[,] matrix)
         {
             int[] perm;
@@ -495,6 +495,40 @@ namespace _003_FosSimulator014
                 identityMatrix[i, i] = 1;
             }
             return identityMatrix;
+        }
+
+        internal static Vector3D Rotation3D(Vector3D vector3D, in Vector3D axis, in double deg)
+        {
+            Vector3D axisZ = axis;
+            axisZ.Normalize();
+            Vector3D axisY = Vector3D.CrossProduct(axisZ, vector3D);
+            axisY.Normalize();
+            Vector3D axisX = Vector3D.CrossProduct(axisY, axisZ);
+            axisX.Normalize();
+
+            double rad = deg / 180 * Math.PI;
+            vector3D = Math.Cos(rad) * axisX + Math.Sin(rad) * axisY;
+            return vector3D;
+        }
+        internal static Point3D CrossPoint_PlaneLine(Vector3D normalPlane, Point3D p0Plane, Point3D lineP0, Point3D lineP1)
+        {
+            //ref. http://www.gisdeveloper.co.kr/?p=792
+            double u = Vector3D.DotProduct(normalPlane, p0Plane - lineP0) / Vector3D.DotProduct(normalPlane, lineP1 - lineP0);
+            Point3D p = lineP0 + u * (lineP1 - lineP0);
+            return p;
+        }
+        internal static Point3D CrossPoint_3Planes(Vector3D v1, Point3D p1, Vector3D v2, Point3D p2, Vector3D v3, Point3D p3)
+        {
+            Vector3D crossLineP1P2 = Vector3D.CrossProduct(v1, v2);
+            Vector3D p1toCrossLine = Vector3D.CrossProduct(crossLineP1P2, v1);
+            Point3D crossPointP1P2 = CrossPoint_PlaneLine(v2, p2, p1, p1 + p1toCrossLine);
+            Point3D crossPoint3Planes = CrossPoint_PlaneLine(v3, p3, crossPointP1P2, crossPointP1P2 + crossLineP1P2);
+            return crossPoint3Planes;
+        }
+
+        internal static double Angle2Vector(Vector3D v1, Vector3D v2)
+        {
+            return Math.Acos(Vector3D.DotProduct(v1, v2) / (v1.Length * v2.Length));
         }
     }
 
