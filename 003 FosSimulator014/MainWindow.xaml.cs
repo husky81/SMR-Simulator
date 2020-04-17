@@ -22,7 +22,7 @@ namespace _003_FosSimulator014
     public partial class MainWindow : Window
     {
         private readonly SMR smr;
-        private readonly FEM fem;
+        internal readonly FEM fem;
         private readonly Bck3D bckD;
         private readonly CommandWindow cmd;
 
@@ -40,7 +40,7 @@ namespace _003_FosSimulator014
             cmd = new CommandWindow(this,tbxCommand);
 
             TurnOnWheelPanZoom();
-            TurnOnWindowSelecion();
+            TurnOnWindowSelecion(true);
             KeyDown += UnselectAll_EscKey;
 
             bckD.ViewTop();
@@ -51,11 +51,6 @@ namespace _003_FosSimulator014
             RedrawFemModel();
         }
 
-        private void UnselectAll_EscKey(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            fem.selection.UnselectAll();
-            RedrawFemModel();
-        }
 
         private void TestNodeGrid()
         {
@@ -68,308 +63,30 @@ namespace _003_FosSimulator014
             }
         }
 
-        class CommandWindow
+
+        public void EraseAll()
         {
-            private readonly MainWindow instance;
-            private readonly System.Windows.Controls.TextBox tbx;
-            private readonly Command mainCommand;
-            private Command activeCommand;
-
-            public CommandWindow(MainWindow instance, System.Windows.Controls.TextBox textBox)
-            {
-                mainCommand = new Command("Main");
-                activeCommand = mainCommand;
-                Command.instance = instance;
-
-                this.tbx = textBox;
-                this.instance = instance;
-
-                Clear();
-                tbx.PreviewKeyDown += BackSpaceBlock_PreviewKeyDown; //"> " 앞에서 백스페이스 방지용.
-
-                InitialCommandConfiguration();
-
-                MainCommandInputEvent_On();
-            }
-            public void InitialCommandConfiguration()
-            {
-                Command cmd;
-                cmd = mainCommand.Add("Zoom", "z");
-                cmd.Add("Extents", "e", "ZoomExtend");
-                cmd.Add("All", "a", "ZoomAll");
-                cmd.Add("Window","", "ZoomRectangle");
-
-                cmd = mainCommand.Add("Circle", "ci");
-                cmd.Add("Radius", "r", "DrawCircle");
-
-                cmd = mainCommand.Add("Regen", "re", "RegenFemModel");
-
-                cmd = mainCommand.Add("Redraw", "r", "Redraw");
-            }
-            private void GotoTheFunction(string runFunction)
-            {
-                switch (runFunction)
-                {
-                    case "ZoomExtend":
-                        instance.ZoomExtents(null, null);
-                        break;
-                    case "RegenFemModel":
-                        instance.RedrawFemModel();
-                        break;
-                    case "Redraw":
-                        instance.RedrawShapes(null, null);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            private void ExecuteCommand(string cmdText)
-            {
-                bool flag = false;
-                foreach (Command cmd in activeCommand.commands)
-                {
-                    if (cmdText.Equals(cmd.shortName))
-                    {
-                        flag = true;
-                        WriteCommandName(cmd.name);
-                        if (cmd.runFunction.Length != 0)
-                        {
-                            WriteText(" : " + cmd.runFunction + "을(를) 실행합니다.");
-                            Enter();
-                            GotoTheFunction(cmd.runFunction);
-                            activeCommand = mainCommand;
-                            tbx.AppendText("> ");
-                            SetCursorLast();
-                            return;
-                        }
-                        WriteText(cmd.Quary());
-                        activeCommand = cmd;
-                        WriteText("> ");
-                        break;
-                    }
-                }
-                if (!flag)
-                {
-                    WriteText("명령어가 없습니다.");
-                    Enter();
-                    if (activeCommand != mainCommand) WriteText(activeCommand.Quary());
-                    tbx.AppendText("> ");
-                    SetCursorLast();
-                }
-            }
-
-
-            class Command
-            {
-                internal static MainWindow instance;
-                public string name; //ex. _zoom , _line
-                public string shortName = "";
-                public string runFunction = "";
-                
-                public List<Command> commands = new List<Command>();
-
-                public Command(string name, string shortName = "", string runFunction = "")
-                {
-                    this.name = name;
-                    this.shortName = shortName;
-                    this.runFunction = runFunction;
-                }
-                public Command Add(string name, string shortName = "", string runFunction=""){
-                    Command cmd = new Command(name, shortName, runFunction);
-                    commands.Add(cmd);
-                    return cmd;
-                }
-
-                internal string Quary()
-                {
-                    string quary = " : ";
-                    foreach (Command cmd in commands)
-                    {
-                        quary += cmd.name + " / ";
-                    }
-                    quary = quary.Substring(0, quary.Length - 2);
-                    return quary;
-
-
-                }
-            }
-
-            private void MainCommandInputEvent_On()
-            {
-                tbx.PreviewKeyDown += Tbx_PreviewKeyDown;
-                tbx.PreviewKeyUp += Tbx_PreviewKeyUp;
-            }
-            private void MainCommandInputEvent_Off()
-            {
-                tbx.PreviewKeyDown -= Tbx_PreviewKeyDown;
-                tbx.PreviewKeyUp -= Tbx_PreviewKeyUp;
-            }
-
-            private void BackSpaceBlock_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-            {
-                switch (e.Key)
-                {
-                    case Key.Back:
-                        String a = tbx.Text.Substring(tbx.Text.Length - 2, 2);
-                        if (tbx.Text.Substring(tbx.Text.Length - 2, 2).Equals("> "))
-                        {
-                            Space();
-                        }
-                        break;
-                }
-            }
-            private void Tbx_PreviewKeyUp(object sender, System.Windows.Input.KeyEventArgs e)
-            {
-                switch (e.Key)
-                {
-                    case Key.Space:
-                        //BackSpace();
-                        break;
-                    case Key.Enter:
-                        BackSpace();
-                        break;
-                    default:
-                        break;
-                }
-
-            }
-
-            private void Clear()
-            {
-                tbx.Focus();
-                tbx.Text = "> ";
-                SetCursorLast();
-            }
-
-            private void Tbx_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-            {
-                 switch (e.Key)
-                {
-                    case Key.Space:
-                        GetCommand();
-                        break;
-                    case Key.Enter:
-                        GetCommand();
-                        break;
-                    case Key.Escape:
-                        if (activeCommand != mainCommand)
-                        {
-                            WriteText("명령을 취소했습니다.(esc)");
-                            activeCommand = mainCommand;
-                            NewLine();
-                        }
-                        break;
-                }
-            }
-
-            private void Space()
-            {
-                tbx.AppendText(" ");
-                SetCursorLast();
-            }
-
-            private void GetCommand()
-            {
-                string userInput = "";
-                for(int i = tbx.Text.Length-2; i >= 0; i--)
-                {
-                    if(tbx.Text.Substring(i,2).Equals("> "))
-                    {
-                        userInput = tbx.Text.Substring(i+2, tbx.Text.Length - i - 2).Trim();
-                        break;
-                    }
-                }
-                if (!userInput.Equals(""))
-                {
-                    //BackSpace(userInput.Length);
-                    WriteText(" -> ");
-                    ExecuteCommand(userInput);
-                }
-            }
-
-
-            private string GetInput(string commandName, string quaryText)
-            {
-                WriteCommandName(commandName);
-                MainCommandInputEvent_Off();
-                WriteText(" : " + quaryText + "> ");
-                
-                return "";
-            }
-
-            private void NewLine()
-            {
-                tbx.Focus();
-                Enter();
-                tbx.AppendText("> ");
-                SetCursorLast();
-            }
-
-            private void WriteCommandName(string fullCommandName)
-            {
-                WriteText(fullCommandName);
-                Enter();
-            }
-
-            private void BackSpace(int length = 1)
-            {
-                tbx.Text = tbx.Text.Substring(0, tbx.Text.Length - length);
-                SetCursorLast();
-            }
-
-            private void Enter()
-            {
-                tbx.AppendText(Environment.NewLine);
-                SetCursorLast();
-            }
-
-            public void WriteText(String text)
-            {
-                tbx.AppendText(text);
-                SetCursorLast();
-            }
-            public void SetCursorLast()
-            {
-                tbx.Select(tbx.Text.Length, 0);
-            }
-            private void Tbx_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-            {
-                switch (e.Key)
-                {
-                    case Key.Space:
-                        WriteText("A");
-                        break;
-                    case Key.Return:
-                        break;
-
-                    default:
-                        break;
-                }
-            }
+            fem.Initialize();
+            RedrawFemModel();
         }
 
         private void StartAddNode(object sender, RoutedEventArgs e)
         {
-            
-            MouseMove += ShowPointMarkerByMouseMove;
-            MouseDown += AddNodeByMouseLeftDown;
-            KeyUp += EndAddNodeByEsc;
-
-            bckD.RedrawShapes001();
+            TurnOnWindowSelecion(false);
+            MouseMove += ShowPointMarker_MouseMove;
+            MouseDown += AddNode_MouseLeftDown;
+            KeyUp += EndAddNode_Esc;
+            bckD.RedrawShapes();
         }
-        private void EndAddNodeByEsc(object sender, System.Windows.Input.KeyEventArgs e)
+        private void ShowPointMarker_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (e.Key == Key.Escape)
-            {
-                bckD.pointMarker.Hide();
-                MouseMove -= ShowPointMarkerByMouseMove;
-                MouseDown -= AddNodeByMouseLeftDown;
-                KeyUp -= EndAddNodeByEsc;
-                bckD.RedrawShapes001();
-            }
+            bckD.pointMarker.visibility = true;
+            Point p = e.GetPosition(grdMain);
+            Point3D p3d = bckD.pointMarker.Position(p);
+            stbLabel.Content = "Add Node at (" + p3d.X + ", " + p3d.Y + ", " + p3d.Z + ")";
+            bckD.RedrawShapes();
         }
-        private void AddNodeByMouseLeftDown(object sender, MouseButtonEventArgs e)
+        private void AddNode_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton==MouseButtonState.Pressed)
             {
@@ -378,14 +95,17 @@ namespace _003_FosSimulator014
                 RedrawFemModel();
             }
         }
-
-        private void ShowPointMarkerByMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        private void EndAddNode_Esc(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            bckD.pointMarker.visibility = true;
-            Point p = e.GetPosition(grdMain);
-            Point3D p3d = bckD.pointMarker.Position(p);
-            stbLabel.Content = "Add Node at (" + p3d.X + ", " + p3d.Y + ", " + p3d.Z + ")";
-            bckD.RedrawShapes001();
+            if (e.Key == Key.Escape)
+            {
+                bckD.pointMarker.Hide();
+                MouseMove -= ShowPointMarker_MouseMove;
+                MouseDown -= AddNode_MouseLeftDown;
+                KeyUp -= EndAddNode_Esc;
+                bckD.RedrawShapes();
+                TurnOnWindowSelecion(true);
+            }
         }
 
         private void FemTest_Solid003(object sender, RoutedEventArgs e)
@@ -525,7 +245,7 @@ namespace _003_FosSimulator014
             Vector3D heightVector = new Vector3D(10,0, 0);
             //bckD.DrawCone(center, radius, heightVector, resolution, Colors.AliceBlue);
             bckD.shapes.AddCone(radius, heightVector, center, 6);
-            bckD.RedrawShapes001();
+            bckD.RedrawShapes();
         }
         private void Draw3dLine(object sender, RoutedEventArgs e)
         {
@@ -541,7 +261,7 @@ namespace _003_FosSimulator014
             bckD.shapes.AddLine(sp, epX);
             bckD.shapes.AddLine(sp, epY);
             bckD.shapes.AddLine(sp, epZ);
-            bckD.RedrawShapes001();
+            bckD.RedrawShapes();
 
         }
         private void DrawCoordinationMark(object sender, RoutedEventArgs e)
@@ -567,7 +287,7 @@ namespace _003_FosSimulator014
             bckD.shapes.AddCylinderClosed(str, dir, dia, resolution);
             bckD.shapes.recentShape.Color(Colors.Black);
             //bckD.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(10, 10, 10));
-            bckD.RedrawShapes001();
+            bckD.RedrawShapes();
         }
         private void DrawSphere(object sender, RoutedEventArgs e)
         {
@@ -577,7 +297,7 @@ namespace _003_FosSimulator014
 
             bckD.shapes.AddSphere(point, diameter, resolution);
             bckD.shapes.recentShape.Color(Colors.Red);
-            bckD.RedrawShapes001();
+            bckD.RedrawShapes();
         }
         private void PerformanceTest(object sender, RoutedEventArgs e)
         {
@@ -592,36 +312,308 @@ namespace _003_FosSimulator014
                     }
                 }
             }
-            bckD.RedrawShapes001();
+            bckD.RedrawShapes();
         }
 
-        private void ViewNode(object sender, RoutedEventArgs e)
+        internal void EraseSelected()
         {
-            System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            fem.model.nodes.show = sd.IsChecked;
-            RedrawFemModel();
-        }
-        private void ViewNodeNumber(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            fem.model.nodes.showNumber = sd.IsChecked;
-            RedrawFemModel();
-        }
-        private void ViewElement(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            fem.model.elems.show = sd.IsChecked;
-            RedrawFemModel();
-        }
-        private void ViewElementNumber(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            fem.model.elems.showNumber = sd.IsChecked;
+            fem.DeleteSelected();
             RedrawFemModel();
         }
 
+
+        internal void DrawCicle()
+        {
+            throw new NotImplementedException();
+        }
+
+        internal void DrawCicleCenterRadius()
+        {
+            throw new NotImplementedException();
+        }
 
     }
+    internal class CommandWindow
+    {
+        private readonly MainWindow main;
+        private readonly System.Windows.Controls.TextBox textBox;
+        private readonly Command mainCommand;
+        private Command activeCommand;
+        private string userInput;
+
+        public CommandWindow(MainWindow instance, System.Windows.Controls.TextBox textBox)
+        {
+            main = instance;
+            this.textBox = textBox;
+
+            mainCommand = new Command("Main");
+            activeCommand = mainCommand;
+            Command.instance = instance;
+
+            Clear();
+            SetCommandStructure();
+
+            textBox.PreviewKeyDown += BackSpaceBlock_PreviewKeyDown; //"> " 앞에서 백스페이스 방지용.
+            textBox.PreviewKeyDown += Tbx_PreviewKeyDown;
+            textBox.PreviewKeyUp += Tbx_PreviewKeyUp;
+            textBox.KeyUp += Tbx_KeyUp;
+        }
+        public void SetCommandStructure()
+        {
+            Command cmd;
+            Command subCmd;
+            cmd = mainCommand.Add("Zoom", "z");
+            subCmd = cmd.Add("All", "a"); subCmd.run += main.ZoomAll;
+            subCmd = cmd.Add("Extents", "e"); subCmd.run += main.ZoomExtents;
+            subCmd = cmd.Add("Rectangle", "r"); subCmd.runMouseDown += main.ZoomRectangle; subCmd.run += main.ZoomRectangle;
+
+            cmd = mainCommand.Add("Circle", "ci"); subCmd.runMouseDown += main.DrawCicleCenterRadius;
+            subCmd = cmd.Add("Radius", "r"); subCmd.run += main.DrawCicle;
+
+            cmd = mainCommand.Add("Regen", "re");cmd.run += main.RedrawFemModel;
+
+            cmd = mainCommand.Add("Redraw", "r");cmd.run += main.RedrawShapes;
+
+            cmd = mainCommand.Add("Erase", "e"); cmd.runSelected += main.EraseSelected;
+            subCmd = cmd.Add("All", "a"); subCmd.run += main.EraseAll;
+        }
+        private void ExecuteCommand(Command cmd)
+        {
+            WriteCommandName(cmd.name);
+
+            if (main.fem.selection.Count > 0)
+            {
+                WriteText(" : 선택된 개체의 " + cmd.name + "을(를) 실행합니다.");
+                Enter();
+                cmd.runSelected();
+                activeCommand = mainCommand;
+                WriteText("> ");
+                return;
+            }
+            if (cmd.run != null)
+            {
+                WriteText(" : " + cmd.name + "을(를) 실행합니다.");
+                Enter();
+                cmd.run();
+                textBox.AppendText("> ");
+                SetCursorLast();
+                activeCommand = mainCommand;
+                return;
+            }
+
+            //서브명령 선택 요청
+            WriteText(cmd.Quary());
+            activeCommand = cmd;
+            WriteText("> ");
+        }
+
+        internal class Command
+        {
+            internal static MainWindow instance;
+            internal delegate void RunCommand();
+            internal RunCommand run; //하위 Command가 있든 없든 무조건 실행
+            internal RunCommand runSelected; //이미 선택된 개체가 있는 경우 실행
+            internal RunCommand runMouseDown; //하위명령 커리 중 마우스를 클릭하는 경우 실행
+            internal string name; //ex. _zoom , _line
+            internal string shortName = "";
+
+            public List<Command> commands = new List<Command>();
+
+            public Command(string name, string shortName = "")
+            {
+                this.name = name;
+                this.shortName = shortName;
+            }
+            public Command Add(string name, string shortName = "")
+            {
+                Command subCmd = new Command(name, shortName);
+                commands.Add(subCmd);
+                return subCmd;
+            } // 서브 명령 추가.
+
+            internal string Quary()
+            {
+                string quary = " : ";
+                foreach (Command cmd in commands)
+                {
+                    quary += cmd.name + " / ";
+                }
+                quary = quary.Substring(0, quary.Length - 2);
+                return quary;
+            }
+        }
+
+        private void MainCommandInputEvent_Off()
+        {
+            textBox.PreviewKeyDown -= Tbx_PreviewKeyDown;
+            textBox.PreviewKeyUp -= Tbx_PreviewKeyUp;
+        }
+
+        private void BackSpaceBlock_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Back:
+                    String a = textBox.Text.Substring(textBox.Text.Length - 2, 2);
+                    if (textBox.Text.Substring(textBox.Text.Length - 2, 2).Equals("> "))
+                    {
+                        Space();
+                    }
+                    break;
+            }
+        }
+        private void Tbx_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Space:
+                    GetCommand();
+                    break;
+                case Key.Enter:
+                    GetCommand();
+                    //if (userInput.Equals("")) WriteText("> ");
+                    //WriteText(userInput);
+                    break;
+                case Key.Escape:
+                    if (activeCommand != mainCommand)
+                    {
+                        WriteText("명령을 취소했습니다.(esc)");
+                        activeCommand = mainCommand;
+                        NewLine();
+                    }
+                    break;
+            }
+        }
+        private void Tbx_PreviewKeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Space:
+                    //BackSpace();
+                    break;
+                case Key.Enter:
+                    //WriteText("> ");
+                    //BackSpace(2);
+                    break;
+                default:
+                    break;
+            }
+
+        }
+        private void Tbx_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Space:
+                    //BackSpace();
+                    break;
+                case Key.Enter:
+                    //WriteText("> ");
+                    BackSpace(2); //그냥 enter만 누른 경우 한줄 위로 올림
+                    break;
+                default:
+                    break;
+            }
+        }
+        private void Clear()
+        {
+            textBox.Focus();
+            textBox.Text = "> ";
+            SetCursorLast();
+        }
+        private void Space()
+        {
+            textBox.AppendText(" ");
+            SetCursorLast();
+        }
+
+        private void GetCommand()
+        {
+            userInput = "";
+            for (int i = textBox.Text.Length - 2; i >= 0; i--)
+            {
+                if (textBox.Text.Substring(i, 2).Equals("> "))
+                {
+                    userInput = textBox.Text.Substring(i + 2, textBox.Text.Length - i - 2).Trim();
+                    break;
+                }
+            }
+            if (!userInput.Equals(""))
+            {
+                //BackSpace(userInput.Length);
+                WriteText(" -> ");
+
+                bool flag = false;
+                foreach (Command cmd in activeCommand.commands)
+                {
+                    if (userInput.Equals(cmd.shortName))
+                    {
+                        flag = true;
+
+                        ExecuteCommand(cmd);
+
+                        break;
+                    }
+                }
+                if (!flag)
+                {
+                    WriteText("명령어가 없습니다.");
+                    Enter();
+                    if (activeCommand != mainCommand) WriteText(activeCommand.Quary());
+                    textBox.AppendText("> ");
+                    SetCursorLast();
+                }
+            }
+
+        }
+
+
+        private string GetInput(string commandName, string quaryText)
+        {
+            WriteCommandName(commandName);
+            MainCommandInputEvent_Off();
+            WriteText(" : " + quaryText + "> ");
+
+            return "";
+        }
+
+        private void NewLine()
+        {
+            textBox.Focus();
+            Enter();
+            textBox.AppendText("> ");
+            SetCursorLast();
+        }
+
+        private void WriteCommandName(string fullCommandName)
+        {
+            WriteText(fullCommandName);
+            Enter();
+        }
+
+        private void BackSpace(int length = 1)
+        {
+            textBox.Text = textBox.Text.Substring(0, textBox.Text.Length - length);
+            SetCursorLast();
+        }
+
+        private void Enter()
+        {
+            textBox.AppendText(Environment.NewLine);
+            SetCursorLast();
+        }
+
+        public void WriteText(String text)
+        {
+            textBox.AppendText(text);
+            SetCursorLast();
+        }
+        public void SetCursorLast()
+        {
+            textBox.Select(textBox.Text.Length, 0);
+        }
+
+    } //명령창 명령어 관리
     public partial class MainWindow : Window
     {
         private void OpenPannelCameraControl(object sender, RoutedEventArgs e)
@@ -690,7 +682,7 @@ namespace _003_FosSimulator014
             smr.structure.length = Convert.ToDouble(tbxLength.Text);
             smr.structure.width = Convert.ToDouble(tbxWidth.Text);
             bckD.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(smr.structure.length, smr.structure.width, smr.structure.height));
-            bckD.RedrawShapes001();
+            bckD.RedrawShapes();
         }
 
         private void OpenPannelFemWorks(object sender, RoutedEventArgs e)
@@ -767,13 +759,13 @@ namespace _003_FosSimulator014
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
             bckD.showCoordinateSystem = sd.IsChecked;
-            bckD.RedrawShapes001();
+            bckD.RedrawShapes();
         }
         private void ViewBasePlaneGrid(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
             bckD.showBasePlaneGrid = sd.IsChecked;
-            bckD.RedrawShapes001();
+            bckD.RedrawShapes();
         }
 
         public void RedrawFemModel()
@@ -981,15 +973,19 @@ namespace _003_FosSimulator014
                 }
             }
 
-            bckD.RedrawShapes001();
+            bckD.RedrawShapes();
         }
         private void RedrawFemModel(object sender, RoutedEventArgs e)
         {
             RedrawFemModel();
         }
-        private void RedrawShapes(object sender, RoutedEventArgs e)
+        public void RedrawShapes(object sender, RoutedEventArgs e)
         {
-            bckD.RedrawShapes001();
+            bckD.RedrawShapes();
+        }
+        public void RedrawShapes()
+        {
+            RedrawShapes(null,null);
         }
 
     } // 패널 표시여부, 그리드 및 좌표계 표시여부, Redraw 등
@@ -1000,9 +996,16 @@ namespace _003_FosSimulator014
         private Point selectWindowEnd;
         private bool orbiting = false;
 
-        private void TurnOnWindowSelecion()
+        private void TurnOnWindowSelecion(bool on)
         {
-            MouseDown += WindowSelection_MouseLeftDown;
+            if (on)
+            {
+                MouseDown += WindowSelection_MouseLeftDown;
+            }
+            else
+            {
+                MouseDown -= WindowSelection_MouseLeftDown;
+            }
         }
         private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
@@ -1028,6 +1031,8 @@ namespace _003_FosSimulator014
             MouseMove -= WindowSelection_MouseMove;
             MouseUp -= WindowSelection_MouseLeftUp;
 
+            if (selectWindowStart.Equals(selectWindowEnd)) return; //사각형 크기가 0인 경우 pass~
+
             Point3D p0 = new Point3D();
             Vector3D v0 = new Vector3D();
             Vector3D v1 = new Vector3D();
@@ -1044,6 +1049,142 @@ namespace _003_FosSimulator014
             MouseMove -= WindowSelection_MouseMove;
             MouseUp -= WindowSelection_MouseLeftUp;
         }
+        private void UnselectAll_EscKey(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                fem.selection.UnselectAll();
+                RedrawFemModel();
+            }
+        }
+
+    } // 마우스 이벤트 관련
+    public partial class MainWindow : Window
+    {
+        private void ViewSW(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewSW();
+        }
+        private void ViewSE(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewSE();
+        }
+        private void ViewNW(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewNW();
+        }
+        private void ViewNE(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewNE();
+        }
+        private void ViewTop(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewTop();
+        }
+        private void ViewFront(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewFront();
+        }
+        private void ViewBottom(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewBottom();
+        }
+        private void ViewLeft(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewLeft();
+        }
+        private void ViewRight(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewRight();
+        }
+        private void ViewBack(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewBack();
+        }
+
+        public void ZoomExtents(object sender, RoutedEventArgs e)
+        {
+            bckD.ViewZoomExtend();
+        }
+        public void ZoomExtents()
+        {
+            ZoomExtents(null, null);
+        }
+        internal void ZoomAll()
+        {
+            ZoomExtents(null, null);
+        }
+        internal void ZoomRectangle()
+        {
+            UserWindowInputAction userWindowInputControl = new UserWindowInputAction(this);
+            userWindowInputControl.action += bckD.ViewZoomRectangle;
+            userWindowInputControl.Start();
+        }
+        public class UserWindowInputAction
+        {
+            private readonly MainWindow main;
+            Point selectWindowStart;
+            Point selectWindowEnd;
+
+            internal delegate void Action(Point p0, Point p1);
+            internal Action action;
+            public UserWindowInputAction(MainWindow main)
+            {
+                this.main = main;
+                
+            }
+            internal void Start()
+            {
+                main.TurnOnWindowSelecion(false);
+                main.MouseDown += WindowSelection_MouseLeftDown;
+            }
+            private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
+            {
+                if (main.orbiting) return;
+                if (e.LeftButton == MouseButtonState.Pressed)
+                {
+                    selectWindowStart = e.GetPosition(main.grdMain);
+                    main.bckD.selectionWindow.Start(selectWindowStart);
+                    main.MouseMove += WindowSelection_MouseMove;
+                    main.MouseUp += WindowSelection_MouseLeftUp;
+                    main.MouseLeave += WindowSelectionEnd;
+                }
+            }
+            private void WindowSelection_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+            {
+                selectWindowEnd = e.GetPosition(main.grdMain);
+                main.bckD.selectionWindow.Move(selectWindowEnd);
+                //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
+            }
+            private void WindowSelection_MouseLeftUp(object sender, MouseButtonEventArgs e)
+            {
+                WindowSelectionEnd(null, null);
+
+                if (selectWindowStart.Equals(selectWindowEnd)) return; //사각형 크기가 0인 경우 pass~
+
+                action(selectWindowStart, selectWindowEnd);
+                //main.bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
+                //main.fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+                main.RedrawFemModel();
+            }
+            private void WindowSelectionEnd(object sender, System.Windows.Input.MouseEventArgs e)
+            {
+                main.bckD.selectionWindow.End();
+                main.MouseMove -= WindowSelection_MouseMove;
+                main.MouseUp -= WindowSelection_MouseLeftUp;
+                main.MouseDown -= WindowSelection_MouseLeftDown;
+            }
+            private void UnselectAll_EscKey(object sender, System.Windows.Input.KeyEventArgs e)
+            {
+                if (e.Key == Key.Escape)
+                {
+                    main.fem.selection.UnselectAll();
+                    main.RedrawFemModel();
+                    WindowSelectionEnd(null, null);
+                }
+            }
+        }
+
 
         private void TurnOnWheelPanZoom()
         {
@@ -1167,55 +1308,32 @@ namespace _003_FosSimulator014
                 GetCameraInfo();
             }
         }
-    } // 마우스 이벤트 관련
-    public partial class MainWindow : Window
-    {
-        private void ViewSW(object sender, RoutedEventArgs e)
-        {
-            bckD.ViewSW();
-        }
-        private void ViewSE(object sender, RoutedEventArgs e)
-        {
-            bckD.ViewSE();
-        }
-        private void ViewNW(object sender, RoutedEventArgs e)
-        {
-            bckD.ViewNW();
-        }
-        private void ViewNE(object sender, RoutedEventArgs e)
-        {
-            bckD.ViewNE();
-        }
-        private void ViewTop(object sender, RoutedEventArgs e)
-        {
-            bckD.ViewTop();
-        }
-        private void ViewFront(object sender, RoutedEventArgs e)
-        {
-            bckD.ViewFront();
-        }
-        private void ViewBottom(object sender, RoutedEventArgs e)
-        {
-            bckD.ViewBottom();
-        }
-        private void ViewLeft(object sender, RoutedEventArgs e)
-        {
-            bckD.ViewLeft();
-        }
-        private void ViewRight(object sender, RoutedEventArgs e)
-        {
-            bckD.ViewRight();
-        }
-        private void ViewBack(object sender, RoutedEventArgs e)
-        {
-            bckD.ViewBack();
-        }
 
-        private void ZoomExtents(object sender, RoutedEventArgs e)
+        private void ViewNode(object sender, RoutedEventArgs e)
         {
-            bckD.ViewZoomExtend();
+            System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
+            fem.model.nodes.show = sd.IsChecked;
+            RedrawFemModel();
         }
-    } // View 컨트롤
+        private void ViewNodeNumber(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
+            fem.model.nodes.showNumber = sd.IsChecked;
+            RedrawFemModel();
+        }
+        private void ViewElement(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
+            fem.model.elems.show = sd.IsChecked;
+            RedrawFemModel();
+        }
+        private void ViewElementNumber(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
+            fem.model.elems.showNumber = sd.IsChecked;
+            RedrawFemModel();
+        }
+    } // View 관련
 
 }
 

@@ -144,7 +144,7 @@ namespace _003_FosSimulator014
             pointMarker = new PointMarker(this);
             selectionWindow = new SelectionWindow(grid);
 
-            RedrawShapes001();
+            RedrawShapes();
         }
         public PerspectiveCamera MyPCamera { get; set; } = new PerspectiveCamera
         {
@@ -156,7 +156,7 @@ namespace _003_FosSimulator014
             NearPlaneDistance = 1
         };
 
-        public void RedrawShapes001()
+        public void RedrawShapes()
         {
             model3DGroup.Children.Clear();
             model3DGroup.Children.Add(myDirLight);
@@ -770,6 +770,7 @@ namespace _003_FosSimulator014
             v2 = pyramidBottomP2 - p0;
             v3 = pyramidBottomP3 - p0;
         }
+
     }
     partial class Bck3D // Orbit & View 컨트롤
     {
@@ -888,7 +889,7 @@ namespace _003_FosSimulator014
         }
         internal void OrbitTwist(double rad, double dist)
         {
-            Point3D p = pCamera_init.Position + new Vector3D(0,0,0);
+            Point3D p = pCamera_init.Position + new Vector3D(0, 0, 0);
             Vector3D pv = new Vector3D(p.X, p.Y, p.Z);  //카메라 위치
             Vector3D u = pCamera_init.UpDirection;
             Vector3D d = pCamera_init.LookDirection + new Vector3D(0, 0, 0);
@@ -1002,7 +1003,7 @@ namespace _003_FosSimulator014
             MyPCamera.LookDirection = fp - np;
             MyPCamera.UpDirection = new Vector3D(0, -1, 0);
         }
-        internal void ViewZoomExtend()
+        internal void ViewZoomPoints(List<Point3D> points)
         {
             double initialCameraDistance = 20;
 
@@ -1022,16 +1023,16 @@ namespace _003_FosSimulator014
             double fovW = MyPCamera.FieldOfView;
             double fovH = Math.Atan(Math.Tan(fovW / 2 / 180 * Math.PI) / width * height) * 2 * 180 / Math.PI;
 
-            if (shapes.Count == 0)
+            if (points.Count == 0)
             {
                 pos = new Point3D(10, 0, 0) - dir * initialCameraDistance;
                 MyPCamera.Position = pos;
                 return;
             }
 
-            if(shapes.Count == 1)
+            if (points.Count == 1)
             {
-                pos = shapes[0].BasePoint - dir * initialCameraDistance;
+                pos = points[0] - dir * initialCameraDistance;
                 MyPCamera.Position = pos;
                 return;
             }
@@ -1041,17 +1042,17 @@ namespace _003_FosSimulator014
             Vector3D uPlane = GF.Rotation3D(up, camY, -fovH / 2);
             Vector3D bPlane = GF.Rotation3D(-up, camY, fovH / 2);
 
-            double lPosition = PlanePosition(lPlane, shapes[0].BasePoint);
-            double rPosition = PlanePosition(rPlane, shapes[0].BasePoint);
-            double uPosition = PlanePosition(uPlane, shapes[0].BasePoint);
-            double bPosition = PlanePosition(bPlane, shapes[0].BasePoint);
-            
-            foreach (Shape shape in shapes)
+            double lPosition = PlanePosition(lPlane, points[0]);
+            double rPosition = PlanePosition(rPlane, points[0]);
+            double uPosition = PlanePosition(uPlane, points[0]);
+            double bPosition = PlanePosition(bPlane, points[0]);
+
+            foreach (Point3D point in points)
             {
-                lPosition = Math.Max(PlanePosition(lPlane, shape.BasePoint), lPosition);
-                rPosition = Math.Max(PlanePosition(rPlane, shape.BasePoint), rPosition);
-                uPosition = Math.Max(PlanePosition(uPlane, shape.BasePoint), uPosition);
-                bPosition = Math.Max(PlanePosition(bPlane, shape.BasePoint), bPosition);
+                lPosition = Math.Max(PlanePosition(lPlane, point), lPosition);
+                rPosition = Math.Max(PlanePosition(rPlane, point), rPosition);
+                uPosition = Math.Max(PlanePosition(uPlane, point), uPosition);
+                bPosition = Math.Max(PlanePosition(bPlane, point), bPosition);
             }
 
             Point3D lPoint = new Point3D(0, 0, 0) + lPlane * lPosition;
@@ -1080,6 +1081,27 @@ namespace _003_FosSimulator014
             }
 
             MyPCamera.Position = newPos;
+
+        }
+        internal void ViewZoomExtend()
+        {
+            List<Point3D> points = new List<Point3D>();
+            foreach (Shape shape in shapes)
+            {
+                points.Add(shape.BasePoint);
+            }
+            ViewZoomPoints(points);
+        }
+        internal void ViewZoomRectangle(Point inpP0, Point inpP1)
+        {
+            Point3D p0 = Get3dPiontByMousePosition(inpP0);
+            Point3D p1 = Get3dPiontByMousePosition(inpP1);
+
+            List<Point3D> points = new List<Point3D>();
+            points.Add(p0);
+            points.Add(p1);
+
+            ViewZoomPoints(points);
         }
         private double PlanePosition(Vector3D planeVector, Point3D point)
         {

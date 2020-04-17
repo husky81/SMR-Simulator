@@ -71,6 +71,14 @@ namespace _003_FosSimulator014
             selection.nodes.Clear();
             selection.elems.Clear();
         }
+        internal void DeleteSelectedNodes()
+        {
+            foreach (Node node in selection.nodes)
+            {
+                model.nodes.Remove(node);
+            }
+            selection.nodes.Clear();
+        }
         internal void DeleteSelectedElems()
         {
             foreach (Element e in selection.elems)
@@ -79,6 +87,11 @@ namespace _003_FosSimulator014
             }
             selection.elems.Clear();
 
+        }
+        internal void DeleteSelected()
+        {
+            DeleteSelectedElems();
+            DeleteSelectedNodes();
         }
 
         internal void Solve()
@@ -310,17 +323,23 @@ namespace _003_FosSimulator014
                 }
             }
         }
+
     }
     class FemSelection
     {
         public Nodes nodes = new Nodes();
         public Elements elems = new Elements();
-
+        public int Count
+        {
+            get
+            {
+                return nodes.Count + elems.Count;
+            }
+        }
         public FemSelection()
         {
 
         }
-
         internal void AddNode(Node node)
         {
             node.selected = true;
@@ -586,8 +605,11 @@ namespace _003_FosSimulator014
         }
         public new Node Add(Node node)
         {
-            node.num = maxNum;
-            maxNum += 1;
+            if (node.num == 0)
+            {
+                node.num = maxNum;
+                maxNum += 1;
+            }
 
             base.Add(node);
             return node;
