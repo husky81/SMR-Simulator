@@ -16,30 +16,37 @@
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="_Redraw" Click="RedrawShapes"></MenuItem>
+                <MenuItem Header="Re_gen" Click="RedrawFemModel">
+                </MenuItem>
+                <Separator/>
+                <MenuItem Header="_Zoom">    
+                    <MenuItem Header="_In"/>
+                    <MenuItem Header="_Out"/>
+                    <MenuItem Header="_Extend" Click="ZoomExtents"/>
+                </MenuItem>
+                <MenuItem Header="Or_bit">
+                    <MenuItem Header="_Free Orbit" Click="TurnOnOrbit"/>
+                </MenuItem>
                 <MenuItem Header="Base plane _grid" Click="ViewBasePlaneGrid" IsCheckable="True" IsChecked="True"></MenuItem>
-                <MenuItem Header="_3D Orbit">
+                <MenuItem Header="_3D Views">
                     <MenuItem Header="_Top" Click="ViewTop" HorizontalAlignment="Left"/>
-                    <MenuItem Header="_Front" Click="ViewFront" HorizontalAlignment="Left"/>
+                    <MenuItem Header="B_ottom" Click="ViewBottom" HorizontalAlignment="Left"/>
                     <MenuItem Header="_Left" Click="ViewLeft" HorizontalAlignment="Left"/>
                     <MenuItem Header="_Right" Click="ViewRight" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_Front" Click="ViewFront" HorizontalAlignment="Left"/>
                     <MenuItem Header="_Back" Click="ViewBack" HorizontalAlignment="Left"/>
-                    <MenuItem Header="B_ottom" Click="ViewBottom" HorizontalAlignment="Left"/>
                     <Separator Height="1" />
                     <MenuItem Header="_S-W" Click="ViewSW" HorizontalAlignment="Left"/>
                     <MenuItem Header="S-_E" Click="ViewSE" HorizontalAlignment="Left"/>
-                    <MenuItem Header="N-_W" Click="ViewNW" HorizontalAlignment="Left"/>
                     <MenuItem Header="_N-E" Click="ViewNE" HorizontalAlignment="Left"/>
+                    <MenuItem Header="N-_W" Click="ViewNW" HorizontalAlignment="Left"/>
                 </MenuItem>
-                <MenuItem Header="_Zoom" HorizontalAlignment="Left">
-                    <MenuItem Header="_In" HorizontalAlignment="Left"/>
-                    <MenuItem Header="_Out" HorizontalAlignment="Left"/>
-                    <MenuItem Header="_Extend" Click="ViewZoomExtend" HorizontalAlignment="Left"/>
-                </MenuItem>
-                <MenuItem x:Name="mnuCoordinateSystem" Header="Coordinate _system" Click="ViewCoordinateSystem" HorizontalAlignment="Left" IsChecked="True" IsCheckable="True"/>
+                <MenuItem x:Name="mnuCoordinateSystem" Header="Coordinate _system" Click="ViewCoordinateSystem" IsChecked="True" IsCheckable="True"/>
                 <MenuItem Header="_Camera control pannel" Click="OpenPannelCameraControl" HorizontalAlignment="Left"/>
-                <MenuItem Header="_Fem Works Pannel" Click="OpenPannelFemWorks" HorizontalAlignment="Left"/>
+                <MenuItem Header="_Fem Works Pannel" Click="OpenPannelFemWorks"/>
 
             </MenuItem>
+
             <MenuItem Header="_Structure" >
                 <MenuItem Header="_Concrete" Click="OpenPannelConcreteSetting" HorizontalAlignment="Left"/>
             </MenuItem>

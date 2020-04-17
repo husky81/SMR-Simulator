@@ -8,17 +8,6 @@ using System.Windows.Media.Media3D;
 
 namespace _003_FosSimulator014
 {
-    class FemSelection
-    {
-        public Nodes nodes = new Nodes();
-        public Elements elems = new Elements();
-
-        public FemSelection()
-        {
-
-        }
-
-    }
     class FEM
     {
         public readonly ModelFem model = new ModelFem();
@@ -291,6 +280,67 @@ namespace _003_FosSimulator014
             return nodeMatrix;
         }
 
+        internal void SelectByWindow(System.Windows.Point p1, System.Windows.Point p2)
+        {
+            
+        }
+
+        internal void SelectByInfinitePyramid(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
+        {
+            Vector3D plane0 = Vector3D.CrossProduct(v0, v1);
+            Vector3D plane1 = Vector3D.CrossProduct(v1, v2);
+            Vector3D plane2 = Vector3D.CrossProduct(v2, v3);
+            Vector3D plane3 = Vector3D.CrossProduct(v3, v0);
+
+            Point3D p;
+            bool isOn0;
+            bool isOn1;
+            bool isOn2;
+            bool isOn3;
+            foreach (Node node in model.nodes)
+            {
+                p = node.c0;
+                isOn0 = GF.IsPointOnPlane(p, p0, plane0);
+                isOn1 = GF.IsPointOnPlane(p, p0, plane1);
+                isOn2 = GF.IsPointOnPlane(p, p0, plane2);
+                isOn3 = GF.IsPointOnPlane(p, p0, plane3);
+                if (isOn0 & isOn1 & isOn2 & isOn3)
+                {
+                    selection.AddNode(node);
+                }
+            }
+        }
+    }
+    class FemSelection
+    {
+        public Nodes nodes = new Nodes();
+        public Elements elems = new Elements();
+
+        public FemSelection()
+        {
+
+        }
+
+        internal void AddNode(Node node)
+        {
+            node.selected = true;
+            nodes.Add(node);
+        }
+
+        internal void UnselectAll()
+        {
+            foreach (Node node in nodes)
+            {
+                node.selected = false;
+            }
+            nodes.Clear();
+            foreach (Element element in elems)
+            {
+                element.selected = false;
+            }
+            elems.Clear();
+
+        }
     }
     class FemLoads : List<FemLoad>
     {
@@ -631,6 +681,7 @@ namespace _003_FosSimulator014
         public double[] gloF;
         internal double[] gloD;
         internal double[] reactionForce = { 0, 0, 0, 0, 0, 0 };
+        internal bool selected = false;
 
         public Node(Point3D point)
         {
@@ -831,6 +882,7 @@ namespace _003_FosSimulator014
         internal double[] locF;
 
         internal double[,] trans;
+        internal bool selected = false;
 
         public Point3D Center
         {

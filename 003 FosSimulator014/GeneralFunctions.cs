@@ -528,7 +528,16 @@ namespace _003_FosSimulator014
 
         internal static double Angle2Vector(Vector3D v1, Vector3D v2)
         {
+            //radian으로 반환
             return Math.Acos(Vector3D.DotProduct(v1, v2) / (v1.Length * v2.Length));
+        }
+
+        internal static bool IsPointOnPlane(Point3D quaryPoint, Point3D planePoint, Vector3D planeVector)
+        {
+            Vector3D vq = quaryPoint - planePoint;
+            double ang = Angle2Vector(planeVector, vq);
+            if (ang > Math.PI / 2) return false;
+            return true;
         }
     }
 

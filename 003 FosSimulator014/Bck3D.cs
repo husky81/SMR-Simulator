@@ -15,6 +15,7 @@ namespace _003_FosSimulator014
         public Shapes shapes;
         public Texts texts = new Texts();
         public PointMarker pointMarker;
+        public SelectionWindow selectionWindow;
 
         public bool showBasePlaneGrid = true;
         ModelVisual3D modelVisual_BasePlaneGrid = new ModelVisual3D();
@@ -141,6 +142,7 @@ namespace _003_FosSimulator014
             SetCoordinateSystem();
             SetBasePlaneGrid002();
             pointMarker = new PointMarker(this);
+            selectionWindow = new SelectionWindow(grid);
 
             RedrawShapes001();
         }
@@ -175,6 +177,7 @@ namespace _003_FosSimulator014
 
         internal void DrawLine(double x1, double x2, double y1, double y2, double thickness)
         {
+
             Line myLine = new Line
             {
                 Stroke = System.Windows.Media.Brushes.LightSteelBlue,
@@ -192,9 +195,9 @@ namespace _003_FosSimulator014
         {
             DrawLine(x1, x2, y1, y2, iniLineThickness);
         }
-        internal void DrawLine(Point strPoint_grdMain, Point center_gridMain)
+        internal void DrawLine(Point strPoint, Point endPoint)
         {
-            DrawLine(strPoint_grdMain.X, center_gridMain.X, strPoint_grdMain.Y, center_gridMain.Y, iniLineThickness);
+            DrawLine(strPoint.X, endPoint.X, strPoint.Y, endPoint.Y, iniLineThickness);
         }
         public void DrawSampleGradient()
         {
@@ -630,6 +633,143 @@ namespace _003_FosSimulator014
             GeometryModel3D geoModel = new GeometryModel3D(mg, mat);
             return geoModel;
         }
+
+        public void RedrawUiShapes()
+        {
+            grid.Children.Clear();
+            foreach (Rectangle rectangle in selectionWindow.shapes.rectangles)
+            {
+                grid.Children.Add(rectangle);
+            }
+        }
+        internal void DrawRectangle()
+        {
+            //ref. https://crynut84.tistory.com/75
+            Rectangle r = new Rectangle();
+            r.Width = 30;
+            r.Height = 30;
+            r.Margin = new Thickness(100, 100, 0, 0);
+            r.Stroke = Brushes.Black;
+            r.HorizontalAlignment = HorizontalAlignment.Left;
+            r.VerticalAlignment = VerticalAlignment.Top;
+            grid.Children.Add(r);
+            //grid.Children.Remove(r);
+        }
+
+        public class SelectionWindow
+        {
+            private readonly Grid grid;
+            internal bool enable = false;
+            Rectangle rectangle;
+            internal UiShapes shapes = new UiShapes();
+            internal Point strPoint;
+            private Point endPoint;
+
+            internal void Start(Point strPoint)
+            {
+                this.strPoint = strPoint;
+                rectangle = new Rectangle();
+                rectangle.Width = 0;
+                rectangle.Height = 0;
+                rectangle.Fill = Brushes.Blue;
+                rectangle.Opacity = 0.2;
+                rectangle.Margin = new Thickness(strPoint.X, strPoint.Y, 0, 0);
+                rectangle.Stroke = Brushes.Black;
+                rectangle.HorizontalAlignment = HorizontalAlignment.Left;
+                rectangle.VerticalAlignment = VerticalAlignment.Top;
+                grid.Children.Add(rectangle);
+            }
+            internal void Move(Point endPoint)
+            {
+                this.endPoint = endPoint;
+
+                double top = strPoint.Y;
+                double left = strPoint.X;
+                double width = endPoint.X - strPoint.X;
+                double height = endPoint.Y - strPoint.Y;
+
+                if (height < 0)
+                {
+                    height = -height;
+                    top -= height;
+                }
+
+                if (width<0)
+                {
+                    width = -width;
+                    left -= width;
+                    rectangle.Fill = Brushes.Green;
+                    rectangle.StrokeDashArray = new DoubleCollection() { 4, 4};
+                }
+                else
+                {
+                    rectangle.Fill = Brushes.Blue;
+                    rectangle.StrokeDashArray = new DoubleCollection();
+                }
+                rectangle.Margin = new Thickness(left, top, 0, 0);
+                rectangle.Width = width;
+                rectangle.Height = height;
+            }
+            internal void End()
+            {
+                grid.Children.Remove(rectangle);
+            }
+            public SelectionWindow(Grid grid)
+            {
+                this.grid = grid;
+                shapes.AddRectangle(strPoint, endPoint);
+            }
+        }
+        public class UiShapes : List<UiShape>
+        {
+            internal List<Line> lines = new List<Line>();
+            internal List<Rectangle> rectangles = new List<Rectangle>();
+
+            internal void AddRectangle(Point strPoint, Point endPoint)
+            {
+                Rectangle r = new Rectangle();
+                //r.PointFromScreen(strPoint);
+                //r.PointToScreen(endPoint);
+                rectangles.Add(r);
+            }
+        }
+        public class UiShape
+        {
+
+        }
+        class UiLine : UiShape
+        {
+
+        }
+
+        internal void GetInfinitePyramidBySelectionWindow(Point windowP0, Point windowP1, ref Point3D p0,ref  Vector3D v0, ref Vector3D v1, ref Vector3D v2,ref  Vector3D v3)
+        {
+            p0 = MyPCamera.Position;
+
+            double wx1;
+            double wx2;
+            double wy1;
+            double wy2;
+            wx1 = Math.Min(windowP0.X, windowP1.X);
+            wx2 = Math.Max(windowP0.X, windowP1.X);
+            wy1 = Math.Min(windowP0.Y, windowP1.Y);
+            wy2 = Math.Max(windowP0.Y, windowP1.Y);
+
+            Point wP0 = new Point(wx1, wy1);
+            Point wP1 = new Point(wx2, wy1);
+            Point wP2 = new Point(wx2, wy2);
+            Point wP3 = new Point(wx1, wy2);
+
+            Point3D pyramidBottomP0 = Get3dPiontByMousePosition(wP0);
+            Point3D pyramidBottomP1 = Get3dPiontByMousePosition(wP1);
+            Point3D pyramidBottomP2 = Get3dPiontByMousePosition(wP2);
+            Point3D pyramidBottomP3 = Get3dPiontByMousePosition(wP3);
+
+            v0 = pyramidBottomP0 - p0;
+            v1 = pyramidBottomP1 - p0;
+            v2 = pyramidBottomP2 - p0;
+            v3 = pyramidBottomP3 - p0;
+        }
     }
     partial class Bck3D // Orbit & View 컨트롤
     {
@@ -872,6 +1012,8 @@ namespace _003_FosSimulator014
             dir.Normalize();
             up.Normalize();
             Vector3D camY = Vector3D.CrossProduct(up, dir);
+            up = Vector3D.CrossProduct(dir, camY);
+            up.Normalize();
             camY.Normalize();
 
             double width = grid.ActualWidth;
@@ -882,7 +1024,7 @@ namespace _003_FosSimulator014
 
             if (shapes.Count == 0)
             {
-                pos = new Point3D(0, 0, 0) - dir * initialCameraDistance;
+                pos = new Point3D(10, 0, 0) - dir * initialCameraDistance;
                 MyPCamera.Position = pos;
                 return;
             }
@@ -941,6 +1083,7 @@ namespace _003_FosSimulator014
         }
         private double PlanePosition(Vector3D planeVector, Point3D point)
         {
+            //point가 planeVector의 어느 위치에 있는지 반환.
             //ref. https://m.blog.naver.com/PostView.nhn?blogId=joy3x94&logNo=70145080536&proxyReferer=https:%2F%2Fwww.google.com%2F
             Point3D P = new Point3D(0, 0, 0);
             Point3D A = point;
