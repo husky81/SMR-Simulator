@@ -98,6 +98,7 @@
     </Compile>
     <Compile Include="Bck3D.cs" />
     <Compile Include="GeneralFunctions.cs" />
+    <Compile Include="Shapes.cs" />
     <Compile Include="SMR.cs" />
     <Compile Include="FEM.cs" />
     <Compile Include="MainWindow.xaml.cs">
