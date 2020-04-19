@@ -23,7 +23,7 @@ namespace _003_FosSimulator014
     {
         private readonly SMR smr;
         internal readonly FEM fem;
-        public readonly Bck3D bckD;
+        public readonly DRAW draw;
         private readonly CommandWindow cmd;
 
         public MainWindow()
@@ -36,21 +36,32 @@ namespace _003_FosSimulator014
 
             smr = new SMR();
             fem = new FEM();
-            bckD = new Bck3D(grdMain);
+            draw = new DRAW(grdMain);
             cmd = new CommandWindow(this,tbxCommand);
 
             TurnOnWheelPanZoom();
             TurnOnWindowSelecion(true);
-            KeyDown += UnselectAll_EscKey;
+            TurnOnUnSelectAll_Esc(true);
 
-            bckD.ViewTop();
-            bckD.ViewZoomExtend();
+            draw.ViewTop();
+            draw.ViewZoomExtend();
 
             TestNodeGrid();
 
             RedrawFemModel();
         }
 
+        private void TurnOnUnSelectAll_Esc(bool on)
+        {
+            if (on)
+            {
+                KeyDown += UnselectAll_Esc;
+            }
+            else
+            {
+                KeyDown -= UnselectAll_Esc;
+            }
+        }
 
         private void TestNodeGrid()
         {
@@ -76,21 +87,21 @@ namespace _003_FosSimulator014
             MouseMove += ShowPointMarker_MouseMove;
             MouseDown += AddNode_MouseLeftDown;
             KeyUp += EndAddNode_Esc;
-            bckD.RedrawShapes();
+            draw.RedrawShapes();
         }
         private void ShowPointMarker_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            bckD.pointMarker.visibility = true;
+            draw.pointMarker.visibility = true;
             Point p = e.GetPosition(grdMain);
-            Point3D p3d = bckD.pointMarker.Position(p);
+            Point3D p3d = draw.pointMarker.Position(p);
             stbLabel.Content = "Add Node at (" + p3d.X + ", " + p3d.Y + ", " + p3d.Z + ")";
-            bckD.RedrawShapes();
+            draw.RedrawShapes();
         }
         private void AddNode_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton==MouseButtonState.Pressed)
             {
-                Point3D p3d = bckD.Get3dPiontByMousePosition(e.GetPosition(grdMain));
+                Point3D p3d = draw.Get3dPiontByMousePosition(e.GetPosition(grdMain));
                 fem.model.nodes.Add(p3d);
                 RedrawFemModel();
             }
@@ -99,11 +110,11 @@ namespace _003_FosSimulator014
         {
             if (e.Key == Key.Escape)
             {
-                bckD.pointMarker.Hide();
+                draw.pointMarker.Hide();
                 MouseMove -= ShowPointMarker_MouseMove;
                 MouseDown -= AddNode_MouseLeftDown;
                 KeyUp -= EndAddNode_Esc;
-                bckD.RedrawShapes();
+                draw.RedrawShapes();
                 TurnOnWindowSelecion(true);
             }
         }
@@ -232,11 +243,11 @@ namespace _003_FosSimulator014
 
         private void DrawLine(object sender, RoutedEventArgs e)
         {
-            bckD.DrawLine(1, 200, 2, 300, 8);
+            draw.DrawLine(1, 200, 2, 300, 8);
         }
         private void DrawSampleGradient(object sender, RoutedEventArgs e)
         {
-            bckD.DrawSampleGradient();
+            draw.DrawSampleGradient();
         }
         private void DrawCone(object sender, RoutedEventArgs e)
         {
@@ -244,8 +255,8 @@ namespace _003_FosSimulator014
             Point3D center = new Point3D(-1, -1, -1);
             Vector3D heightVector = new Vector3D(10,0, 0);
             //bckD.DrawCone(center, radius, heightVector, resolution, Colors.AliceBlue);
-            bckD.shapes.AddCone(radius, heightVector, center, 6);
-            bckD.RedrawShapes();
+            draw.shapes.AddCone(radius, heightVector, center, 6);
+            draw.RedrawShapes();
         }
         private void Draw3dLine(object sender, RoutedEventArgs e)
         {
@@ -258,10 +269,10 @@ namespace _003_FosSimulator014
             //bckD.Draw3dLine(sp, epY);
             //bckD.Draw3dLine(sp, epZ);
 
-            bckD.shapes.AddLine(sp, epX);
-            bckD.shapes.AddLine(sp, epY);
-            bckD.shapes.AddLine(sp, epZ);
-            bckD.RedrawShapes();
+            draw.shapes.AddLine(sp, epX);
+            draw.shapes.AddLine(sp, epY);
+            draw.shapes.AddLine(sp, epZ);
+            draw.RedrawShapes();
 
         }
         private void DrawCoordinationMark(object sender, RoutedEventArgs e)
@@ -274,20 +285,20 @@ namespace _003_FosSimulator014
             Vector3D dir = new Vector3D(len, 0, 0);
             
             //bckD.DrawCylinderClosed(str, dir, dia, resolution, Colors.Red);
-            bckD.shapes.AddCylinderClosed(str, dir, dia, resolution);
-            bckD.shapes.RecentShape.Color(Colors.Red);
+            draw.shapes.AddCylinderClosed(str, dir, dia, resolution);
+            draw.shapes.RecentShape.Color(Colors.Red);
 
 
             dir = new Vector3D(0, len, 0);
-            bckD.shapes.AddCylinderClosed(str, dir, dia, resolution);
-            bckD.shapes.RecentShape.Color(Colors.Green);
+            draw.shapes.AddCylinderClosed(str, dir, dia, resolution);
+            draw.shapes.RecentShape.Color(Colors.Green);
 
             dir = new Vector3D(0, 0, len);
             //bckD.DrawCylinderClosed(str, dir, dia, resolution, Colors.Black);
-            bckD.shapes.AddCylinderClosed(str, dir, dia, resolution);
-            bckD.shapes.RecentShape.Color(Colors.Black);
+            draw.shapes.AddCylinderClosed(str, dir, dia, resolution);
+            draw.shapes.RecentShape.Color(Colors.Black);
             //bckD.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(10, 10, 10));
-            bckD.RedrawShapes();
+            draw.RedrawShapes();
         }
         private void DrawSphere(object sender, RoutedEventArgs e)
         {
@@ -295,9 +306,9 @@ namespace _003_FosSimulator014
             double diameter = 5;
             int resolution = 48;
 
-            bckD.shapes.AddSphere(point, diameter, resolution);
-            bckD.shapes.RecentShape.Color(Colors.Red);
-            bckD.RedrawShapes();
+            draw.shapes.AddSphere(point, diameter, resolution);
+            draw.shapes.RecentShape.Color(Colors.Red);
+            draw.RedrawShapes();
         }
         private void PerformanceTest(object sender, RoutedEventArgs e)
         {
@@ -307,12 +318,12 @@ namespace _003_FosSimulator014
                 {
                     for (int k = 1; k < 20; k++)
                     {
-                        bckD.shapes.AddCylinderClosed(new Point3D(i, j, k), new Vector3D(0.5, 0, 0), 0.2, 16);
-                        bckD.shapes.RecentShape.Color(Colors.Magenta);
+                        draw.shapes.AddCylinderClosed(new Point3D(i, j, k), new Vector3D(0.5, 0, 0), 0.2, 16);
+                        draw.shapes.RecentShape.Color(Colors.Magenta);
                     }
                 }
             }
-            bckD.RedrawShapes();
+            draw.RedrawShapes();
         }
 
         internal void EraseSelected()
@@ -324,14 +335,18 @@ namespace _003_FosSimulator014
 
         internal void DrawCicle()
         {
-            throw new NotImplementedException();
+
         }
 
         internal void DrawCicleCenterRadius()
         {
-            throw new NotImplementedException();
+            
         }
 
+        internal void AddLine()
+        {
+
+        }
     }
     internal class CommandWindow
     {
@@ -365,9 +380,9 @@ namespace _003_FosSimulator014
             cmd = mainCommand.Add("Zoom", "z");
             subCmd = cmd.Add("All", "a"); subCmd.run += main.ZoomAll;
             subCmd = cmd.Add("Extents", "e"); subCmd.run += main.ZoomExtents;
-            subCmd = cmd.Add("Rectangle", "r"); subCmd.runMouseDown += main.ZoomRectangle(Point p0); subCmd.run += main.ZoomRectangle;
+            subCmd = cmd.Add("Rectangle", "r"); subCmd.run += main.ZoomRectangle;
 
-            cmd = mainCommand.Add("Circle", "ci"); subCmd.runMouseDown += main.DrawCicleCenterRadius(Point p0);
+            cmd = mainCommand.Add("Circle", "ci"); subCmd.run += main.DrawCicleCenterRadius;
             subCmd = cmd.Add("Radius", "r"); subCmd.run += main.DrawCicle;
 
             cmd = mainCommand.Add("Regen", "re");cmd.run += main.RedrawFemModel;
@@ -376,10 +391,14 @@ namespace _003_FosSimulator014
 
             cmd = mainCommand.Add("Erase", "e"); cmd.runSelected += main.EraseSelected;
             subCmd = cmd.Add("All", "a"); subCmd.run += main.EraseAll;
+
+            cmd = mainCommand.Add("Line", "l"); cmd.run += main.AddLine;
         }
         private void ExecuteCommand(Command cmd)
         {
             WriteCommandName(cmd.name);
+
+            if (main.orbiting) main.TurnOnOrbit(false);
 
             if (main.fem.selection.Count > 0 & cmd.runSelected != null)
             {
@@ -407,6 +426,45 @@ namespace _003_FosSimulator014
             WriteText("> ");
         }
 
+        private void GetCommand()
+        {
+            userInput = "";
+            for (int i = textBox.Text.Length - 2; i >= 0; i--)
+            {
+                if (textBox.Text.Substring(i, 2).Equals("> "))
+                {
+                    userInput = textBox.Text.Substring(i + 2, textBox.Text.Length - i - 2).Trim();
+                    break;
+                }
+            }
+            if (!userInput.Equals(""))
+            {
+                //BackSpace(userInput.Length);
+                WriteText(" -> ");
+
+                bool flag = false;
+                foreach (Command cmd in activeCommand.commands)
+                {
+                    if (userInput.Equals(cmd.shortName))
+                    {
+                        flag = true;
+
+                        ExecuteCommand(cmd);
+                        return;
+                    }
+                }
+                if (!flag)
+                {
+                    WriteText("명령어가 없습니다.");
+                    Enter();
+                    if (activeCommand != mainCommand) WriteText(activeCommand.Quary());
+                    textBox.AppendText("> ");
+                    SetCursorLast();
+                }
+            }
+
+        }
+
         internal class Command
         {
             internal static MainWindow main;
@@ -419,6 +477,7 @@ namespace _003_FosSimulator014
             internal string shortName = "";
 
             public List<Command> commands = new List<Command>();
+            private Command mouseDownSubCommand;
 
             public Command(string name, string shortName = "")
             {
@@ -432,6 +491,7 @@ namespace _003_FosSimulator014
                 return subCmd;
             } // 서브 명령 추가.
 
+
             internal string Quary()
             {
                 string quary = " : ";
@@ -440,7 +500,8 @@ namespace _003_FosSimulator014
                     quary += cmd.name;
                     if (cmd.runMouseDown != null)
                     {
-                        main.MouseDown += Main_MouseDown;
+                        //main.MouseDown += Main_MouseDown;
+                        mouseDownSubCommand = cmd;
                         quary += " (window)";
                     }
                     quary += " / ";
@@ -451,7 +512,12 @@ namespace _003_FosSimulator014
 
             private void Main_MouseDown(object sender, MouseButtonEventArgs e)
             {
-                
+                main.MouseDown -= Main_MouseDown;
+                if(e.LeftButton == MouseButtonState.Pressed)
+                {
+                    Point p0 = e.GetPosition(main.grdMain);
+                    mouseDownSubCommand.runMouseDown(p0);
+                }
             }
         }
 
@@ -476,6 +542,7 @@ namespace _003_FosSimulator014
         }
         private void Tbx_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+
             switch (e.Key)
             {
                 case Key.Space:
@@ -539,44 +606,6 @@ namespace _003_FosSimulator014
             SetCursorLast();
         }
 
-        private void GetCommand()
-        {
-            userInput = "";
-            for (int i = textBox.Text.Length - 2; i >= 0; i--)
-            {
-                if (textBox.Text.Substring(i, 2).Equals("> "))
-                {
-                    userInput = textBox.Text.Substring(i + 2, textBox.Text.Length - i - 2).Trim();
-                    break;
-                }
-            }
-            if (!userInput.Equals(""))
-            {
-                //BackSpace(userInput.Length);
-                WriteText(" -> ");
-
-                bool flag = false;
-                foreach (Command cmd in activeCommand.commands)
-                {
-                    if (userInput.Equals(cmd.shortName))
-                    {
-                        flag = true;
-
-                        ExecuteCommand(cmd);
-                        return;
-                    }
-                }
-                if (!flag)
-                {
-                    WriteText("명령어가 없습니다.");
-                    Enter();
-                    if (activeCommand != mainCommand) WriteText(activeCommand.Quary());
-                    textBox.AppendText("> ");
-                    SetCursorLast();
-                }
-            }
-
-        }
 
         private void NewLine()
         {
@@ -628,42 +657,42 @@ namespace _003_FosSimulator014
         }
         private void GetCameraInfo()
         {
-            tbxCameraPositionX.Text = bckD.MyPCamera.Position.X.ToString();
-            tbxCameraPositionY.Text = bckD.MyPCamera.Position.Y.ToString();
-            tbxCameraPositionZ.Text = bckD.MyPCamera.Position.Z.ToString();
-            tbxCameraLookDirectionX.Text = bckD.MyPCamera.LookDirection.X.ToString();
-            tbxCameraLookDirectionY.Text = bckD.MyPCamera.LookDirection.Y.ToString();
-            tbxCameraLookDirectionZ.Text = bckD.MyPCamera.LookDirection.Z.ToString();
-            tbxCameraUpDirectionX.Text = bckD.MyPCamera.UpDirection.X.ToString();
-            tbxCameraUpDirectionY.Text = bckD.MyPCamera.UpDirection.Y.ToString();
-            tbxCameraUpDirectionZ.Text = bckD.MyPCamera.UpDirection.Z.ToString();
-            tbxCameraFarPlaneDistance.Text = bckD.MyPCamera.FarPlaneDistance.ToString();
-            tbxCameraFieldOfView.Text = bckD.MyPCamera.FieldOfView.ToString();
-            tbxCameraNearPlaneDistance.Text = bckD.MyPCamera.NearPlaneDistance.ToString();
+            tbxCameraPositionX.Text = draw.MyPCamera.Position.X.ToString();
+            tbxCameraPositionY.Text = draw.MyPCamera.Position.Y.ToString();
+            tbxCameraPositionZ.Text = draw.MyPCamera.Position.Z.ToString();
+            tbxCameraLookDirectionX.Text = draw.MyPCamera.LookDirection.X.ToString();
+            tbxCameraLookDirectionY.Text = draw.MyPCamera.LookDirection.Y.ToString();
+            tbxCameraLookDirectionZ.Text = draw.MyPCamera.LookDirection.Z.ToString();
+            tbxCameraUpDirectionX.Text = draw.MyPCamera.UpDirection.X.ToString();
+            tbxCameraUpDirectionY.Text = draw.MyPCamera.UpDirection.Y.ToString();
+            tbxCameraUpDirectionZ.Text = draw.MyPCamera.UpDirection.Z.ToString();
+            tbxCameraFarPlaneDistance.Text = draw.MyPCamera.FarPlaneDistance.ToString();
+            tbxCameraFieldOfView.Text = draw.MyPCamera.FieldOfView.ToString();
+            tbxCameraNearPlaneDistance.Text = draw.MyPCamera.NearPlaneDistance.ToString();
         }
         private void SetCameraInfo(object sender, RoutedEventArgs e)
         {
-            bckD.MyPCamera.Position = new Point3D
+            draw.MyPCamera.Position = new Point3D
             {
                 X = Convert.ToDouble(tbxCameraPositionX.Text),
                 Y = Convert.ToDouble(tbxCameraPositionY.Text),
                 Z = Convert.ToDouble(tbxCameraPositionZ.Text)
             };
-            bckD.MyPCamera.LookDirection = new Vector3D
+            draw.MyPCamera.LookDirection = new Vector3D
             {
                 X = Convert.ToDouble(tbxCameraLookDirectionX.Text),
                 Y = Convert.ToDouble(tbxCameraLookDirectionY.Text),
                 Z = Convert.ToDouble(tbxCameraLookDirectionZ.Text)
             };
-            bckD.MyPCamera.UpDirection = new Vector3D
+            draw.MyPCamera.UpDirection = new Vector3D
             {
                 X = Convert.ToDouble(tbxCameraUpDirectionX.Text),
                 Y = Convert.ToDouble(tbxCameraUpDirectionY.Text),
                 Z = Convert.ToDouble(tbxCameraUpDirectionZ.Text)
             };
-            bckD.MyPCamera.FieldOfView = Convert.ToDouble(tbxCameraFieldOfView.Text);
-            bckD.MyPCamera.NearPlaneDistance = Convert.ToDouble(tbxCameraNearPlaneDistance.Text);
-            bckD.MyPCamera.FarPlaneDistance = Convert.ToDouble(tbxCameraFarPlaneDistance.Text);
+            draw.MyPCamera.FieldOfView = Convert.ToDouble(tbxCameraFieldOfView.Text);
+            draw.MyPCamera.NearPlaneDistance = Convert.ToDouble(tbxCameraNearPlaneDistance.Text);
+            draw.MyPCamera.FarPlaneDistance = Convert.ToDouble(tbxCameraFarPlaneDistance.Text);
         }
 
         private void OpenPannelConcreteSetting(object sender, RoutedEventArgs e)
@@ -682,8 +711,8 @@ namespace _003_FosSimulator014
             smr.structure.height = Convert.ToDouble(tbxHeight.Text);
             smr.structure.length = Convert.ToDouble(tbxLength.Text);
             smr.structure.width = Convert.ToDouble(tbxWidth.Text);
-            bckD.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(smr.structure.length, smr.structure.width, smr.structure.height));
-            bckD.RedrawShapes();
+            draw.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(smr.structure.length, smr.structure.width, smr.structure.height));
+            draw.RedrawShapes();
         }
 
         private void OpenPannelFemWorks(object sender, RoutedEventArgs e)
@@ -759,14 +788,14 @@ namespace _003_FosSimulator014
         private void ViewCoordinateSystem(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            bckD.showCoordinateSystem = sd.IsChecked;
-            bckD.RedrawShapes();
+            draw.showCoordinateSystem = sd.IsChecked;
+            draw.RedrawShapes();
         }
         private void ViewBasePlaneGrid(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            bckD.showBasePlaneGrid = sd.IsChecked;
-            bckD.RedrawShapes();
+            draw.showBasePlaneGrid = sd.IsChecked;
+            draw.RedrawShapes();
         }
 
         public void RedrawFemModel()
@@ -780,8 +809,8 @@ namespace _003_FosSimulator014
             double maxLoadSize = fem.loads.GetMaxLoadLength();
             double loadViewScale = maxLoadLength / maxLoadSize;
 
-            bckD.shapes.Clear();
-            bckD.texts.Clear();
+            draw.shapes.Clear();
+            draw.texts.Clear();
 
             double diaNode;
             double diaElem;
@@ -805,15 +834,15 @@ namespace _003_FosSimulator014
                 {
                     foreach (Node node in fem.model.nodes)
                     {
-                        bckD.shapes.AddSphere(node.c1, diaNode, rlsNode);
-                        bckD.shapes.RecentShape.Color(colorNode);
+                        draw.shapes.AddSphere(node.c1, diaNode, rlsNode);
+                        draw.shapes.RecentShape.Color(colorNode);
                     }
                 }
                 if (fem.model.nodes.showNumber)
                 {
                     foreach (Node node in fem.model.nodes)
                     {
-                        bckD.texts.Add(node.num.ToString(), node.c1, 8);
+                        draw.texts.Add(node.num.ToString(), node.c1, 8);
                     }
                 }
                 if (fem.model.elems.show)
@@ -829,24 +858,24 @@ namespace _003_FosSimulator014
                                 Vector3D dir = end - str;
                                 if (showSection)
                                 {
-                                    bckD.shapes.AddPolygon(str, dir, frame.section.poly);
+                                    draw.shapes.AddPolygon(str, dir, frame.section.poly);
                                 }
                                 else
                                 {
-                                    bckD.shapes.AddCylinder(str, dir, diaElem, rlsElem);
+                                    draw.shapes.AddCylinder(str, dir, diaElem, rlsElem);
                                 }
                                 break;
                             case 40:
                                 Plate p = (Plate)e;
-                                bckD.shapes.AddBox(p.nodes[0].c1, p.nodes[2].c1 - p.nodes[0].c1);
+                                draw.shapes.AddBox(p.nodes[0].c1, p.nodes[2].c1 - p.nodes[0].c1);
 
                                 break;
                             case 80:
                                 Solid s = (Solid)e;
-                                bckD.shapes.AddHexahedron(s.nodes[0].c1, s.nodes[1].c1, s.nodes[2].c1, s.nodes[3].c1, s.nodes[4].c1, s.nodes[5].c1, s.nodes[6].c1, s.nodes[7].c1);
+                                draw.shapes.AddHexahedron(s.nodes[0].c1, s.nodes[1].c1, s.nodes[2].c1, s.nodes[3].c1, s.nodes[4].c1, s.nodes[5].c1, s.nodes[6].c1, s.nodes[7].c1);
                                 break;
                             default:
-                                bckD.shapes.RecentShape.Color(colorElem);
+                                draw.shapes.RecentShape.Color(colorElem);
                                 break;
                         }
                     }
@@ -855,7 +884,7 @@ namespace _003_FosSimulator014
                 {
                     foreach (Element elem in fem.model.elems)
                     {
-                        bckD.texts.Add(elem.num.ToString(), elem.Center, 8);
+                        draw.texts.Add(elem.num.ToString(), elem.Center, 8);
                     }
                 }
 
@@ -863,8 +892,8 @@ namespace _003_FosSimulator014
                 {
                     foreach (NodalLoad nodalLoad in load.nodalLoads)
                     {
-                        bckD.shapes.AddForce(nodalLoad.node.c1, nodalLoad.force * loadViewScale);
-                        bckD.shapes.RecentShape.Color(colorLoad);
+                        draw.shapes.AddForce(nodalLoad.node.c1, nodalLoad.force * loadViewScale);
+                        draw.shapes.RecentShape.Color(colorLoad);
                     }
                 }
 
@@ -872,8 +901,8 @@ namespace _003_FosSimulator014
                 foreach (Node node in fem.model.nodes)
                 {
                     Vector3D dir = new Vector3D(node.reactionForce[0], node.reactionForce[1], node.reactionForce[2]);
-                    bckD.shapes.AddForce(node.c1, dir * loadViewScale);
-                    bckD.shapes.RecentShape.Color(colorReaction);
+                    draw.shapes.AddForce(node.c1, dir * loadViewScale);
+                    draw.shapes.RecentShape.Color(colorReaction);
                 }
             }
 
@@ -903,23 +932,23 @@ namespace _003_FosSimulator014
                     {
                         foreach (Node node in fem.model.nodes)
                         {
-                            bckD.shapes.AddSphere(node.c0, diaNode, rlsNode);
+                            draw.shapes.AddSphere(node.c0, diaNode, rlsNode);
                             if (node.selected)
                             {
-                                bckD.shapes.RecentShape.Color(colorSelectedNode);
+                                draw.shapes.RecentShape.Color(colorSelectedNode);
                             }
                             else
                             {
-                                bckD.shapes.RecentShape.Color(colorNode);
+                                draw.shapes.RecentShape.Color(colorNode);
                             }
-                            bckD.shapes.RecentShape.Opacity(opacity);
+                            draw.shapes.RecentShape.Opacity(opacity);
                         }
                     }
                     if (fem.model.nodes.showNumber)
                     {
                         foreach (Node node in fem.model.nodes)
                         {
-                            bckD.texts.Add(node.num.ToString(), node.c0, 8);
+                            draw.texts.Add(node.num.ToString(), node.c0, 8);
                         }
                     }
                 }
@@ -937,27 +966,27 @@ namespace _003_FosSimulator014
 
                                 if (showSection & frame.section.hasSectionPoly)
                                 {
-                                    bckD.shapes.AddPolygon(str, dir, frame.section.poly);
+                                    draw.shapes.AddPolygon(str, dir, frame.section.poly);
                                 }
                                 else
                                 {
-                                    bckD.shapes.AddCylinder(str, dir, diaElem, rlsElem);
+                                    draw.shapes.AddCylinder(str, dir, diaElem, rlsElem);
                                 }
                                 break;
                             case 40:
                                 Plate p = (Plate)e;
-                                bckD.shapes.AddBox(p.nodes[0].c0, p.nodes[2].c0 - p.nodes[0].c0);
+                                draw.shapes.AddBox(p.nodes[0].c0, p.nodes[2].c0 - p.nodes[0].c0);
 
                                 break;
                             case 80:
                                 Solid s = (Solid)e;
-                                bckD.shapes.AddHexahedron(s.nodes[0].c0, s.nodes[1].c0, s.nodes[2].c0, s.nodes[3].c0, s.nodes[4].c0, s.nodes[5].c0, s.nodes[6].c0, s.nodes[7].c0);
+                                draw.shapes.AddHexahedron(s.nodes[0].c0, s.nodes[1].c0, s.nodes[2].c0, s.nodes[3].c0, s.nodes[4].c0, s.nodes[5].c0, s.nodes[6].c0, s.nodes[7].c0);
                                 break;
                             default:
                                 break;
                         }
-                        bckD.shapes.RecentShape.Color(colorElem);
-                        bckD.shapes.RecentShape.Opacity(opacity);
+                        draw.shapes.RecentShape.Color(colorElem);
+                        draw.shapes.RecentShape.Opacity(opacity);
                     }
                 }
                 if (showUndeformedForce)
@@ -966,15 +995,15 @@ namespace _003_FosSimulator014
                     {
                         foreach (NodalLoad nodalLoad in load.nodalLoads)
                         {
-                            bckD.shapes.AddForce(load.nodalLoads[0].node.c0, nodalLoad.force * loadViewScale);
-                            bckD.shapes.RecentShape.Color(colorLoad);
-                            bckD.shapes.RecentShape.Opacity(opacity);
+                            draw.shapes.AddForce(load.nodalLoads[0].node.c0, nodalLoad.force * loadViewScale);
+                            draw.shapes.RecentShape.Color(colorLoad);
+                            draw.shapes.RecentShape.Opacity(opacity);
                         }
                     }
                 }
             }
 
-            bckD.RedrawShapes();
+            draw.RedrawShapes();
         }
         private void RedrawFemModel(object sender, RoutedEventArgs e)
         {
@@ -982,7 +1011,7 @@ namespace _003_FosSimulator014
         }
         public void RedrawShapes(object sender, RoutedEventArgs e)
         {
-            bckD.RedrawShapes();
+            draw.RedrawShapes();
         }
         public void RedrawShapes()
         {
@@ -999,6 +1028,7 @@ namespace _003_FosSimulator014
 
         internal void TurnOnWindowSelecion(bool on)
         {
+            if (orbiting) return;
             if (on)
             {
                 MouseDown += WindowSelection_MouseLeftDown;
@@ -1013,44 +1043,13 @@ namespace _003_FosSimulator014
             if (orbiting) return;
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                selectWindowStart = e.GetPosition(grdMain);
-                bckD.selectionWindow.Start(selectWindowStart);
-                MouseMove += WindowSelection_MouseMove;
-                MouseUp += WindowSelection_MouseLeftUp;
-                MouseLeave += WindowSelection_MouseLeave;
+                RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
+                r.FirstPoint = e.GetPosition(grdMain);
+                r.action = SelectFemByWindow;
+                r.Start();
             }
         }
-        private void WindowSelection_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            selectWindowEnd = e.GetPosition(grdMain);
-            bckD.selectionWindow.Move(selectWindowEnd);
-            //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
-        }
-        private void WindowSelection_MouseLeftUp(object sender, MouseButtonEventArgs e)
-        {
-            bckD.selectionWindow.End();
-            MouseMove -= WindowSelection_MouseMove;
-            MouseUp -= WindowSelection_MouseLeftUp;
-
-            if (selectWindowStart.Equals(selectWindowEnd)) return; //사각형 크기가 0인 경우 pass~
-
-            Point3D p0 = new Point3D();
-            Vector3D v0 = new Vector3D();
-            Vector3D v1 = new Vector3D();
-            Vector3D v2 = new Vector3D();
-            Vector3D v3 = new Vector3D();
-
-            bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
-            fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
-            RedrawFemModel();
-        }
-        private void WindowSelection_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            bckD.selectionWindow.End();
-            MouseMove -= WindowSelection_MouseMove;
-            MouseUp -= WindowSelection_MouseLeftUp;
-        }
-        private void UnselectAll_EscKey(object sender, System.Windows.Input.KeyEventArgs e)
+        private void UnselectAll_Esc(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Escape)
             {
@@ -1058,54 +1057,67 @@ namespace _003_FosSimulator014
                 RedrawFemModel();
             }
         }
+        public void SelectFemByWindow(Point wP0, Point wP1)
+        {
+            if (wP0.Equals(wP1)) return; //사각형 크기가 0인 경우 pass~
+
+            Point3D p0 = new Point3D();
+            Vector3D v0 = new Vector3D();
+            Vector3D v1 = new Vector3D();
+            Vector3D v2 = new Vector3D();
+            Vector3D v3 = new Vector3D();
+
+            draw.GetInfinitePyramidBySelectionWindow(wP0, wP1, ref p0, ref v0, ref v1, ref v2, ref v3);
+            fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+        }
 
     } // 마우스 이벤트 관련
     public partial class MainWindow : Window
     {
         private void ViewSW(object sender, RoutedEventArgs e)
         {
-            bckD.ViewSW();
+            draw.ViewSW();
         }
         private void ViewSE(object sender, RoutedEventArgs e)
         {
-            bckD.ViewSE();
+            draw.ViewSE();
         }
         private void ViewNW(object sender, RoutedEventArgs e)
         {
-            bckD.ViewNW();
+            draw.ViewNW();
         }
         private void ViewNE(object sender, RoutedEventArgs e)
         {
-            bckD.ViewNE();
+            draw.ViewNE();
         }
         private void ViewTop(object sender, RoutedEventArgs e)
         {
-            bckD.ViewTop();
+            draw.ViewTop();
         }
         private void ViewFront(object sender, RoutedEventArgs e)
         {
-            bckD.ViewFront();
+            draw.ViewFront();
         }
         private void ViewBottom(object sender, RoutedEventArgs e)
         {
-            bckD.ViewBottom();
+            draw.ViewBottom();
         }
         private void ViewLeft(object sender, RoutedEventArgs e)
         {
-            bckD.ViewLeft();
+            draw.ViewLeft();
         }
         private void ViewRight(object sender, RoutedEventArgs e)
         {
-            bckD.ViewRight();
+            draw.ViewRight();
         }
         private void ViewBack(object sender, RoutedEventArgs e)
         {
-            bckD.ViewBack();
+            draw.ViewBack();
         }
 
         public void ZoomExtents(object sender, RoutedEventArgs e)
         {
-            bckD.ViewZoomExtend();
+            draw.ViewZoomExtend();
         }
         public void ZoomExtents()
         {
@@ -1117,10 +1129,20 @@ namespace _003_FosSimulator014
         }
         internal void ZoomRectangle()
         {
+            
+
             RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
-            r.action += bckD.ViewZoomRectangle;
+            r.action += draw.ViewZoomRectangle;
             r.Start();
         }
+        internal void ZoomRectangle(Point p0)
+        {
+            RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
+            r.FirstPoint = p0;
+            r.action += draw.ViewZoomRectangle;
+            r.Start();
+        }
+
 
 
         private void TurnOnWheelPanZoom()
@@ -1131,18 +1153,18 @@ namespace _003_FosSimulator014
         }
         private void Zoom_MouseWheelScroll(object sender, MouseWheelEventArgs e)
         {
-            bckD.OrbitForward(e.Delta);
+            draw.OrbitForward(e.Delta);
             GetCameraInfo();
         }
         private void PanOn_MouseWheelDown(object sender, MouseButtonEventArgs e)
         {
             pointMouseDown = e.GetPosition(grdMain);
-            bckD.OrbitStart();
+            draw.OrbitStart();
             MouseMove += Pan_MouseWheelDownMove;
         }
         private void PanOff_MouseWheelUp(object sender, MouseButtonEventArgs e)
         {
-            bckD.OrbitEnd();
+            draw.OrbitEnd();
             MouseMove -= Pan_MouseWheelDownMove;
         }
         private void Pan_MouseWheelDownMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -1154,51 +1176,38 @@ namespace _003_FosSimulator014
                 stbLabel.Content = mov.X + ", " + mov.Y;
                 //bckD.OrbitMoveX(mov.X / 2); //MoveX와 MoveY중 처음 실행된 것 하나만 동작함.
                 //bckD.OrbitMoveY(mov.Y / 2);
-                bckD.OrbitMove(mov);
+                draw.OrbitMove(mov);
                 GetCameraInfo();
             }
         }
 
         private void TurnOnOrbit(object sender, RoutedEventArgs e)
         {
-            TurnOnOrbit_MouseEvent();
+            TurnOnOrbit(true);
         }
-        private void TurnOnOrbit_MouseEvent()
+        internal void TurnOnOrbit(bool on)
         {
-            orbiting = true;
-            MouseDown += new MouseButtonEventHandler(OrbitStart_MouseDown);
-            MouseUp += new MouseButtonEventHandler(OrbitEnd_MouseUp);
-            grdMain.MouseLeave += new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
-            KeyDown += TurnOffOrbit_EscKeyDown;
-        }
-        private void TurnOffOrbit_EscKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == Key.Escape)
+            if (on)
             {
-                orbiting = false;
-                MouseDown -= new MouseButtonEventHandler(OrbitStart_MouseDown);
-                MouseUp -= new MouseButtonEventHandler(OrbitEnd_MouseUp);
-                grdMain.MouseLeave -= new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
-                KeyDown -= TurnOffOrbit_EscKeyDown;
+                orbiting = true;
+                MouseDown += new MouseButtonEventHandler(OrbitStart_MouseDown);
+                MouseUp += new MouseButtonEventHandler(OrbitEnd_MouseUp);
+                grdMain.MouseLeave += new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
+                KeyDown += TurnOffOrbit_Esc;
+                TurnOnUnSelectAll_Esc(false);
             }
+            else
+            {
+                OritEnd();
+            }
+
         }
         private void OrbitStart_MouseDown(object sender, System.Windows.Input.MouseEventArgs e)
         {
             pointMouseDown = e.GetPosition(grdMain);
-            bckD.OrbitStart();
+            draw.OrbitStart();
             stbLabel.Content = "0, 0";
             MouseMove += new System.Windows.Input.MouseEventHandler(Orbit_MouseMove);
-        }
-        private void OrbitEnd_MouseUp(object sender, MouseButtonEventArgs e)
-        {
-            //stbLabel.Content = (p.X) + ", " + (p.Y);
-            stbLabel.Content = "";
-            bckD.OrbitEnd();
-            this.MouseMove -= new System.Windows.Input.MouseEventHandler(Orbit_MouseMove);
-        }
-        private void Orbit_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            stbLabel.Content = "";
         }
         private void Orbit_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
@@ -1208,7 +1217,7 @@ namespace _003_FosSimulator014
                 Vector mov = p - pointMouseDown;
                 stbLabel.Content = mov.X + ", " + mov.Y;
 
-                bckD.OrbitRotate(mov);
+                draw.OrbitRotate(mov);
                 GetCameraInfo();
             }
             else
@@ -1241,9 +1250,36 @@ namespace _003_FosSimulator014
                 double rad = newAngle - iniAngle;
 
                 stbLabel.Content = "d = " + dist + ", rad = " + rad;
-                bckD.OrbitTwist(rad, dist);
+                draw.OrbitTwist(rad, dist);
                 GetCameraInfo();
             }
+        }
+        private void Orbit_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            stbLabel.Content = "";
+        }
+        private void OrbitEnd_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            //stbLabel.Content = (p.X) + ", " + (p.Y);
+            stbLabel.Content = "";
+            draw.OrbitEnd();
+            this.MouseMove -= new System.Windows.Input.MouseEventHandler(Orbit_MouseMove);
+        }
+        private void TurnOffOrbit_Esc(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                OritEnd();
+            }
+        }
+        private void OritEnd()
+        {
+            orbiting = false;
+            MouseDown -= new MouseButtonEventHandler(OrbitStart_MouseDown);
+            MouseUp -= new MouseButtonEventHandler(OrbitEnd_MouseUp);
+            grdMain.MouseLeave -= new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
+            KeyDown -= TurnOffOrbit_Esc;
+            TurnOnUnSelectAll_Esc(true);
         }
 
         private void ViewNode(object sender, RoutedEventArgs e)
@@ -1274,11 +1310,25 @@ namespace _003_FosSimulator014
     public class RequestUserMouseWindowInput
     {
         private readonly MainWindow main;
-        Point selectWindowStart;
-        Point selectWindowEnd;
+        private Point p0, p1;
 
         internal delegate void Action(Point p0, Point p1);
         internal Action action;
+        private bool hasFirstPoint = false;
+        private Point firstPoint;
+        internal Point FirstPoint
+        {
+            get
+            {
+                return firstPoint;
+            }
+            set
+            {
+                hasFirstPoint = true;
+                firstPoint = value;
+            }
+        }
+
         public RequestUserMouseWindowInput(MainWindow main)
         {
             this.main = main;
@@ -1286,15 +1336,28 @@ namespace _003_FosSimulator014
         internal void Start()
         {
             main.TurnOnWindowSelecion(false);
-            main.MouseDown += WindowSelection_MouseLeftDown;
+            if (hasFirstPoint)
+            {
+                // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
+                if (main.orbiting) return;
+                p0 = FirstPoint;
+                main.draw.selectionWindow.Start(p0);
+                main.MouseMove += WindowSelection_MouseMove;
+                main.MouseUp += WindowSelection_MouseLeftUp;
+                main.MouseLeave += WindowSelectionEnd;
+            }
+            else
+            {
+                main.MouseDown += WindowSelection_MouseLeftDown;
+            }
         }
         private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
             if (main.orbiting) return;
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                selectWindowStart = e.GetPosition(main.grdMain);
-                main.bckD.selectionWindow.Start(selectWindowStart);
+                p0 = e.GetPosition(main.grdMain);
+                main.draw.selectionWindow.Start(p0);
                 main.MouseMove += WindowSelection_MouseMove;
                 main.MouseUp += WindowSelection_MouseLeftUp;
                 main.MouseLeave += WindowSelectionEnd;
@@ -1302,37 +1365,28 @@ namespace _003_FosSimulator014
         }
         private void WindowSelection_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            selectWindowEnd = e.GetPosition(main.grdMain);
-            main.bckD.selectionWindow.Move(selectWindowEnd);
+            p1 = e.GetPosition(main.grdMain);
+            main.draw.selectionWindow.Move(p1);
             //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
         }
         private void WindowSelection_MouseLeftUp(object sender, MouseButtonEventArgs e)
         {
             WindowSelectionEnd(null, null);
 
-            if (selectWindowStart.Equals(selectWindowEnd)) return; //사각형 크기가 0인 경우 pass~
+            if (p0.Equals(p1)) return; //사각형 크기가 0인 경우 pass~
 
-            action(selectWindowStart, selectWindowEnd);
+            action(p0, p1);
             //main.bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
             //main.fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
             main.RedrawFemModel();
         }
         private void WindowSelectionEnd(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            main.bckD.selectionWindow.End();
+            main.draw.selectionWindow.End();
             main.MouseMove -= WindowSelection_MouseMove;
             main.MouseUp -= WindowSelection_MouseLeftUp;
             main.MouseDown -= WindowSelection_MouseLeftDown;
             main.TurnOnWindowSelecion(true);
-        }
-        private void UnselectAll_EscKey(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == Key.Escape)
-            {
-                WindowSelectionEnd(null, null);
-                main.fem.selection.UnselectAll();
-                main.RedrawFemModel();
-            }
         }
     }
 
