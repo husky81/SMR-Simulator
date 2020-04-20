@@ -347,6 +347,8 @@ namespace _003_FosSimulator014
         {
             RequestUserMouseTwoPointInput r = new RequestUserMouseTwoPointInput(this);
             r.action = AddLineFem;
+            //r.viewType = RequestUserMouseTwoPointInput.viewTypes.Line;
+            r.viewType = DRAW.SelectionWindow.ViewType.Line;
             r.Start();
         }
         internal void AddLineFem(Point wP0, Point wP1)
@@ -1064,6 +1066,7 @@ namespace _003_FosSimulator014
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
+                r.viewType = DRAW.SelectionWindow.ViewType.SelectionWindow;
                 r.FirstPoint = e.GetPosition(grdMain);
                 r.action = SelectFemByWindow;
                 r.Start();
@@ -1334,6 +1337,8 @@ namespace _003_FosSimulator014
         internal Action action;
         private bool hasFirstPoint = false;
         private Point firstPoint;
+        internal DRAW.SelectionWindow.ViewType viewType;
+
         internal Point FirstPoint
         {
             get
@@ -1354,6 +1359,7 @@ namespace _003_FosSimulator014
         internal void Start()
         {
             main.TurnOnWindowSelecion(false);
+            main.draw.selectionWindow.viewType = viewType;
 
             if (hasFirstPoint)
             {
@@ -1419,6 +1425,8 @@ namespace _003_FosSimulator014
         internal Action action;
         private bool hasFirstPoint = false;
         private Point firstPoint;
+        internal DRAW.SelectionWindow.ViewType viewType;
+
         internal Point FirstPoint
         {
             get
@@ -1439,6 +1447,7 @@ namespace _003_FosSimulator014
         internal void Start()
         {
             main.TurnOnWindowSelecion(false);
+            main.draw.selectionWindow.viewType = viewType;
 
             if (hasFirstPoint)
             {

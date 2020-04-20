@@ -660,33 +660,142 @@ namespace _003_FosSimulator014
         {
             private readonly Grid grid;
             internal bool enable = false;
-            Rectangle rectangle;
             internal UiShapes shapes = new UiShapes();
-            internal Point strPoint;
-            private Point endPoint;
+            internal Point wP0, wP1;
+            public ViewType viewType;
+            public enum ViewType
+            {
+                SelectionWindow,
+                Rectangle,
+                Line,
+                Arrow,
+                Circle
+            }
+            Rectangle rectangle;
+            Line line;
 
+            public SelectionWindow(Grid grid)
+            {
+                this.grid = grid;
+                //shapes.AddRectangle(strPoint, endPoint);
+            }
             internal void Start(Point strPoint)
             {
-                this.strPoint = strPoint;
+                this.wP0 = strPoint;
+                switch (viewType)
+                {
+                    case ViewType.SelectionWindow:
+                        DrawSelectionWindow();
+                        break;
+                    case ViewType.Rectangle:
+                        DrawRectangle();
+                        break;
+                    case ViewType.Line:
+                        DrawLine();
+                        break;
+                    case ViewType.Arrow:
+                        break;
+                    case ViewType.Circle:
+                        break;
+                    default:
+                        break;
+                }
+            }
+            internal void Move(Point endPoint)
+            {
+                this.wP1 = endPoint;
+                switch (viewType)
+                {
+                    case ViewType.SelectionWindow:
+                        ChangeSelectionWindow();
+                        break;
+                    case ViewType.Rectangle:
+                        ChangeRectangle();
+                        break;
+                    case ViewType.Line:
+                        ChangeLine();
+                        break;
+                    case ViewType.Arrow:
+                        break;
+                    case ViewType.Circle:
+                        break;
+                    default:
+                        break;
+                }
+            }
+            internal void End()
+            {
+                switch (viewType)
+                {
+                    case ViewType.SelectionWindow:
+                        grid.Children.Remove(rectangle);
+                        break;
+                    case ViewType.Rectangle:
+                        grid.Children.Remove(rectangle);
+                        break;
+                    case ViewType.Line:
+                        grid.Children.Remove(line);
+                        break;
+                    case ViewType.Arrow:
+                        break;
+                    case ViewType.Circle:
+                        break;
+                    default:
+                        break;
+                }
+            }
+            private void DrawLine()
+            {
+                line = new Line
+                {
+                    Stroke = System.Windows.Media.Brushes.Black,
+                    X1 = wP0.X,
+                    X2 = wP1.X,
+                    Y1 = wP0.Y,
+                    Y2 = wP0.Y,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    StrokeThickness = 1
+                };
+                grid.Children.Add(line);
+            }
+            private void ChangeLine()
+            {
+                line.X2 = wP1.X;
+                line.Y2 = wP1.Y;
+            }
+            private void DrawSelectionWindow()
+            {
                 rectangle = new Rectangle();
                 rectangle.Width = 0;
                 rectangle.Height = 0;
                 rectangle.Fill = Brushes.Blue;
                 rectangle.Opacity = 0.2;
-                rectangle.Margin = new Thickness(strPoint.X, strPoint.Y, 0, 0);
+                rectangle.Margin = new Thickness(wP0.X, wP0.Y, 0, 0);
                 rectangle.Stroke = Brushes.Black;
                 rectangle.HorizontalAlignment = HorizontalAlignment.Left;
                 rectangle.VerticalAlignment = VerticalAlignment.Top;
                 grid.Children.Add(rectangle);
             }
-            internal void Move(Point endPoint)
+            private void DrawRectangle()
             {
-                this.endPoint = endPoint;
-
-                double top = strPoint.Y;
-                double left = strPoint.X;
-                double width = endPoint.X - strPoint.X;
-                double height = endPoint.Y - strPoint.Y;
+                rectangle = new Rectangle();
+                rectangle.Width = 0;
+                rectangle.Height = 0;
+                rectangle.Fill = null;
+                rectangle.Opacity = 1;
+                rectangle.Margin = new Thickness(wP0.X, wP0.Y, 0, 0);
+                rectangle.Stroke = Brushes.Black;
+                rectangle.HorizontalAlignment = HorizontalAlignment.Left;
+                rectangle.VerticalAlignment = VerticalAlignment.Top;
+                grid.Children.Add(rectangle);
+            }
+            private void ChangeRectangle()
+            {
+                double top = wP0.Y;
+                double left = wP0.X;
+                double width = wP1.X - wP0.X;
+                double height = wP1.Y - wP0.Y;
 
                 if (height < 0)
                 {
@@ -694,12 +803,34 @@ namespace _003_FosSimulator014
                     top -= height;
                 }
 
-                if (width<0)
+                if (width < 0)
+                {
+                    width = -width;
+                    left -= width;
+                }
+                rectangle.Margin = new Thickness(left, top, 0, 0);
+                rectangle.Width = width;
+                rectangle.Height = height;
+            }
+            private void ChangeSelectionWindow()
+            {
+                double top = wP0.Y;
+                double left = wP0.X;
+                double width = wP1.X - wP0.X;
+                double height = wP1.Y - wP0.Y;
+
+                if (height < 0)
+                {
+                    height = -height;
+                    top -= height;
+                }
+
+                if (width < 0)
                 {
                     width = -width;
                     left -= width;
                     rectangle.Fill = Brushes.Green;
-                    rectangle.StrokeDashArray = new DoubleCollection() { 4, 4};
+                    rectangle.StrokeDashArray = new DoubleCollection() { 4, 4 };
                 }
                 else
                 {
@@ -709,15 +840,6 @@ namespace _003_FosSimulator014
                 rectangle.Margin = new Thickness(left, top, 0, 0);
                 rectangle.Width = width;
                 rectangle.Height = height;
-            }
-            internal void End()
-            {
-                grid.Children.Remove(rectangle);
-            }
-            public SelectionWindow(Grid grid)
-            {
-                this.grid = grid;
-                shapes.AddRectangle(strPoint, endPoint);
             }
         }
         public class UiShapes : List<UiShape>
