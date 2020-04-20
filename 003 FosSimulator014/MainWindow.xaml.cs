@@ -345,7 +345,17 @@ namespace _003_FosSimulator014
 
         internal void AddLine()
         {
-
+            RequestUserMouseTwoPointInput r = new RequestUserMouseTwoPointInput(this);
+            r.action = AddLineFem;
+            r.Start();
+        }
+        internal void AddLineFem(Point wP0, Point wP1)
+        {
+            Point3D p0 = draw.Get3dPiontByMousePosition(wP0);
+            Point3D p1 = draw.Get3dPiontByMousePosition(wP1);
+            Node n1 = fem.model.nodes.Add(p0);
+            Node n2 = fem.model.nodes.Add(p1);
+            fem.model.elems.AddFrame(n1, n2);
         }
     }
     internal class CommandWindow
@@ -355,11 +365,13 @@ namespace _003_FosSimulator014
         private readonly Command mainCommand;
         private Command activeCommand;
         private string userInput;
+        string cmdStr = "> ";
 
         public CommandWindow(MainWindow instance, System.Windows.Controls.TextBox textBox)
         {
             main = instance;
             this.textBox = textBox;
+
 
             mainCommand = new Command("Main");
             activeCommand = mainCommand;
@@ -368,7 +380,7 @@ namespace _003_FosSimulator014
             Clear();
             SetCommandStructure();
 
-            textBox.PreviewKeyDown += BackSpaceBlock_PreviewKeyDown; //"> " 앞에서 백스페이스 방지용.
+            textBox.PreviewKeyDown += BackSpaceBlock_PreviewKeyDown; //cmdStr 앞에서 백스페이스 방지용.
             textBox.PreviewKeyDown += Tbx_PreviewKeyDown;
             textBox.PreviewKeyUp += Tbx_PreviewKeyUp;
             textBox.KeyUp += Tbx_KeyUp;
@@ -406,7 +418,7 @@ namespace _003_FosSimulator014
                 Enter();
                 cmd.runSelected();
                 activeCommand = mainCommand;
-                WriteText("> ");
+                WriteText(cmdStr);
                 return;
             }
             if (cmd.run != null)
@@ -414,7 +426,7 @@ namespace _003_FosSimulator014
                 WriteText(" : " + cmd.name + "을(를) 실행합니다.");
                 Enter();
                 cmd.run();
-                textBox.AppendText("> ");
+                textBox.AppendText(cmdStr);
                 SetCursorLast();
                 activeCommand = mainCommand;
                 return;
@@ -423,17 +435,18 @@ namespace _003_FosSimulator014
             //서브명령 선택 요청
             WriteText(cmd.Quary());
             activeCommand = cmd;
-            WriteText("> ");
+            WriteText(cmdStr);
         }
 
         private void GetCommand()
         {
             userInput = "";
-            for (int i = textBox.Text.Length - 2; i >= 0; i--)
+            for (int i = textBox.Text.Length - cmdStr.Length - 1; i >= 0; i--)
             {
-                if (textBox.Text.Substring(i, 2).Equals("> "))
+                if (textBox.Text.Substring(i, cmdStr.Length).Equals(cmdStr))
                 {
-                    userInput = textBox.Text.Substring(i + 2, textBox.Text.Length - i - 2).Trim();
+                    int cmdStrPoint = i + cmdStr.Length;
+                    userInput = textBox.Text.Substring(cmdStrPoint, textBox.Text.Length - cmdStrPoint).Trim();
                     break;
                 }
             }
@@ -458,7 +471,7 @@ namespace _003_FosSimulator014
                     WriteText("명령어가 없습니다.");
                     Enter();
                     if (activeCommand != mainCommand) WriteText(activeCommand.Quary());
-                    textBox.AppendText("> ");
+                    textBox.AppendText(cmdStr);
                     SetCursorLast();
                 }
             }
@@ -532,8 +545,8 @@ namespace _003_FosSimulator014
             switch (e.Key)
             {
                 case Key.Back:
-                    String a = textBox.Text.Substring(textBox.Text.Length - 2, 2);
-                    if (textBox.Text.Substring(textBox.Text.Length - 2, 2).Equals("> "))
+                    String a = textBox.Text.Substring(textBox.Text.Length - 2, cmdStr.Length);
+                    if (textBox.Text.Substring(textBox.Text.Length - 2, cmdStr.Length).Equals(cmdStr))
                     {
                         Space();
                     }
@@ -597,7 +610,7 @@ namespace _003_FosSimulator014
         private void Clear()
         {
             textBox.Focus();
-            textBox.Text = "> ";
+            textBox.Text = cmdStr;
             SetCursorLast();
         }
         private void Space()
@@ -611,7 +624,7 @@ namespace _003_FosSimulator014
         {
             textBox.Focus();
             Enter();
-            textBox.AppendText("> ");
+            textBox.AppendText(cmdStr);
             SetCursorLast();
         }
 
@@ -964,13 +977,20 @@ namespace _003_FosSimulator014
                                 Point3D end = frame.nodes[1].c0;
                                 Vector3D dir = end - str;
 
-                                if (showSection & frame.section.hasSectionPoly)
+                                if(frame.section == null)
                                 {
-                                    draw.shapes.AddPolygon(str, dir, frame.section.poly);
+                                    draw.shapes.AddCylinder(str, dir, diaElem, rlsElem);
                                 }
                                 else
                                 {
-                                    draw.shapes.AddCylinder(str, dir, diaElem, rlsElem);
+                                    if(showSection & frame.section.hasSectionPoly)
+                                    {
+                                        draw.shapes.AddPolygon(str, dir, frame.section.poly);
+                                    }
+                                    else
+                                    {
+                                        draw.shapes.AddCylinder(str, dir, diaElem, rlsElem);
+                                    }
                                 }
                                 break;
                             case 40:
@@ -1142,8 +1162,6 @@ namespace _003_FosSimulator014
             r.action += draw.ViewZoomRectangle;
             r.Start();
         }
-
-
 
         private void TurnOnWheelPanZoom()
         {
@@ -1336,6 +1354,7 @@ namespace _003_FosSimulator014
         internal void Start()
         {
             main.TurnOnWindowSelecion(false);
+
             if (hasFirstPoint)
             {
                 // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
@@ -1385,7 +1404,95 @@ namespace _003_FosSimulator014
             main.draw.selectionWindow.End();
             main.MouseMove -= WindowSelection_MouseMove;
             main.MouseUp -= WindowSelection_MouseLeftUp;
+            main.MouseLeave -= WindowSelectionEnd;
             main.MouseDown -= WindowSelection_MouseLeftDown;
+
+            main.TurnOnWindowSelecion(true);
+        }
+    }
+    public class RequestUserMouseTwoPointInput
+    {
+        private readonly MainWindow main;
+        private Point p0, p1;
+
+        internal delegate void Action(Point p0, Point p1);
+        internal Action action;
+        private bool hasFirstPoint = false;
+        private Point firstPoint;
+        internal Point FirstPoint
+        {
+            get
+            {
+                return firstPoint;
+            }
+            set
+            {
+                hasFirstPoint = true;
+                firstPoint = value;
+            }
+        }
+
+        public RequestUserMouseTwoPointInput(MainWindow main)
+        {
+            this.main = main;
+        }
+        internal void Start()
+        {
+            main.TurnOnWindowSelecion(false);
+
+            if (hasFirstPoint)
+            {
+                // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
+                //if (main.orbiting) return;
+                p0 = FirstPoint;
+                main.draw.selectionWindow.Start(p0);
+                main.MouseMove += WindowSelection_MouseMove;
+                main.MouseLeave += WindowSelectionEnd;
+            }
+            else
+            {
+                main.MouseDown += WindowSelection_MouseLeftDown;
+            }
+        }
+        private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
+        {
+            //if (main.orbiting) return;
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                if (hasFirstPoint)
+                {
+                    WindowSelectionEnd(null, null);
+
+                    if (p0.Equals(p1)) return; //사각형 크기가 0인 경우 pass~
+
+                    action(p0, p1);
+                    //main.bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
+                    //main.fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+                    main.RedrawFemModel();
+                }
+                else
+                {
+                    p0 = e.GetPosition(main.grdMain);
+                    FirstPoint = p0;
+                    main.draw.selectionWindow.Start(p0);
+                    main.MouseMove += WindowSelection_MouseMove;
+                    main.MouseLeave += WindowSelectionEnd;
+                }
+            }
+        }
+        private void WindowSelection_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            p1 = e.GetPosition(main.grdMain);
+            main.draw.selectionWindow.Move(p1);
+            //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
+        }
+        private void WindowSelectionEnd(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            main.draw.selectionWindow.End();
+            main.MouseMove -= WindowSelection_MouseMove;
+            main.MouseLeave -= WindowSelectionEnd;
+            main.MouseDown -= WindowSelection_MouseLeftDown;
+
             main.TurnOnWindowSelecion(true);
         }
     }
