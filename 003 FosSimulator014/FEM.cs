@@ -14,8 +14,12 @@ namespace _003_FosSimulator014
         public readonly FemLoads loads = new FemLoads();
         internal bool solved = false;
 
-        public FemSelection selection = new FemSelection();
+        public FemSelection selection;
 
+        public FEM()
+        {
+            selection = new FemSelection(this);
+        }
         internal void Initialize()
         {
             selection.elems.Clear();
@@ -75,6 +79,11 @@ namespace _003_FosSimulator014
         {
             foreach (Node node in selection.nodes)
             {
+                foreach (Element elem in node.connectedElements)
+                {
+                    model.elems.Remove(elem);
+                    selection.elems.Remove(elem);
+                }
                 model.nodes.Remove(node);
             }
             selection.nodes.Clear();
@@ -327,6 +336,7 @@ namespace _003_FosSimulator014
     }
     class FemSelection
     {
+        private readonly FEM fem;
         public Nodes nodes = new Nodes();
         public Elements elems = new Elements();
         public int Count
@@ -336,9 +346,9 @@ namespace _003_FosSimulator014
                 return nodes.Count + elems.Count;
             }
         }
-        public FemSelection()
+        public FemSelection(FEM fem)
         {
-
+            this.fem = fem;
         }
         internal void AddNode(Node node)
         {
@@ -359,6 +369,11 @@ namespace _003_FosSimulator014
             }
             elems.Clear();
 
+        }
+
+        internal void Erase()
+        {
+            fem.DeleteSelected();
         }
     }
     class FemLoads : List<FemLoad>
@@ -704,6 +719,7 @@ namespace _003_FosSimulator014
         internal double[] gloD;
         internal double[] reactionForce = { 0, 0, 0, 0, 0, 0 };
         internal bool selected = false;
+        internal Elements connectedElements = new Elements();
 
         public Node(Point3D point)
         {
@@ -1083,6 +1099,9 @@ namespace _003_FosSimulator014
             dof = 12;
             nodes.Add(n1);
             nodes.Add(n2);
+
+            n1.connectedElements.Add(this);
+            n2.connectedElements.Add(this);
 
             L = (n2.c0 - n1.c0).Length;
             AxialDirectionAngle = 0;
