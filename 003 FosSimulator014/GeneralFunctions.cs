@@ -525,11 +525,38 @@ namespace _003_FosSimulator014
             Point3D crossPoint3Planes = CrossPoint_PlaneLine(v3, p3, crossPointP1P2, crossPointP1P2 + crossLineP1P2);
             return crossPoint3Planes;
         }
+        internal static double PlanePosition(Vector3D planeVector, Point3D point)
+        {
+            //point가 planeVector의 어느 위치에 있는지 반환.
+            //ref. https://m.blog.naver.com/PostView.nhn?blogId=joy3x94&logNo=70145080536&proxyReferer=https:%2F%2Fwww.google.com%2F
+            Point3D P = new Point3D(0, 0, 0);
+            Point3D A = point;
+            Vector3D u = planeVector;
+
+            Vector3D PA = A - P;
+            if (PA.Length == 0) return 0;
+
+            double theta = GF.Angle2Vector(PA, u);
+            if (theta == 0)
+            {
+                Vector3D vec = point - new Point3D(0, 0, 0);
+                return vec.Length;
+            }
+            double d = Vector3D.CrossProduct(PA, u).Length / u.Length;
+            double lengthPH = d / Math.Tan(theta);
+            return lengthPH;
+        }
 
         internal static double Angle2Vector(Vector3D v1, Vector3D v2)
         {
             //radian으로 반환
-            return Math.Acos(Vector3D.DotProduct(v1, v2) / (v1.Length * v2.Length));
+            double v1v2overv1lv2l = Vector3D.DotProduct(v1, v2) / (v1.Length * v2.Length);
+            double rad = Math.Acos(v1v2overv1lv2l);
+            //if (double.IsNaN(rad))
+            //{
+            //
+            //}
+            return rad;
         }
 
         internal static bool IsPointOnPlane(Point3D quaryPoint, Point3D planePoint, Vector3D planeVector)

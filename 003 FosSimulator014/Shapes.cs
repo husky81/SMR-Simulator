@@ -126,6 +126,21 @@ namespace _003_FosSimulator014
             modelVisual3D.Content = this.Model3DGroup();
             return modelVisual3D;
         }
+
+        internal Point3D Center()
+        {
+            Point3D cp = new Point3D(0, 0, 0);
+            foreach (Shape shape in this)
+            {
+                cp.X += shape.BasePoint.X;
+                cp.Y += shape.BasePoint.Y;
+                cp.Z += shape.BasePoint.Z;
+            }
+            cp.X /= Count;
+            cp.Y /= Count;
+            cp.Z /= Count;
+            return cp;
+        }
     }
     public class Shape
     {

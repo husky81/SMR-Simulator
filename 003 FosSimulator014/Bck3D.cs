@@ -146,9 +146,9 @@ namespace _003_FosSimulator014
 
             Vector3D pointVector = p3d - pos;
             Point3D pV = pointVector + new Point3D(0, 0, 0);
-            double dist = PlanePosition(dir, pV);
-            double unitX = -PlanePosition(camY, pV)/ dist;
-            double unitY = -PlanePosition(up, pV)/ dist;
+            double dist = GF.PlanePosition(dir, pV);
+            double unitX = -GF.PlanePosition(camY, pV)/ dist;
+            double unitY = -GF.PlanePosition(up, pV)/ dist;
 
             double angX = Math.Atan2(unitX, 1) ;
             double angY = Math.Atan2(unitY, 1);
@@ -939,19 +939,6 @@ namespace _003_FosSimulator014
     }
     partial class DRAW // Orbit & View 컨트롤
     {
-        internal void OrbitStart()
-        {
-            pCamera_init = new PerspectiveCamera
-            {
-                //속성값들을 복사해주어야 깊은 복사가 됨. 복사를 안한 값들은 참조로 됨.
-                Position = MyPCamera.Position,
-                LookDirection = MyPCamera.LookDirection,
-                UpDirection = MyPCamera.UpDirection,
-                FieldOfView = MyPCamera.FieldOfView,
-                FarPlaneDistance = MyPCamera.FarPlaneDistance,
-                NearPlaneDistance = MyPCamera.NearPlaneDistance
-            };
-        }
         internal void OrbitForward(int delta)
         {
             Point3D p = MyPCamera.Position;
@@ -985,49 +972,113 @@ namespace _003_FosSimulator014
             p.Z = np.Z;
             MyPCamera.Position = p;
         }
-        internal void OrbitMove(Vector vector)
+        internal void OrbitStart()
         {
-            Point3D p = pCamera_init.Position;
+            pCamera_init = new PerspectiveCamera
+            {
+                //속성값들을 복사해주어야 깊은 복사가 됨. 복사를 안한 값들은 참조로 됨.
+                Position = MyPCamera.Position,
+                LookDirection = MyPCamera.LookDirection,
+                UpDirection = MyPCamera.UpDirection,
+                FieldOfView = MyPCamera.FieldOfView,
+                FarPlaneDistance = MyPCamera.FarPlaneDistance,
+                NearPlaneDistance = MyPCamera.NearPlaneDistance
+            };
+        }
+        internal void OrbitMove(Vector mov)
+        {
+            //Point3D pos = pCamera_init.Position;
+            //Vector3D dir = pCamera_init.LookDirection;
+            //Vector3D up = pCamera_init.UpDirection;
+            //
+            //Vector3D rightVector = Vector3D.CrossProduct(dir, up);
+            //Vector3D upVector = Vector3D.CrossProduct(rightVector, dir);
+            //rightVector.Normalize();
+            //upVector.Normalize();
+
+            Point3D pos = pCamera_init.Position;
             Vector3D dir = pCamera_init.LookDirection;
             Vector3D up = pCamera_init.UpDirection;
+            dir.Normalize();
+            up.Normalize();
+            Vector3D camY = Vector3D.CrossProduct(up, dir);
+            up = Vector3D.CrossProduct(dir, camY);
+            up.Normalize();
+            camY.Normalize();
 
-            Vector3D rightVector = Vector3D.CrossProduct(dir, up);
-            Vector3D upVector = Vector3D.CrossProduct(rightVector, dir);
-            rightVector.Normalize();
-            upVector.Normalize();
+            double width = grid.ActualWidth;
+            //double height = grid.ActualHeight;
 
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D np = pv - rightVector * vector.X / 8 + upVector * vector.Y / 8;
+            double fovW = MyPCamera.FieldOfView;
+            //double fovH = Math.Atan(Math.Tan(fovW / 2 / 180 * Math.PI) / width * height) * 2 * 180 / Math.PI;
+
+
+            //마우스로 pan을 하려면 어차피 카메라와의 특정거리를 선정해야함
+            //Shapes의 center 속성으로부터 특정 거리 선정함
+            //그 특정거리에 있는 점을 마우스로 잡고 움직이는 것으로 가정.
+            Point3D shapesCenter = shapes.Center();
+            Vector3D cv = shapesCenter - pos;
+            Point3D cvp = cv + new Point3D(0, 0, 0);
+            double targetDist = GF.PlanePosition(dir, cvp);
+
+            double width3d = Math.Tan(fovW / 2 / 180 * Math.PI) * targetDist;
+            double resolution = width3d / (width / 2);
+
+            Vector3D pv = new Vector3D(pos.X, pos.Y, pos.Z);
+            Vector3D np = pv + camY * mov.X * resolution + up * mov.Y * resolution;
 
             MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
         }
+        private double lastForcalDist;
         internal void OrbitRotate(Vector mov)
         {
-            Point3D p = pCamera_init.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);  //카메라 위치
-            Vector3D u = pCamera_init.UpDirection;
-            Vector3D d = pCamera_init.LookDirection;
+            Point3D pos = pCamera_init.Position;
+            Vector3D dir = pCamera_init.LookDirection;
+            Vector3D up = pCamera_init.UpDirection;
+            dir.Normalize();
+            up.Normalize();
+            Vector3D camY = Vector3D.CrossProduct(up, dir);
+            up = Vector3D.CrossProduct(dir, camY);
+            up.Normalize();
+            camY.Normalize();
 
-            //초점은 가시거리의 1/5로 잡는게 좋을 것 같음.
-            d.Normalize();
-            double fdist = pCamera_init.FarPlaneDistance / 5;
-            Vector3D fp = pv + d * fdist; //초점
+            double width = grid.ActualWidth;
+            double height = grid.ActualHeight;
+
+            double fovW = MyPCamera.FieldOfView;
+            double fovH = Math.Atan(Math.Tan(fovW / 2 / 180 * Math.PI) / width * height) * 2 * 180 / Math.PI;
+
+            Vector3D pv = new Vector3D(pos.X, pos.Y, pos.Z);  //카메라 위치
+
+            Point3D shapesCenter = shapes.Center();
+            Vector3D centerVector = shapesCenter - pos;
+            Point3D cvp = centerVector + new Point3D(0, 0, 0);
+            double focalDist = GF.PlanePosition(dir, cvp);
+
+            //if(double.IsNaN(focalDist)) focalDist = pCamera_init.FarPlaneDistance / 5; //가시거리의 1/5로 잡는게 좋을 것 같음.
+
+            if (double.IsNaN(focalDist)) focalDist = lastForcalDist;
+
+            lastForcalDist = focalDist;
+
+            Vector3D fp = pv + dir * focalDist; //초점
             Vector3D cv = pv - fp; //초점에 대한 카메라 위치 백터
 
-            Vector3D localXVector = Vector3D.CrossProduct(d, u);
-            Vector3D localYVector = u;
-            Vector3D localZVector = Vector3D.CrossProduct(localXVector, d);
+            Vector3D localXVector = Vector3D.CrossProduct(dir, up);
+            Vector3D localYVector = up;
+            Vector3D localZVector = Vector3D.CrossProduct(localXVector, dir);
             localXVector.Normalize();
             localYVector.Normalize();
             localZVector.Normalize();
 
             Vector3D moveVector = -mov.X * localXVector + mov.Y * localZVector;
             double moveLength = moveVector.Length;
-            double moveRad = moveLength / 100;
+            //double moveRad = moveLength / width * 4;
+            double moveRad = moveLength / 150; //화면이 커지면 더 많이 돌아가게 하는방식이 더 좋음.
             Vector3D moveDir = moveVector;
             moveDir.Normalize();
 
-            Vector3D ncv = Math.Cos(moveRad) * cv + Math.Sin(moveRad) * fdist * moveDir;
+            Vector3D ncv = Math.Cos(moveRad) * cv + Math.Sin(moveRad) * focalDist * moveDir;
 
             Vector3D np = fp + ncv;
 
@@ -1207,17 +1258,17 @@ namespace _003_FosSimulator014
             Vector3D uPlane = GF.Rotation3D(up, camY, -fovH / 2);
             Vector3D bPlane = GF.Rotation3D(-up, camY, fovH / 2);
 
-            double lPosition = PlanePosition(lPlane, points[0]);
-            double rPosition = PlanePosition(rPlane, points[0]);
-            double uPosition = PlanePosition(uPlane, points[0]);
-            double bPosition = PlanePosition(bPlane, points[0]);
+            double lPosition = GF.PlanePosition(lPlane, points[0]);
+            double rPosition = GF.PlanePosition(rPlane, points[0]);
+            double uPosition = GF.PlanePosition(uPlane, points[0]);
+            double bPosition = GF.PlanePosition(bPlane, points[0]);
 
             foreach (Point3D point in points)
             {
-                lPosition = Math.Max(PlanePosition(lPlane, point), lPosition);
-                rPosition = Math.Max(PlanePosition(rPlane, point), rPosition);
-                uPosition = Math.Max(PlanePosition(uPlane, point), uPosition);
-                bPosition = Math.Max(PlanePosition(bPlane, point), bPosition);
+                lPosition = Math.Max(GF.PlanePosition(lPlane, point), lPosition);
+                rPosition = Math.Max(GF.PlanePosition(rPlane, point), rPosition);
+                uPosition = Math.Max(GF.PlanePosition(uPlane, point), uPosition);
+                bPosition = Math.Max(GF.PlanePosition(bPlane, point), bPosition);
             }
 
             Point3D lPoint = new Point3D(0, 0, 0) + lPlane * lPosition;
@@ -1232,8 +1283,8 @@ namespace _003_FosSimulator014
 
             Point3D cp12 = new Point3D((p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2, (p1.Z + p2.Z) / 2);
             Point3D cp34 = new Point3D((p3.X + p4.X) / 2, (p3.Y + p4.Y) / 2, (p3.Z + p4.Z) / 2);
-            double cp12pos = PlanePosition(dir, cp12);
-            double cp34pos = PlanePosition(dir, cp34);
+            double cp12pos = GF.PlanePosition(dir, cp12);
+            double cp34pos = GF.PlanePosition(dir, cp34);
 
             Point3D newPos;
             if (cp12pos > cp34pos)
@@ -1267,27 +1318,6 @@ namespace _003_FosSimulator014
             points.Add(p1);
 
             ViewZoomPoints(points);
-        }
-        private double PlanePosition(Vector3D planeVector, Point3D point)
-        {
-            //point가 planeVector의 어느 위치에 있는지 반환.
-            //ref. https://m.blog.naver.com/PostView.nhn?blogId=joy3x94&logNo=70145080536&proxyReferer=https:%2F%2Fwww.google.com%2F
-            Point3D P = new Point3D(0, 0, 0);
-            Point3D A = point;
-            Vector3D u = planeVector;
-
-            Vector3D PA = A - P;
-            if (PA.Length == 0) return 0;
-
-            double theta = GF.Angle2Vector(PA, u);
-            if (theta == 0)
-            {
-                Vector3D vec = point - new Point3D(0, 0, 0);
-                return vec.Length;
-            }
-            double d = Vector3D.CrossProduct(PA, u).Length / u.Length;
-            double lengthPH = d / Math.Tan(theta);
-            return lengthPH;
         }
         internal void ViewSE()
         {

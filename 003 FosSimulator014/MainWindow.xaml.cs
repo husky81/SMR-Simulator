@@ -360,6 +360,19 @@ namespace _003_FosSimulator014
             Node n2 = fem.model.nodes.Add(p1);
             fem.model.elems.AddFrame(n1, n2);
         }
+
+        private void FemExtrude(object sender, RoutedEventArgs e)
+        {
+            Vector3D dir = new Vector3D(0, 1, 0);
+            Elements ee = fem.Extrude(dir, 2);
+            RedrawFemModel();
+        }
+
+        private void FemDivide(object sender, RoutedEventArgs e)
+        {
+            fem.Divide(2);
+            RedrawFemModel();
+        }
     }
     public class CommandWindow
     {

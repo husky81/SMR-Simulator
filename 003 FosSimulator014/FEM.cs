@@ -309,6 +309,61 @@ namespace _003_FosSimulator014
 
         internal void SelectByInfinitePyramid(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
         {
+            Nodes selectedNodes = new Nodes();
+
+            Vector3D plane0 = Vector3D.CrossProduct(v0, v1);
+            Vector3D plane1 = Vector3D.CrossProduct(v1, v2);
+            Vector3D plane2 = Vector3D.CrossProduct(v2, v3);
+            Vector3D plane3 = Vector3D.CrossProduct(v3, v0);
+
+            Point3D p;
+            bool isOn0;
+            bool isOn1;
+            bool isOn2;
+            bool isOn3;
+            foreach (Node node in model.nodes)
+            {
+                node.selectedAtThisTime = false;
+            }
+            foreach (Node node in model.nodes)
+            {
+                if (IsNodeOn(node))
+                {
+                    selection.AddNode(node);
+                    node.selectedAtThisTime = true;
+                }
+
+                selectedNodes.Add(node);
+            }
+            bool flag;
+            foreach (Element element in model.elems)
+            {
+                flag = true;
+                foreach (Node node in element.nodes)
+                {
+                    if (node.selectedAtThisTime == false) flag = false;
+                }
+                if (flag)
+                {
+                    selection.AddElement(element);
+                }
+            }
+            bool IsNodeOn(Node node)
+            {
+                p = node.c0;
+                isOn0 = GF.IsPointOnPlane(p, p0, plane0);
+                isOn1 = GF.IsPointOnPlane(p, p0, plane1);
+                isOn2 = GF.IsPointOnPlane(p, p0, plane2);
+                isOn3 = GF.IsPointOnPlane(p, p0, plane3);
+                if (isOn0 & isOn1 & isOn2 & isOn3)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+        internal void SelectByInfinitePyramid_0ld(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
+        {
             Vector3D plane0 = Vector3D.CrossProduct(v0, v1);
             Vector3D plane1 = Vector3D.CrossProduct(v1, v2);
             Vector3D plane2 = Vector3D.CrossProduct(v2, v3);
@@ -330,6 +385,19 @@ namespace _003_FosSimulator014
                 {
                     selection.AddNode(node);
                 }
+            }
+            bool IsNodeOn(Node node)
+            {
+                p = node.c0;
+                isOn0 = GF.IsPointOnPlane(p, p0, plane0);
+                isOn1 = GF.IsPointOnPlane(p, p0, plane1);
+                isOn2 = GF.IsPointOnPlane(p, p0, plane2);
+                isOn3 = GF.IsPointOnPlane(p, p0, plane3);
+                if (isOn0 & isOn1 & isOn2 & isOn3)
+                {
+                    return true;
+                }
+                return false;
             }
         }
 
@@ -355,7 +423,11 @@ namespace _003_FosSimulator014
             node.selected = true;
             nodes.Add(node);
         }
-
+        internal void AddElement(Element element)
+        {
+            element.selected = true;
+            elems.Add(element);
+        }
         internal void UnselectAll()
         {
             foreach (Node node in nodes)
@@ -375,6 +447,7 @@ namespace _003_FosSimulator014
         {
             fem.DeleteSelected();
         }
+
     }
     class FemLoads : List<FemLoad>
     {
@@ -720,6 +793,7 @@ namespace _003_FosSimulator014
         internal double[] reactionForce = { 0, 0, 0, 0, 0, 0 };
         internal bool selected = false;
         internal Elements connectedElements = new Elements();
+        internal bool selectedAtThisTime;
 
         public Node(Point3D point)
         {
