@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Annotations;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -66,7 +67,7 @@ namespace _003_FosSimulator014
 
             internal Point3D Position(Point point)
             {
-                position = instance.Get3dPiontByMousePosition(point);
+                position = instance.GetPiont3D_FromPoint(point);
 
                 markerShapes.transform = new TranslateTransform3D(position.X, position.Y, position.Z);
                 modelVisual3D.Content = markerShapes.Model3DGroup();
@@ -81,13 +82,13 @@ namespace _003_FosSimulator014
             }
         }
 
-        public Point3D Get3dPiontByMousePosition(Point mousePosition)
+        public Point3D GetPiont3D_FromPoint(Point p0)
         {
             //Grid의 마우스 포인트
             double gridHeight = grid.ActualHeight;
             double gridWidth = grid.ActualWidth;
             Point gridCenter = new Point(gridWidth / 2, gridHeight / 2);
-            Vector p = mousePosition - gridCenter;
+            Vector p = p0 - gridCenter;
 
             //베이스평면 정보
             Point3D ucsBasePoint = new Point3D(0, 0, 0);
@@ -124,6 +125,41 @@ namespace _003_FosSimulator014
 
             Point3D crossPoint = camPosition + u * pointDirection; //마우스커서 위치와 basePlane의 접점
             return new Point3D(crossPoint.X, crossPoint.Y, crossPoint.Z);
+        }
+        public Point GetPoint_FromPoint3D(Point3D p3d)
+        {
+            Point3D pos = MyPCamera.Position;
+            Vector3D dir = MyPCamera.LookDirection;
+            Vector3D up = MyPCamera.UpDirection;
+            dir.Normalize();
+            up.Normalize();
+            Vector3D camY = Vector3D.CrossProduct(up, dir);
+            up = Vector3D.CrossProduct(dir, camY);
+            up.Normalize();
+            camY.Normalize();
+
+            double width = grid.ActualWidth;
+            double height = grid.ActualHeight;
+
+            double fovW = MyPCamera.FieldOfView;
+            //double fovH = Math.Atan(Math.Tan(fovW / 2 / 180 * Math.PI) / width * height) * 2 * 180 / Math.PI;
+
+            Vector3D pointVector = p3d - pos;
+            Point3D pV = pointVector + new Point3D(0, 0, 0);
+            double dist = PlanePosition(dir, pV);
+            double unitX = -PlanePosition(camY, pV)/ dist;
+            double unitY = -PlanePosition(up, pV)/ dist;
+
+            double angX = Math.Atan2(unitX, 1) ;
+            double angY = Math.Atan2(unitY, 1);
+
+            double resolution = width / 2 / Math.Tan(fovW / 180 * Math.PI / 2);
+
+            double x = width / 2 + Math.Tan(angX) * resolution;
+            double y = height / 2 + Math.Tan(angY) * resolution;
+
+            Point outP = new Point(x, y);
+            return outP;
         }
 
         DirectionalLight myDirLight = new DirectionalLight
@@ -673,6 +709,7 @@ namespace _003_FosSimulator014
             }
             Rectangle rectangle;
             Line line;
+            internal bool started = false;
 
             public SelectionWindow(Grid grid)
             {
@@ -681,7 +718,9 @@ namespace _003_FosSimulator014
             }
             internal void Start(Point strPoint)
             {
+                started = true;
                 this.wP0 = strPoint;
+                
                 switch (viewType)
                 {
                     case ViewType.SelectionWindow:
@@ -691,6 +730,7 @@ namespace _003_FosSimulator014
                         DrawRectangle();
                         break;
                     case ViewType.Line:
+                        if (line != null) grid.Children.Remove(line);
                         DrawLine();
                         break;
                     case ViewType.Arrow:
@@ -703,6 +743,7 @@ namespace _003_FosSimulator014
             }
             internal void Move(Point endPoint)
             {
+                if (!started) return;
                 this.wP1 = endPoint;
                 switch (viewType)
                 {
@@ -725,6 +766,7 @@ namespace _003_FosSimulator014
             }
             internal void End()
             {
+                started = false;
                 switch (viewType)
                 {
                     case ViewType.SelectionWindow:
@@ -735,6 +777,7 @@ namespace _003_FosSimulator014
                         break;
                     case ViewType.Line:
                         grid.Children.Remove(line);
+                        //grid.Children.Clear();
                         break;
                     case ViewType.Arrow:
                         break;
@@ -882,10 +925,10 @@ namespace _003_FosSimulator014
             Point wP2 = new Point(wx2, wy2);
             Point wP3 = new Point(wx1, wy2);
 
-            Point3D pyramidBottomP0 = Get3dPiontByMousePosition(wP0);
-            Point3D pyramidBottomP1 = Get3dPiontByMousePosition(wP1);
-            Point3D pyramidBottomP2 = Get3dPiontByMousePosition(wP2);
-            Point3D pyramidBottomP3 = Get3dPiontByMousePosition(wP3);
+            Point3D pyramidBottomP0 = GetPiont3D_FromPoint(wP0);
+            Point3D pyramidBottomP1 = GetPiont3D_FromPoint(wP1);
+            Point3D pyramidBottomP2 = GetPiont3D_FromPoint(wP2);
+            Point3D pyramidBottomP3 = GetPiont3D_FromPoint(wP3);
 
             v0 = pyramidBottomP0 - p0;
             v1 = pyramidBottomP1 - p0;
@@ -1216,8 +1259,8 @@ namespace _003_FosSimulator014
         }
         internal void ViewZoomRectangle(Point inpP0, Point inpP1)
         {
-            Point3D p0 = Get3dPiontByMousePosition(inpP0);
-            Point3D p1 = Get3dPiontByMousePosition(inpP1);
+            Point3D p0 = GetPiont3D_FromPoint(inpP0);
+            Point3D p1 = GetPiont3D_FromPoint(inpP1);
 
             List<Point3D> points = new List<Point3D>();
             points.Add(p0);
@@ -1236,10 +1279,13 @@ namespace _003_FosSimulator014
             Vector3D PA = A - P;
             if (PA.Length == 0) return 0;
 
-            double d = Vector3D.CrossProduct(PA, u).Length / u.Length;
-
             double theta = GF.Angle2Vector(PA, u);
-
+            if (theta == 0)
+            {
+                Vector3D vec = point - new Point3D(0, 0, 0);
+                return vec.Length;
+            }
+            double d = Vector3D.CrossProduct(PA, u).Length / u.Length;
             double lengthPH = d / Math.Tan(theta);
             return lengthPH;
         }
