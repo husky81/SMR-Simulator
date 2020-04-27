@@ -975,6 +975,7 @@ namespace _003_FosSimulator014
             Color colorNode = Colors.Yellow;
             Color colorSelectedNode = Colors.Red;
             Color colorElem = Colors.Blue;
+            Color colorSelectedElem = Colors.Red;
             Color colorLoad = Colors.Red;
             Color colorReaction = Colors.Yellow;
 
@@ -1143,7 +1144,14 @@ namespace _003_FosSimulator014
                             default:
                                 break;
                         }
-                        draw.shapes.RecentShape.Color(colorElem);
+                        if (e.selected)
+                        {
+                            draw.shapes.RecentShape.Color(colorSelectedElem);
+                        }
+                        else
+                        {
+                            draw.shapes.RecentShape.Color(colorElem);
+                        }
                         draw.shapes.RecentShape.Opacity(opacity);
                     }
                 }
