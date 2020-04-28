@@ -213,7 +213,7 @@ namespace _003_FosSimulator014
             Nodes nodesDdp = nodes.Copy(); //de-duplicated
             List<int> nodesNumber = new List<int>();
             List<int> nodesNumberDdp = new List<int>();
-            ExtrudedNodeList(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
+            ExtrudedNodeList_old(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
 
             Node[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
 
@@ -230,8 +230,6 @@ namespace _003_FosSimulator014
         }
         private Elements Extrude_Plate(Plates plates, Vector3D dir, int iter)
         {
-            Elements extrudedElems = new Elements();
-
             Nodes nodes = plates.ConnectedNodes();
             Nodes nodesDdp = nodes.Copy(); //de-duplicated
             List<int> nodesNumber = new List<int>();
@@ -240,10 +238,42 @@ namespace _003_FosSimulator014
 
             Node[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
 
+            Elements extrudedElems = new Elements();
             for (int i = 0; i < iter; i++)
             {
                 for (int j = 0; j < plates.Count * 4; j += 4)
                 {
+                    Node n0 = nodeMatrix[i, nodesNumber[j]];
+                    Node n1 = nodeMatrix[i, nodesNumber[j + 1]];
+                    Node n2 = nodeMatrix[i, nodesNumber[j + 2]];
+                    Node n3 = nodeMatrix[i, nodesNumber[j + 3]];
+                    Node n4 = nodeMatrix[i + 1, nodesNumber[j]];
+                    Node n5 = nodeMatrix[i + 1, nodesNumber[j + 1]];
+                    Node n6 = nodeMatrix[i + 1, nodesNumber[j + 2]];
+                    Node n7 = nodeMatrix[i + 1, nodesNumber[j + 3]];
+                    Solid s = model.elems.AddSolid(n0,n1,n2,n3,n4,n5,n6,n7);
+                    s.material = plates[j / 4].material;
+                    extrudedElems.Add(s);
+                }
+            }
+            return extrudedElems;
+        }
+        private Elements Extrude_Plate_old(Plates plates, Vector3D dir, int iter)
+        {
+            Nodes nodes = plates.ConnectedNodes();
+            Nodes nodesDdp = nodes.Copy(); //de-duplicated
+            List<int> nodesNumber = new List<int>();
+            List<int> nodesNumberDdp = new List<int>();
+            ExtrudedNodeList(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
+
+            Node[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
+
+            Elements extrudedElems = new Elements();
+            for (int i = 0; i < iter; i++)
+            {
+                for (int j = 0; j < plates.Count * 4; j += 4)
+                {
+
                     Solid s = model.elems.AddSolid(
                         nodeMatrix[i, nodesNumber[j]], nodeMatrix[i, nodesNumber[j + 1]], nodeMatrix[i, nodesNumber[j + 2]], nodeMatrix[i, nodesNumber[j + 3]],
                         nodeMatrix[i + 1, nodesNumber[j]], nodeMatrix[i + 1, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j + 2]], nodeMatrix[i + 1, nodesNumber[j + 3]]
@@ -267,11 +297,70 @@ namespace _003_FosSimulator014
             int count = nodesDdp.Count;
             for (int i = 0; i < count - 1; i++)
             {
+                List<int> equalJs = new List<int>();
+                for (int j = i + 1; j < count; j++)
+                {
+                    int tmpi = nodesNumberDdp[i];
+                    int tmpj = nodesNumberDdp[j];
+
+                    if (nodesDdp[i] == nodesDdp[j])
+                    {
+                        if(nodesNumber[nodesNumberDdp[j]] != nodesNumber[nodesNumberDdp[i]]) //이미 중복넘버로 처리된 내용은 스킵.
+                        {
+                            nodesNumber[nodesNumberDdp[j]] = nodesNumber[nodesNumberDdp[i]];
+                            equalJs.Add(j);
+                            j -= 1;
+                        }
+
+                        ////solid의 경우 동일한 노드 번호가 여러개 있을 수 있음.
+                        //for (int k = nodesNumberDdp[j] + 1; k < nodesNumber.Count; k++)
+                        //{
+                        //
+                        //    nodesNumber[k] -= 1;
+                        //}
+                        //nodesDdp.RemoveAt(j);
+                        //nodesNumberDdp.RemoveAt(j);
+                        //count -= 1;
+                    }
+                }
+                if (equalJs.Count > 0)
+                {
+                    for (int k = nodesNumberDdp[equalJs[0]] + 1; k < nodesNumber.Count; k++)
+                    {
+                        nodesNumber[k] -= 1;
+                    }
+                    for (int j = equalJs.Count - 1; j >= 1; j--)
+                    {
+                        nodesNumber[nodesNumberDdp[equalJs[j]]] += 1;
+                    }
+                    for (int j = equalJs.Count - 1; j >= 0; j--)
+                    {
+                        nodesDdp.RemoveAt(equalJs[j]);
+                        nodesNumberDdp.RemoveAt(equalJs[j]);
+                        count -= equalJs.Count;
+                    }
+                }
+            }
+        }
+        private void ExtrudedNodeList_old(Nodes nodes, Nodes nodesDdp, List<int> nodesNumber, List<int> nodesNumberDdp)
+        {
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                nodesNumber.Add(i);
+            }
+            for (int i = 0; i < nodesDdp.Count; i++)
+            {
+                nodesNumberDdp.Add(i);
+            }
+            int count = nodesDdp.Count;
+            for (int i = 0; i < count - 1; i++)
+            {
                 for (int j = i + 1; j < count; j++)
                 {
                     if (nodesDdp[i] == nodesDdp[j])
                     {
                         nodesNumber[nodesNumberDdp[j]] = nodesNumber[nodesNumberDdp[i]];
+
                         for (int k = nodesNumberDdp[j] + 1; k < nodesNumber.Count; k++)
                         {
                             nodesNumber[k] -= 1;
@@ -348,6 +437,13 @@ namespace _003_FosSimulator014
                     selection.AddElement(element);
                 }
             }
+
+            //중복제거
+            selection.nodes.Distinct();
+            selection.elems.Distinct();
+
+            return;
+
             bool IsNodeOn(Node node)
             {
                 p = node.c0;
@@ -821,11 +917,11 @@ namespace _003_FosSimulator014
     class Elements : List<Element>
     {
         public int maxNum = 1;
-        internal int countTruss = 0;
-        internal int countFrame = 0;
-        internal int countCable = 0;
-        internal int countPlate = 0;
-        internal int countSolid = 0;
+        //internal int countTruss = 0;
+        //internal int countFrame = 0;
+        //internal int countCable = 0;
+        //internal int countPlate = 0;
+        //internal int countSolid = 0;
         //internal List<Frame> frames = new List<Frame>();
         internal Frames frames = new Frames();
         internal Plates plates = new Plates();
@@ -860,6 +956,13 @@ namespace _003_FosSimulator014
             {
                 Add(element);
             }
+        }
+        internal new void Clear()
+        {
+            base.Clear();
+            frames.Clear();
+            plates.Clear();
+            solids.Clear();
         }
         internal Frame AddFrame(Node n1, Node n2)
         {
@@ -918,39 +1021,6 @@ namespace _003_FosSimulator014
             foreach (Element element in this)
             {
                 element.UpdateMemberForce001();
-            }
-        }
-        internal void CountElems()
-        {
-            countTruss = 0;
-            countFrame = 0;
-            countCable = 0;
-            countPlate = 0;
-            countSolid = 0;
-
-            foreach (Element element in this)
-            {
-                switch (element.type) //20:Truss, 21:Frame, 25:Cable, 40:Plate, 80:Solid
-                {
-                    case 20:
-                        countTruss += 1;
-                        break;
-                    case 21:
-                        countFrame += 1;
-                        break;
-                    case 25:
-                        countCable += 1;
-                        break;
-                    case 40:
-                        countPlate += 1;
-                        break;
-                    case 80:
-                        countSolid += 1;
-                        break;
-                    default:
-                        break;
-                }
-
             }
         }
         internal Nodes ConnectedNodes()

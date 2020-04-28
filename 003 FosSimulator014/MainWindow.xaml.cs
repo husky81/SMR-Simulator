@@ -49,12 +49,42 @@ namespace _003_FosSimulator014
             draw.ViewTop();
             draw.ViewZoomExtend();
 
-            TestNodeGrid();
+            //TestNodeGrid();
+            TestExtrude();
 
             RedrawFemModel();
         }
 
+        private void TestExtrude()
+        {
+            fem.Initialize();
+            MaterialFem matl1 = fem.model.materials.AddConcrete("C30");
+            Section sect1 = fem.model.sections.AddRectangle(1, 0.2);
 
+            Node n1 = fem.model.nodes.Add(0, 0, 0);
+            Node n2 = fem.model.nodes.Add(10, 0, 0);
+            Frame f = fem.model.elems.AddFrame(n1, n2);
+            f.material = matl1;
+            f.Section(sect1);
+            fem.Select(f);
+            fem.Divide(2);
+
+            //fem.SelectElemAll();
+            //fem.Divide(2);
+
+            fem.SelectElemAll();
+            fem.Divide(2);
+
+            fem.SelectElemAll();
+            Vector3D dir = new Vector3D(0, 1, 0);
+            fem.Extrude(dir, 2);
+
+            fem.SelectElemAll();
+            dir = new Vector3D(0, 0, 1);
+            fem.Extrude(dir, 1);
+
+
+        }
         private void TestNodeGrid()
         {
             for(int i = 0; i < 10; i++)
@@ -907,12 +937,9 @@ namespace _003_FosSimulator014
             Elements elems = fem.model.elems;
             item.Header = "Elements(" + elems.Count + ")";
             item.IsExpanded = true;
-            elems.CountElems();
-            if (elems.countTruss != 0) item.Items.Add(new TreeViewItem() { Header = "Truss(" + elems.countTruss + ")" });
-            if (elems.countFrame != 0) item.Items.Add(new TreeViewItem() { Header = "Frame(" + elems.countFrame + ")" });
-            if (elems.countCable != 0) item.Items.Add(new TreeViewItem() { Header = "Cable(" + elems.countCable + ")" });
-            if (elems.countPlate != 0) item.Items.Add(new TreeViewItem() { Header = "Plate(" + elems.countPlate + ")" });
-            if (elems.countSolid != 0) item.Items.Add(new TreeViewItem() { Header = "Solid(" + elems.countSolid + ")" });
+            if (elems.frames.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Frame(" + elems.frames.Count + ")" });
+            if (elems.plates.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Plate(" + elems.plates.Count + ")" });
+            if (elems.solids.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Solid(" + elems.solids.Count + ")" });
             treeViewFemWorks.Items.Add(item);
 
             item = new TreeViewItem();
