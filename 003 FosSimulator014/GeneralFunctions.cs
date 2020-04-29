@@ -497,23 +497,44 @@ namespace _003_FosSimulator014
             return identityMatrix;
         }
 
-        internal static Vector3D Rotation3D(Vector3D vector3D, in Vector3D axis, in double deg)
+        internal static Vector3D RotationVector3D(Vector3D vec, in Vector3D baseAxis, in double rotationAngleDeg)
         {
-            Vector3D axisZ = axis;
+            Vector3D axisZ = baseAxis;
             axisZ.Normalize();
-            Vector3D axisY = Vector3D.CrossProduct(axisZ, vector3D);
+            Vector3D axisY = Vector3D.CrossProduct(axisZ, vec);
             axisY.Normalize();
             Vector3D axisX = Vector3D.CrossProduct(axisY, axisZ);
             axisX.Normalize();
 
-            double rad = deg / 180 * Math.PI;
-            vector3D = Math.Cos(rad) * axisX + Math.Sin(rad) * axisY;
-            return vector3D;
+            double rad = rotationAngleDeg / 180 * Math.PI;
+            vec = Math.Cos(rad) * axisX + Math.Sin(rad) * axisY;
+            return vec;
         }
-        internal static Point3D CrossPoint_PlaneLine(Vector3D normalPlane, Point3D p0Plane, Point3D lineP0, Point3D lineP1)
+        public static Vector3D RotateVector3D(Vector3D vec, Point3D basePoint, Vector3D baseAxis, double rotationAngleRad)
+        {
+            // To rotate the point (x,y,z) about the line through (a,b,c) with the normalised (u^2 + v^2 + w^2 = 1) direction vector
+            // by the angle theta use the following function:
+            double bAX2 = baseAxis.X * baseAxis.X;
+            double bAY2 = baseAxis.Y * baseAxis.Y;
+            double bAZ2 = baseAxis.Z * baseAxis.Z;
+            double bApXYZ2 = baseAxis.X * vec.X + baseAxis.Y * vec.Y + baseAxis.Z * vec.Z;
+            double cosRa = Math.Cos(rotationAngleRad);
+            double sinRa = Math.Sin(rotationAngleRad);
+            double bPXAX = basePoint.X * baseAxis.X;
+            double bPYAY = basePoint.Y * baseAxis.Y;
+            double bPZAZ = basePoint.Z * baseAxis.Z;
+            Vector3D rotatedVector = new Vector3D
+            {
+                X = (basePoint.X * (bAY2 + bAZ2) - baseAxis.X * (bPYAY + bPZAZ - bApXYZ2)) * (1 - cosRa) + vec.X * cosRa + (-basePoint.Z * baseAxis.Y + basePoint.Y * baseAxis.Z - baseAxis.Z * vec.Y + baseAxis.Y * vec.Z) * sinRa,
+                Y = (basePoint.Y * (bAX2 + bAZ2) - baseAxis.Y * (bPXAX + bPZAZ - bApXYZ2)) * (1 - cosRa) + vec.Y * cosRa + (basePoint.Z * baseAxis.X - basePoint.X * baseAxis.Z + baseAxis.Z * vec.X - baseAxis.X * vec.Z) * sinRa,
+                Z = (basePoint.Z * (bAX2 + bAY2) - baseAxis.Z * (bPXAX + bPYAY - bApXYZ2)) * (1 - cosRa) + vec.Z * cosRa + (-basePoint.Y * baseAxis.X + basePoint.X * baseAxis.Y - baseAxis.Y * vec.X + baseAxis.X * vec.Y) * sinRa
+            };
+            return rotatedVector;
+        }
+        internal static Point3D CrossPoint_PlaneLine(Vector3D planeAxis, Point3D planePoint, Point3D lineP0, Point3D lineP1)
         {
             //ref. http://www.gisdeveloper.co.kr/?p=792
-            double u = Vector3D.DotProduct(normalPlane, p0Plane - lineP0) / Vector3D.DotProduct(normalPlane, lineP1 - lineP0);
+            double u = Vector3D.DotProduct(planeAxis, planePoint - lineP0) / Vector3D.DotProduct(planeAxis, lineP1 - lineP0);
             Point3D p = lineP0 + u * (lineP1 - lineP0);
             return p;
         }
@@ -525,9 +546,14 @@ namespace _003_FosSimulator014
             Point3D crossPoint3Planes = CrossPoint_PlaneLine(v3, p3, crossPointP1P2, crossPointP1P2 + crossLineP1P2);
             return crossPoint3Planes;
         }
+        /// <summary>
+        /// point가 planeVector의 어느 위치에 있는지 반환.
+        /// </summary>
+        /// <param name="planeVector"></param>
+        /// <param name="point"></param>
+        /// <returns></returns>
         internal static double PlanePosition(Vector3D planeVector, Point3D point)
         {
-            //point가 planeVector의 어느 위치에 있는지 반환.
             //ref. https://m.blog.naver.com/PostView.nhn?blogId=joy3x94&logNo=70145080536&proxyReferer=https:%2F%2Fwww.google.com%2F
             Point3D P = new Point3D(0, 0, 0);
             Point3D A = point;
@@ -536,7 +562,7 @@ namespace _003_FosSimulator014
             Vector3D PA = A - P;
             if (PA.Length == 0) return 0;
 
-            double theta = GF.Angle2Vector(PA, u);
+            double theta = GF.AngleBetweenTwoVectors(PA, u);
             if (theta == 0)
             {
                 Vector3D vec = point - new Point3D(0, 0, 0);
@@ -546,8 +572,13 @@ namespace _003_FosSimulator014
             double lengthPH = d / Math.Tan(theta);
             return lengthPH;
         }
-
-        internal static double Angle2Vector(Vector3D v1, Vector3D v2)
+        /// <summary>
+        /// 두 벡터 사이의 각(rad)을 반환합니다.
+        /// </summary>
+        /// <param name="v1"></param>
+        /// <param name="v2"></param>
+        /// <returns>반환되는 값은 radian입니다.</returns>
+        internal static double AngleBetweenTwoVectors(Vector3D v1, Vector3D v2)
         {
             //radian으로 반환
             double v1v2overv1lv2l = Vector3D.DotProduct(v1, v2) / (v1.Length * v2.Length);
@@ -558,11 +589,13 @@ namespace _003_FosSimulator014
             //}
             return rad;
         }
-
+        /// <summary>
+        /// quaryPoint가 plane의 위쪽에 있는지 확인. 위에 있으면 true, 아래면 false.
+        /// </summary>
         internal static bool IsPointOnPlane(Point3D quaryPoint, Point3D planePoint, Vector3D planeVector)
         {
             Vector3D vq = quaryPoint - planePoint;
-            double ang = Angle2Vector(planeVector, vq);
+            double ang = AngleBetweenTwoVectors(planeVector, vq);
             if (ang > Math.PI / 2) return false;
             return true;
         }

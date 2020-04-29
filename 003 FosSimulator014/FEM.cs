@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media.Media3D;
 
 namespace _003_FosSimulator014
@@ -22,8 +23,7 @@ namespace _003_FosSimulator014
         }
         internal void Initialize()
         {
-            selection.elems.Clear();
-            selection.nodes.Clear();
+            selection.Clear();
 
             model.materials.Clear();
             model.materials.maxNum = 1;
@@ -43,14 +43,14 @@ namespace _003_FosSimulator014
 
             solved = false;
         }
-
+        
         internal void Select(Element element)
         {
-            selection.elems.Add(element);
+            selection.AddElement(element);
         }
         internal void Select(Node node)
         {
-            selection.nodes.Add(node);
+            selection.AddNode(node);
         }
         internal void SelectElems(int strElemNum, int endElemNum)
         {
@@ -58,22 +58,18 @@ namespace _003_FosSimulator014
             {
                 if (strElemNum <= elem.num & elem.num <= endElemNum)
                 {
-                    selection.elems.Add(elem);
+                    selection.AddElement(elem);
                 }
             }
         }
         internal void SelectElemAll()
         {
-            selection.elems = new Elements();
-            foreach (Element elem in model.elems)
-            {
-                selection.elems.Add(elem);
-            }
+            selection.Clear();
+            selection.AddElement(model.elems);
         }
         internal void DeselectAll()
         {
-            selection.nodes.Clear();
-            selection.elems.Clear();
+            selection.DeselectAll();
         }
         internal void DeleteSelectedNodes()
         {
@@ -97,7 +93,7 @@ namespace _003_FosSimulator014
             selection.elems.Clear();
 
         }
-        internal void DeleteSelected()
+        internal void DeleteSelection()
         {
             DeleteSelectedElems();
             DeleteSelectedNodes();
@@ -261,32 +257,6 @@ namespace _003_FosSimulator014
             }
             return extrudedElems;
         }
-        private Elements Extrude_Plate_old(Plates plates, Vector3D dir, int iter)
-        {
-            Nodes nodes = plates.ConnectedNodes();
-            Nodes nodesDdp = nodes.Copy(); //de-duplicated
-            List<int> nodesNumber = new List<int>();
-            List<int> nodesNumberDdp = new List<int>();
-            ExtrudedNodeList(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
-
-            Node[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
-
-            Elements extrudedElems = new Elements();
-            for (int i = 0; i < iter; i++)
-            {
-                for (int j = 0; j < plates.Count * 4; j += 4)
-                {
-
-                    Solid s = model.elems.AddSolid(
-                        nodeMatrix[i, nodesNumber[j]], nodeMatrix[i, nodesNumber[j + 1]], nodeMatrix[i, nodesNumber[j + 2]], nodeMatrix[i, nodesNumber[j + 3]],
-                        nodeMatrix[i + 1, nodesNumber[j]], nodeMatrix[i + 1, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j + 2]], nodeMatrix[i + 1, nodesNumber[j + 3]]
-                        );
-                    s.material = plates[j / 4].material;
-                    extrudedElems.Add(s);
-                }
-            }
-            return extrudedElems;
-        }
         private void ExtrudedNodeList(Nodes nodes, Nodes nodesDdp, List<int> nodesNumber, List<int> nodesNumberDdp)
         {
             //nodes : extrude에 참여하는 모든 요소의 절점을 순서대로 중복해서 저장한 배열임.
@@ -346,105 +316,8 @@ namespace _003_FosSimulator014
                 }
             }
         }
-        private void ExtrudedNodeList_Good(Nodes nodes, Nodes nodesDdp, List<int> nodesNumber, List<int> nodesNumberDdp)
-        {
-            //솔리드 요소 구성 잘됨. 최적화 진행을 위한 백업. 200429 bck
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                nodesNumber.Add(i);
-            }
-            for (int i = 0; i < nodesDdp.Count; i++)
-            {
-                nodesNumberDdp.Add(i);
-            }
-            int count = nodesDdp.Count;
-            for (int i = 0; i < count - 1; i++)
-            {
-                List<int> equalJs = new List<int>();
-                for (int j = i + 1; j < count; j++)
-                {
-                    int tmpi = nodesNumberDdp[i];
-                    int tmpj = nodesNumberDdp[j];
 
-                    if (nodesDdp[i] == nodesDdp[j])
-                    {
-                        if (nodesNumber[nodesNumberDdp[j]] != nodesNumber[nodesNumberDdp[i]]) //이미 중복넘버로 처리된 내용은 스킵.
-                        {
-                            nodesNumber[nodesNumberDdp[j]] = nodesNumber[nodesNumberDdp[i]];
-                            equalJs.Add(j);
 
-                        }
-
-                        ////solid의 경우 동일한 노드 번호가 여러개 있을 수 있음.
-                        //for (int k = nodesNumberDdp[j] + 1; k < nodesNumber.Count; k++)
-                        //{
-                        //
-                        //    nodesNumber[k] -= 1;
-                        //}
-                        //nodesDdp.RemoveAt(j);
-                        //nodesNumberDdp.RemoveAt(j);
-                        //count -= 1;
-                    }
-                }
-                if (equalJs.Count > 0)
-                {
-                    for (int j = equalJs.Count - 1; j >= 0; j--)
-                    {
-                        for (int k = nodesNumberDdp[equalJs[j]] + 1; k < nodesNumber.Count; k++)
-                        {
-                            if (nodesNumber[k] > equalJs[j])
-                            {
-                                nodesNumber[k] -= 1;
-                            }
-                        }
-                        //for (int k = equalJs.Count - 1; k > j; k--)
-                        //{
-                        //    int tmpi = nodesNumberDdp[equalJs[k]];
-                        //    nodesNumber[nodesNumberDdp[equalJs[k]]-1] += 1;
-                        //}
-                        nodesDdp.RemoveAt(equalJs[j]);
-                        nodesNumberDdp.RemoveAt(equalJs[j]);
-                        for (int k = equalJs.Count - 1; k > j; k--)
-                        {
-                            equalJs[k] -= 1;
-                        }
-                        //j -= 1;
-                        count -= 1;
-                    }
-                }
-            }
-        }
-        private void ExtrudedNodeList_old(Nodes nodes, Nodes nodesDdp, List<int> nodesNumber, List<int> nodesNumberDdp)
-        {
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                nodesNumber.Add(i);
-            }
-            for (int i = 0; i < nodesDdp.Count; i++)
-            {
-                nodesNumberDdp.Add(i);
-            }
-            int count = nodesDdp.Count;
-            for (int i = 0; i < count - 1; i++)
-            {
-                for (int j = i + 1; j < count; j++)
-                {
-                    if (nodesDdp[i] == nodesDdp[j])
-                    {
-                        nodesNumber[nodesNumberDdp[j]] = nodesNumber[nodesNumberDdp[i]];
-
-                        for (int k = nodesNumberDdp[j] + 1; k < nodesNumber.Count; k++)
-                        {
-                            nodesNumber[k] -= 1;
-                        }
-                        nodesDdp.RemoveAt(j);
-                        nodesNumberDdp.RemoveAt(j);
-                        j -= 1;
-                        count -= 1;
-                    }
-                }
-            }
-        }
         private Node[,] ExtrudedNodeMatrix_AddNode(Nodes nodesDdp, int iter, Vector3D dir)
         {
             //중복을 제거한 노드리스트를 dir 방향으로 iter번 반복해서 절점 생성.
@@ -464,11 +337,9 @@ namespace _003_FosSimulator014
             return nodeMatrix;
         }
 
-        internal void SelectByWindow(System.Windows.Point p1, System.Windows.Point p2)
-        {
-            
-        }
-
+        /// <summary>
+        /// 꼭지점과 4개의 벡터로 표현되는 무한 피라미드의 내부에 있는 모든 요소를 선택합니다.
+        /// </summary>
         internal void SelectByInfinitePyramid(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
         {
             Nodes selectedNodes = new Nodes();
@@ -531,6 +402,10 @@ namespace _003_FosSimulator014
                 return false;
             }
         }
+        /// <summary>
+        /// 꼭지점과 4개의 벡터로 표현되는 무한 피라미드의 내부에 있는 모든 요소를 선택합니다.
+        /// 라인에 걸리는거 다 선택.
+        /// </summary>
         internal void SelectByInfinitePyramid_Cross(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
         {
             //피라미드에 걸리는 모든 요소 선택
@@ -594,51 +469,63 @@ namespace _003_FosSimulator014
                 return false;
             }
         }
-        internal void SelectByInfinitePyramid_0ld(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
+        /// <summary>
+        /// 꼭지점과 2개의 벡터로 표현되는 부채꼴 면에 걸리는 모든 요소를 선택.
+        /// </summary>
+        internal void SelectByInfiniteTriangle(Point3D p0, Vector3D v0, Vector3D v1)
         {
-            Vector3D plane0 = Vector3D.CrossProduct(v0, v1);
-            Vector3D plane1 = Vector3D.CrossProduct(v1, v2);
-            Vector3D plane2 = Vector3D.CrossProduct(v2, v3);
-            Vector3D plane3 = Vector3D.CrossProduct(v3, v0);
+            Elements selectedElems = new Elements();
+            Vector3D plane = Vector3D.CrossProduct(v0, v1);
 
-            Point3D p;
-            bool isOn0;
-            bool isOn1;
-            bool isOn2;
-            bool isOn3;
-            foreach (Node node in model.nodes)
+            //절점 하나라도 평면에 걸리면 선택
+            foreach (Element element in model.elems)
             {
-                p = node.c0;
-                isOn0 = GF.IsPointOnPlane(p, p0, plane0);
-                isOn1 = GF.IsPointOnPlane(p, p0, plane1);
-                isOn2 = GF.IsPointOnPlane(p, p0, plane2);
-                isOn3 = GF.IsPointOnPlane(p, p0, plane3);
-                if (isOn0 & isOn1 & isOn2 & isOn3)
+                bool firstFlag = GF.IsPointOnPlane(element.nodes[0].c0, p0, plane);
+                bool flag;
+                for (int i = 1; i < element.nodes.Count; i++)
                 {
-                    selection.AddNode(node);
+                    flag = GF.IsPointOnPlane(element.nodes[i].c0, p0, plane);
+                    if (flag != firstFlag)
+                    {
+                        selectedElems.Add(element);
+                        break;
+                    }
                 }
             }
-            bool IsNodeOn(Node node)
+            
+
+            foreach (Element elem in selectedElems)
             {
-                p = node.c0;
-                isOn0 = GF.IsPointOnPlane(p, p0, plane0);
-                isOn1 = GF.IsPointOnPlane(p, p0, plane1);
-                isOn2 = GF.IsPointOnPlane(p, p0, plane2);
-                isOn3 = GF.IsPointOnPlane(p, p0, plane3);
-                if (isOn0 & isOn1 & isOn2 & isOn3)
+                for (int i = 0; i < elem.nodes.Count-1; i++)
                 {
-                    return true;
+                    Point3D n0 = elem.nodes[i].c0;
+                    Point3D n1 = elem.nodes[i+1].c0;
+                    Point3D crossPoint = GF.CrossPoint_PlaneLine(plane, p0, n0, n1);
+
+                    Vector3D downPlaneAxis = Vector3D.CrossProduct(plane, v0);
+                    Vector3D upPlaneAxis = Vector3D.CrossProduct(v1, plane);
+                    bool downFlag = GF.IsPointOnPlane(crossPoint, p0, downPlaneAxis);
+                    if(!downFlag)
+                    {
+                        selectedElems.Remove(elem);
+                        return;
+                    }
+                    bool upFlag = GF.IsPointOnPlane(crossPoint, p0, upPlaneAxis);
+                    if (!upFlag)
+                    {
+                        selectedElems.Remove(elem);
+                        return;
+                    }
                 }
-                return false;
             }
+            selection.AddElement(selectedElems);
         }
-
     }
     class FemSelection
     {
         private readonly FEM fem;
-        public Nodes nodes = new Nodes();
-        public Elements elems = new Elements();
+        internal Nodes nodes = new Nodes();
+        internal Elements elems = new Elements();
         public int Count
         {
             get
@@ -660,7 +547,14 @@ namespace _003_FosSimulator014
             element.selected = true;
             elems.Add(element);
         }
-        internal void UnselectAll()
+        internal void AddElement(Elements elements)
+        {
+            foreach (Element element in elements)
+            {
+                AddElement(element);
+            }
+        }
+        internal void DeselectAll()
         {
             foreach (Node node in nodes)
             {
@@ -674,12 +568,14 @@ namespace _003_FosSimulator014
             elems.Clear();
 
         }
-
-        internal void Erase()
+        internal void Delete()
         {
-            fem.DeleteSelected();
+            fem.DeleteSelection();
         }
-
+        internal void Clear()
+        {
+            DeselectAll();
+        }
     }
     class FemLoads : List<FemLoad>
     {
@@ -1011,9 +907,14 @@ namespace _003_FosSimulator014
     class Node
     {
         public int num;
-        public Point3D c0; //initialPoint
-        public Point3D c1; //initialPoint + disp;
-        double x, y, z;
+        /// <summary>
+        /// 사용자가 입력한 절점의 좌표입니다. initialPoint.
+        /// </summary>
+        public Point3D c0;
+        /// <summary>
+        /// 해석결과로 나온 변위를 포함한 절점의 좌표입니다. initialPoint + disp;
+        /// </summary>
+        public Point3D c1; //
         public int[] id;
         public double[] gloF;
         internal double[] gloD;
@@ -1024,16 +925,10 @@ namespace _003_FosSimulator014
 
         public Node(Point3D point)
         {
-            this.c0 = point;
-            x = point.X;
-            y = point.Y;
-            z = point.Z;
+            c0 = point;
         }
         public Node(double x, double y, double z)
         {
-            this.x = x;
-            this.y = y;
-            this.z = z;
             c0 = new Point3D(x, y, z);
         }
         internal void UpdateC1()

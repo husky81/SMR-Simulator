@@ -73,13 +73,11 @@
                 <MenuItem Header="_3D Solid" HorizontalAlignment="Left" >
                     <MenuItem Header="_Sphere" Click="DrawSphere" HorizontalAlignment="Left"/>
                     <MenuItem Header="Co_ne" Click="DrawCone" HorizontalAlignment="Left"/>
-                    <MenuItem Header="_Line" Click="Draw3dLine" HorizontalAlignment="Left"/>
                     <MenuItem Header="_Coordination Mark" Click="DrawCoordinationMark" HorizontalAlignment="Left"/>
                     <MenuItem Header ="Performance test" Click="PerformanceTest" HorizontalAlignment="Left"/>
                 </MenuItem>
                 <MenuItem Header="_2D Example" >
                     <MenuItem Header="gradation" Click="DrawSampleGradient" HorizontalAlignment="Left"/>
-                    <MenuItem Header="line" Click="DrawLine" HorizontalAlignment="Left"/>
                 </MenuItem>
 
             </MenuItem>

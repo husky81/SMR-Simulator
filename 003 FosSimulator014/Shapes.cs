@@ -467,7 +467,7 @@ namespace _003_FosSimulator014
             SetTransforms(center, new Vector3D(1, 1, 1));
         }
     }
-    public class Texts : List<Text>
+    public class TextShapes : List<Text>
     {
         public Text Add(string caption, Point3D position, double size)
         {
