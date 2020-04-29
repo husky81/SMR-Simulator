@@ -39,7 +39,6 @@ namespace _003_FosSimulator014
             Width = 20
         };
 
-
         public class PointMarker
         {
             readonly DRAW instance;
@@ -1030,6 +1029,28 @@ namespace _003_FosSimulator014
             MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
         }
         private double lastForcalDist;
+
+        private Point3D GetFocalPoint(PerspectiveCamera pCamera)
+        {
+            //shapes.center의 카메라 방향벡터 수직접점
+
+            Point3D pos = pCamera.Position;
+            Vector3D dir = pCamera.LookDirection;
+            dir.Normalize();
+
+            Point3D shapesCenter = shapes.Center();
+            Vector3D cv = shapesCenter - pos;
+            Point3D cvp = new Point3D(cv.X, cv.Y, cv.Z);
+            double focalDist = GF.PlanePosition(dir, cvp);
+
+            //if(double.IsNaN(focalDist)) focalDist = pCamera_init.FarPlaneDistance / 5; //가시거리의 1/5로 잡는게 좋을 것 같음.
+            if (double.IsNaN(focalDist)) focalDist = lastForcalDist;
+
+            lastForcalDist = focalDist;
+
+            Point3D fp = pos + dir * focalDist;
+            return fp;
+        }
         internal void OrbitRotate(Vector mov)
         {
             Point3D pos = pCamera_init.Position;
@@ -1040,29 +1061,12 @@ namespace _003_FosSimulator014
             Vector3D camY = Vector3D.CrossProduct(up, dir);
             up = Vector3D.CrossProduct(dir, camY);
             up.Normalize();
-            camY.Normalize();
 
-            double width = grid.ActualWidth;
-            double height = grid.ActualHeight;
+            Point3D fp = GetFocalPoint(pCamera_init);
+            Vector3D distVector = fp - pos;
+            double focalDist = distVector.Length;
 
-            double fovW = MyPCamera.FieldOfView;
-            double fovH = Math.Atan(Math.Tan(fovW / 2 / 180 * Math.PI) / width * height) * 2 * 180 / Math.PI;
-
-            Vector3D pv = new Vector3D(pos.X, pos.Y, pos.Z);  //카메라 위치
-
-            Point3D shapesCenter = shapes.Center();
-            Vector3D centerVector = shapesCenter - pos;
-            Point3D cvp = centerVector + new Point3D(0, 0, 0);
-            double focalDist = GF.PlanePosition(dir, cvp);
-
-            //if(double.IsNaN(focalDist)) focalDist = pCamera_init.FarPlaneDistance / 5; //가시거리의 1/5로 잡는게 좋을 것 같음.
-
-            if (double.IsNaN(focalDist)) focalDist = lastForcalDist;
-
-            lastForcalDist = focalDist;
-
-            Vector3D fp = pv + dir * focalDist; //초점
-            Vector3D cv = pv - fp; //초점에 대한 카메라 위치 백터
+            Vector3D cv = pos - fp; //초점에 대한 카메라 위치 백터
 
             Vector3D localXVector = Vector3D.CrossProduct(dir, up);
             Vector3D localYVector = up;
@@ -1080,28 +1084,15 @@ namespace _003_FosSimulator014
 
             Vector3D ncv = Math.Cos(moveRad) * cv + Math.Sin(moveRad) * focalDist * moveDir;
 
-            Vector3D np = fp + ncv;
-
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
+            Point3D newPos = fp + ncv;
+            MyPCamera.Position = newPos;
 
             //카메라 방향
-            Vector3D nd = fp - np; //새 카메라 방향
-            MyPCamera.LookDirection = nd;
+            Vector3D newDir = fp - newPos; //새 카메라 방향
+            MyPCamera.LookDirection = newDir;
 
-            //카메라 upDirection 계산.
-            //ncv 와 cv 사용에 따라서 달라짐
-            Vector3D nu;
-            //if (Math.Abs(mov.X) < Math.Abs(mov.Y))
-            //{
-            //    nu = Vector3D.CrossProduct(ncv, localXVector);
-            //}
-            //else
-            //{
-            //    nu = Vector3D.CrossProduct(cv, localXVector);
-            //}
-            nu = Vector3D.CrossProduct(ncv * Math.Abs(mov.Y) + cv * Math.Abs(mov.X), localXVector);
-            //nu = Vector3D.CrossProduct(ncv, localXVector);
-            MyPCamera.UpDirection = nu;
+            Vector3D newUp = Vector3D.CrossProduct(ncv * Math.Abs(mov.Y) + cv * Math.Abs(mov.X), localXVector);
+            MyPCamera.UpDirection = newUp;
         }
         internal void OrbitTwist(double rad, double dist)
         {
@@ -1137,87 +1128,69 @@ namespace _003_FosSimulator014
 
         internal void ViewTop()
         {
-            Point3D p = MyPCamera.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D d = MyPCamera.LookDirection;
-            Vector3D fp = pv + d;
-            double dist = d.Length;
-            Vector3D np = fp;
-            np.Z += dist;
+            Point3D focalPoint = GetFocalPoint(MyPCamera);
+            Vector3D distVector = focalPoint - MyPCamera.Position;
+            Point3D newPos = focalPoint;
+            newPos.Z += distVector.Length;
 
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
-            MyPCamera.LookDirection = fp - np;
+            MyPCamera.Position = newPos;
+            MyPCamera.LookDirection = focalPoint - newPos;
             MyPCamera.UpDirection = new Vector3D(0, 1, 0);
         }
         internal void ViewFront()
         {
-            Point3D p = MyPCamera.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D d = MyPCamera.LookDirection;
-            Vector3D fp = pv + d;
-            double dist = d.Length;
-            Vector3D np = fp;
-            np.Y -= dist;
+            Point3D focalPoint = GetFocalPoint(MyPCamera);
+            Vector3D distVector = focalPoint - MyPCamera.Position;
+            Point3D newPos = focalPoint;
+            newPos.Y -= distVector.Length;
 
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
-            MyPCamera.LookDirection = fp - np;
+            MyPCamera.Position = newPos;
+            MyPCamera.LookDirection = focalPoint - newPos;
             MyPCamera.UpDirection = new Vector3D(0, 0, 1);
         }
         internal void ViewBack()
         {
-            Point3D p = MyPCamera.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D d = MyPCamera.LookDirection;
-            Vector3D fp = pv + d;
-            double dist = d.Length;
-            Vector3D np = fp;
-            np.Y += dist;
+            Point3D focalPoint = GetFocalPoint(MyPCamera);
+            Vector3D distVector = focalPoint - MyPCamera.Position;
+            Point3D newPos = focalPoint;
+            newPos.Y += distVector.Length;
 
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
-            MyPCamera.LookDirection = fp - np;
+            MyPCamera.Position = newPos;
+            MyPCamera.LookDirection = focalPoint - newPos;
             MyPCamera.UpDirection = new Vector3D(0, 0, 1);
         }
         internal void ViewRight()
         {
-            Point3D p = MyPCamera.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D d = MyPCamera.LookDirection;
-            Vector3D fp = pv + d;
-            double dist = d.Length;
-            Vector3D np = fp;
-            np.X += dist;
+            Point3D focalPoint = GetFocalPoint(MyPCamera);
+            Vector3D distVector = focalPoint - MyPCamera.Position;
+            Point3D newPos = focalPoint;
+            newPos.X += distVector.Length;
 
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
-            MyPCamera.LookDirection = fp - np;
+            MyPCamera.Position = newPos;
+            MyPCamera.LookDirection = focalPoint - newPos;
             MyPCamera.UpDirection = new Vector3D(0, 0, 1);
         }
         internal void ViewLeft()
         {
-            Point3D p = MyPCamera.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D d = MyPCamera.LookDirection;
-            Vector3D fp = pv + d;
-            double dist = d.Length;
-            Vector3D np = fp;
-            np.X -= dist;
+            Point3D focalPoint = GetFocalPoint(MyPCamera);
+            Vector3D distVector = focalPoint - MyPCamera.Position;
+            Point3D newPos = focalPoint;
+            newPos.X -= distVector.Length;
 
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
-            MyPCamera.LookDirection = fp - np;
+            MyPCamera.Position = newPos;
+            MyPCamera.LookDirection = focalPoint - newPos;
             MyPCamera.UpDirection = new Vector3D(0, 0, 1);
         }
         internal void ViewBottom()
         {
-            Point3D p = MyPCamera.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D d = MyPCamera.LookDirection;
-            Vector3D fp = pv + d;
-            double dist = d.Length;
-            Vector3D np = fp;
-            np.Z -= dist;
+            Point3D focalPoint = GetFocalPoint(MyPCamera);
+            Vector3D distVector = focalPoint - MyPCamera.Position;
+            Point3D newPos = focalPoint;
+            newPos.Z -= distVector.Length;
 
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
-            MyPCamera.LookDirection = fp - np;
-            MyPCamera.UpDirection = new Vector3D(0, -1, 0);
+            MyPCamera.Position = newPos;
+            MyPCamera.LookDirection = focalPoint - newPos;
+            MyPCamera.UpDirection = new Vector3D(0, 1, 0);
         }
         internal void ViewZoomPoints(List<Point3D> points)
         {
@@ -1321,77 +1294,67 @@ namespace _003_FosSimulator014
         }
         internal void ViewSE()
         {
-            Point3D p = MyPCamera.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D d = MyPCamera.LookDirection;
-            Vector3D fp = pv + d;
-            double dist = d.Length;
-            Vector3D np = fp;
+            Point3D focalPoint = GetFocalPoint(MyPCamera);
+            Vector3D distVector = focalPoint - MyPCamera.Position;
+            Point3D newPos = focalPoint;
+            double dist = distVector.Length;
             double distZ = dist * Math.Sin(Math.PI / 4);
             double distXY = distZ * Math.Sin(Math.PI / 4);
-            np.X += distXY;
-            np.Y -= distXY;
-            np.Z += distZ;
+            newPos.X += distXY;
+            newPos.Y -= distXY;
+            newPos.Z += distZ;
 
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
-            MyPCamera.LookDirection = fp - np;
-            //pCamera.UpDirection = new Vector3D(0, 0, 1);
+            MyPCamera.Position = newPos;
+            MyPCamera.LookDirection = focalPoint - newPos;
+            MyPCamera.UpDirection = new Vector3D(0, 0, 1);
         }
         internal void ViewSW()
         {
-            Point3D p = MyPCamera.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D d = MyPCamera.LookDirection;
-            Vector3D fp = pv + d;
-            double dist = d.Length;
-            Vector3D np = fp;
+            Point3D focalPoint = GetFocalPoint(MyPCamera);
+            Vector3D distVector = focalPoint - MyPCamera.Position;
+            Point3D newPos = focalPoint;
+            double dist = distVector.Length;
             double distZ = dist * Math.Sin(Math.PI / 4);
             double distXY = distZ * Math.Sin(Math.PI / 4);
-            np.X -= distXY;
-            np.Y -= distXY;
-            np.Z += distZ;
+            newPos.X -= distXY;
+            newPos.Y -= distXY;
+            newPos.Z += distZ;
 
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
-            MyPCamera.LookDirection = fp - np;
+            MyPCamera.Position = newPos;
+            MyPCamera.LookDirection = focalPoint - newPos;
             MyPCamera.UpDirection = new Vector3D(0, 0, 1);
         }
         internal void ViewNW()
         {
-            Point3D p = MyPCamera.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D d = MyPCamera.LookDirection;
-            Vector3D fp = pv + d;
-            double dist = d.Length;
-            Vector3D np = fp;
+            Point3D focalPoint = GetFocalPoint(MyPCamera);
+            Vector3D distVector = focalPoint - MyPCamera.Position;
+            Point3D newPos = focalPoint;
+            double dist = distVector.Length;
             double distZ = dist * Math.Sin(Math.PI / 4);
             double distXY = distZ * Math.Sin(Math.PI / 4);
-            np.X -= distXY;
-            np.Y += distXY;
-            np.Z += distZ;
+            newPos.X -= distXY;
+            newPos.Y += distXY;
+            newPos.Z += distZ;
 
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
-            MyPCamera.LookDirection = fp - np;
+            MyPCamera.Position = newPos;
+            MyPCamera.LookDirection = focalPoint - newPos;
             MyPCamera.UpDirection = new Vector3D(0, 0, 1);
         }
         internal void ViewNE()
         {
-            Point3D p = MyPCamera.Position;
-            Vector3D pv = new Vector3D(p.X, p.Y, p.Z);
-            Vector3D d = MyPCamera.LookDirection;
-            Vector3D fp = pv + d;
-            double dist = d.Length;
-            Vector3D np = fp;
+            Point3D focalPoint = GetFocalPoint(MyPCamera);
+            Vector3D distVector = focalPoint - MyPCamera.Position;
+            Point3D newPos = focalPoint;
+            double dist = distVector.Length;
             double distZ = dist * Math.Sin(Math.PI / 4);
             double distXY = distZ * Math.Sin(Math.PI / 4);
-            np.X += distXY;
-            np.Y += distXY;
-            np.Z += distZ;
+            newPos.X += distXY;
+            newPos.Y += distXY;
+            newPos.Z += distZ;
 
-            MyPCamera.Position = new Point3D(np.X, np.Y, np.Z);
-            MyPCamera.LookDirection = fp - np;
+            MyPCamera.Position = newPos;
+            MyPCamera.LookDirection = focalPoint - newPos;
             MyPCamera.UpDirection = new Vector3D(0, 0, 1);
         }
-
     }
-    
 }

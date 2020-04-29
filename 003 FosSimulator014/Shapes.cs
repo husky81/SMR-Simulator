@@ -130,6 +130,7 @@ namespace _003_FosSimulator014
         internal Point3D Center()
         {
             Point3D cp = new Point3D(0, 0, 0);
+            if (this.Count == 0) return cp;
             foreach (Shape shape in this)
             {
                 cp.X += shape.BasePoint.X;

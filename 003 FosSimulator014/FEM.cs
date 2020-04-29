@@ -213,7 +213,7 @@ namespace _003_FosSimulator014
             Nodes nodesDdp = nodes.Copy(); //de-duplicated
             List<int> nodesNumber = new List<int>();
             List<int> nodesNumberDdp = new List<int>();
-            ExtrudedNodeList_old(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
+            ExtrudedNodeList(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
 
             Node[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
 
@@ -234,8 +234,11 @@ namespace _003_FosSimulator014
             Nodes nodesDdp = nodes.Copy(); //de-duplicated
             List<int> nodesNumber = new List<int>();
             List<int> nodesNumberDdp = new List<int>();
+
+            //Extrude에 참여하는 노드를 요소단위로 중복한 노드 순서 및 중복 제거한 노드 순서 반환.
             ExtrudedNodeList(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
 
+            //중복을 제거한 노드리스트를 dir 방향으로 iter번 반복해서 절점 생성.
             Node[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
 
             Elements extrudedElems = new Elements();
@@ -286,6 +289,66 @@ namespace _003_FosSimulator014
         }
         private void ExtrudedNodeList(Nodes nodes, Nodes nodesDdp, List<int> nodesNumber, List<int> nodesNumberDdp)
         {
+            //nodes : extrude에 참여하는 모든 요소의 절점을 순서대로 중복해서 저장한 배열임.
+            //nodesDdp(Out) : 중복되는 노드를 제거한 배열.
+            //nodesNumber(Out) : 중복 제거전 배열 크기 그대로, 중복 제거 노드리스트 nodesDdp의 위치를 저장한 리스트. 이 번호를 사용해서 요소를 생성하면 중복문제 해결~
+            //nodesNumberDdp(Out) : nodesNumber를 만들기위해 보조적으로 사용됨.
+
+            //nodeNumber와 nodeNumberDdp 생성.
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                nodesNumber.Add(i);
+            }
+            for (int i = 0; i < nodesDdp.Count; i++)
+            {
+                nodesNumberDdp.Add(i);
+            }
+            int count = nodesDdp.Count;
+            for (int i = 0; i < count - 1; i++)
+            {
+                List<int> equalJs = new List<int>();
+
+                //i번째 노드와 중복되는 노드의 번호들을 euqlJs에 저장.
+                for (int j = i + 1; j < count; j++)
+                {
+                    //int tmpi = nodesNumberDdp[i];
+                    //int tmpj = nodesNumberDdp[j];
+
+                    if (nodesDdp[i] == nodesDdp[j])
+                    {
+                        if (nodesNumber[nodesNumberDdp[j]] != nodesNumber[nodesNumberDdp[i]]) //이미 중복넘버로 처리된 내용은 스킵.
+                        {
+                            nodesNumber[nodesNumberDdp[j]] = nodesNumber[nodesNumberDdp[i]];
+                            equalJs.Add(j);
+                        }
+                    }
+                }
+                //i번째 노드와 중복되는 모든 번호들을 Ddp에서 제거하고, node넘버 땡김.
+                if (equalJs.Count > 0)
+                {
+                    for (int j = equalJs.Count - 1; j >= 0; j--) //equalJs를 뒤에서 부터 하나씩 제거함.
+                    {
+                        for (int k = nodesNumberDdp[equalJs[j]] + 1; k < nodesNumber.Count; k++)
+                        {
+                            if (nodesNumber[k] > equalJs[j])  //이미 중복처리 된 노드번호들을 그대로 놔둠. 제거할 번호보다 앞에 있는 번호들은 그냥 놔둠.
+                            {
+                                nodesNumber[k] -= 1; //제거할 번호보다 뒤에 있는 번호들을 하나씩 빼서 제거 후에 노드번호로 맞춤.
+                            }
+                        }
+                        nodesDdp.RemoveAt(equalJs[j]);
+                        nodesNumberDdp.RemoveAt(equalJs[j]);
+                        for (int k = equalJs.Count - 1; k > j; k--)
+                        {
+                            equalJs[k] -= 1;  //Ddp리스트에서 제거되면 equalJs 번호도 하나씩 빼줘야됨.
+                        }
+                        count -= 1; //중복되는 번호가 하나 빠지면 반복 회수도 줄여야함.
+                    }
+                }
+            }
+        }
+        private void ExtrudedNodeList_Good(Nodes nodes, Nodes nodesDdp, List<int> nodesNumber, List<int> nodesNumberDdp)
+        {
+            //솔리드 요소 구성 잘됨. 최적화 진행을 위한 백업. 200429 bck
             for (int i = 0; i < nodes.Count; i++)
             {
                 nodesNumber.Add(i);
@@ -305,11 +368,11 @@ namespace _003_FosSimulator014
 
                     if (nodesDdp[i] == nodesDdp[j])
                     {
-                        if(nodesNumber[nodesNumberDdp[j]] != nodesNumber[nodesNumberDdp[i]]) //이미 중복넘버로 처리된 내용은 스킵.
+                        if (nodesNumber[nodesNumberDdp[j]] != nodesNumber[nodesNumberDdp[i]]) //이미 중복넘버로 처리된 내용은 스킵.
                         {
                             nodesNumber[nodesNumberDdp[j]] = nodesNumber[nodesNumberDdp[i]];
                             equalJs.Add(j);
-                            j -= 1;
+
                         }
 
                         ////solid의 경우 동일한 노드 번호가 여러개 있을 수 있음.
@@ -325,19 +388,28 @@ namespace _003_FosSimulator014
                 }
                 if (equalJs.Count > 0)
                 {
-                    for (int k = nodesNumberDdp[equalJs[0]] + 1; k < nodesNumber.Count; k++)
-                    {
-                        nodesNumber[k] -= 1;
-                    }
-                    for (int j = equalJs.Count - 1; j >= 1; j--)
-                    {
-                        nodesNumber[nodesNumberDdp[equalJs[j]]] += 1;
-                    }
                     for (int j = equalJs.Count - 1; j >= 0; j--)
                     {
+                        for (int k = nodesNumberDdp[equalJs[j]] + 1; k < nodesNumber.Count; k++)
+                        {
+                            if (nodesNumber[k] > equalJs[j])
+                            {
+                                nodesNumber[k] -= 1;
+                            }
+                        }
+                        //for (int k = equalJs.Count - 1; k > j; k--)
+                        //{
+                        //    int tmpi = nodesNumberDdp[equalJs[k]];
+                        //    nodesNumber[nodesNumberDdp[equalJs[k]]-1] += 1;
+                        //}
                         nodesDdp.RemoveAt(equalJs[j]);
                         nodesNumberDdp.RemoveAt(equalJs[j]);
-                        count -= equalJs.Count;
+                        for (int k = equalJs.Count - 1; k > j; k--)
+                        {
+                            equalJs[k] -= 1;
+                        }
+                        //j -= 1;
+                        count -= 1;
                     }
                 }
             }
@@ -375,6 +447,7 @@ namespace _003_FosSimulator014
         }
         private Node[,] ExtrudedNodeMatrix_AddNode(Nodes nodesDdp, int iter, Vector3D dir)
         {
+            //중복을 제거한 노드리스트를 dir 방향으로 iter번 반복해서 절점 생성.
             Node[,] nodeMatrix = new Node[iter + 1, nodesDdp.Count];
             for (int n = 0; n < nodesDdp.Count; n++)
             {
@@ -398,6 +471,69 @@ namespace _003_FosSimulator014
 
         internal void SelectByInfinitePyramid(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
         {
+            Nodes selectedNodes = new Nodes();
+
+            Vector3D plane0 = Vector3D.CrossProduct(v0, v1);
+            Vector3D plane1 = Vector3D.CrossProduct(v1, v2);
+            Vector3D plane2 = Vector3D.CrossProduct(v2, v3);
+            Vector3D plane3 = Vector3D.CrossProduct(v3, v0);
+
+            Point3D p;
+            bool isOn0;
+            bool isOn1;
+            bool isOn2;
+            bool isOn3;
+            foreach (Node node in model.nodes)
+            {
+                node.selectedAtThisTime = false;
+            }
+            foreach (Node node in model.nodes)
+            {
+                if (IsNodeOn(node))
+                {
+                    selection.AddNode(node);
+                    node.selectedAtThisTime = true;
+                }
+
+                selectedNodes.Add(node);
+            }
+            bool flag;
+            foreach (Element element in model.elems)
+            {
+                flag = true;
+                foreach (Node node in element.nodes)
+                {
+                    if (node.selectedAtThisTime == false) flag = false;
+                }
+                if (flag)
+                {
+                    selection.AddElement(element);
+                }
+            }
+
+            //중복제거
+            selection.nodes.Distinct();
+            selection.elems.Distinct();
+
+            return;
+
+            bool IsNodeOn(Node node)
+            {
+                p = node.c0;
+                isOn0 = GF.IsPointOnPlane(p, p0, plane0);
+                isOn1 = GF.IsPointOnPlane(p, p0, plane1);
+                isOn2 = GF.IsPointOnPlane(p, p0, plane2);
+                isOn3 = GF.IsPointOnPlane(p, p0, plane3);
+                if (isOn0 & isOn1 & isOn2 & isOn3)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+        internal void SelectByInfinitePyramid_Cross(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
+        {
+            //피라미드에 걸리는 모든 요소 선택
             Nodes selectedNodes = new Nodes();
 
             Vector3D plane0 = Vector3D.CrossProduct(v0, v1);
@@ -787,26 +923,21 @@ namespace _003_FosSimulator014
         public Nodes()
         {
         }
-        public new Node Add(Node node)
-        {
-            if (node.num == 0)
-            {
-                node.num = maxNum;
-                maxNum += 1;
-            }
 
+        internal Node Add(double x, double y, double z)
+        {
+            Node node = new Node(x, y, z)
+            {
+                num = maxNum
+            };
+            maxNum += 1;
             base.Add(node);
             return node;
         }
 
-        internal Node Add(double x, double y, double z)
+        internal Node Add(Point3D p0)
         {
-            return Add(new Node(x, y, z));
-        }
-
-        internal Node Add(Point3D point)
-        {
-            return Add(new Node(point));
+            return Add(p0.X,p0.Y,p0.Z);
         }
 
         internal Node GetNode(int nodeNumber)
@@ -1083,7 +1214,6 @@ namespace _003_FosSimulator014
                 return center;
             }
         }
-
         internal double[,] GloK()
         {
             switch (type)
@@ -1107,7 +1237,6 @@ namespace _003_FosSimulator014
             }
             return gloK;
         }
-
         internal void SetID()
         {
             switch (type)
@@ -1151,7 +1280,6 @@ namespace _003_FosSimulator014
                     break;
             }
         }
-
         internal void UpdateMemberForce001()
         {
             gloD = new double[dof];
@@ -1195,6 +1323,13 @@ namespace _003_FosSimulator014
             gloF = GF.Multiply(gloK, gloD);
             locF = GF.Multiply(trans, gloF);
 
+        }
+        protected void AddConnectedElementAtNodes(Element elem)
+        {
+            foreach (Node node in nodes)
+            {
+                node.connectedElements.Add(elem);
+            }
         }
     }
     class Frames : List<Frame>
@@ -1244,8 +1379,7 @@ namespace _003_FosSimulator014
             nodes.Add(n1);
             nodes.Add(n2);
 
-            n1.connectedElements.Add(this);
-            n2.connectedElements.Add(this);
+            AddConnectedElementAtNodes(this);
 
             L = (n2.c0 - n1.c0).Length;
             AxialDirectionAngle = 0;
@@ -1421,6 +1555,7 @@ namespace _003_FosSimulator014
         public Truss()
         {
             type = 20;
+            AddConnectedElementAtNodes(this);
         }
 
     }
@@ -1448,6 +1583,7 @@ namespace _003_FosSimulator014
             nodes.Add(n2);
             nodes.Add(n3);
             nodes.Add(n4);
+            AddConnectedElementAtNodes(this);
         }
     }
     class Solid : Element
@@ -1473,7 +1609,7 @@ namespace _003_FosSimulator014
             nodes.Add(n6);
             nodes.Add(n7);
             nodes.Add(n8);
-
+            AddConnectedElementAtNodes(this);
         }
 
         internal void SetLocK()

@@ -42,7 +42,7 @@ namespace _003_FosSimulator014
             requestUserCoordinatesInput = new RequestUserCoordinatesInput(this);
 
             TurnOnWheelPanZoom();
-            TurnOnWindowSelecion(true);
+            WindowSelectionOn(true);
             TurnOnUnSelectAll_Esc(true);
             TurnOnErase_Del(true);
 
@@ -69,20 +69,19 @@ namespace _003_FosSimulator014
             fem.Select(f);
             fem.Divide(2);
 
-            //fem.SelectElemAll();
-            //fem.Divide(2);
+            fem.SelectElemAll();
+            fem.Divide(2);
 
             fem.SelectElemAll();
             fem.Divide(2);
 
             fem.SelectElemAll();
             Vector3D dir = new Vector3D(0, 1, 0);
-            fem.Extrude(dir, 2);
+            fem.Extrude(dir, 5);
 
             fem.SelectElemAll();
             dir = new Vector3D(0, 0, 1);
-            fem.Extrude(dir, 1);
-
+            fem.Extrude(dir, 5);
 
         }
         private void TestNodeGrid()
@@ -107,7 +106,7 @@ namespace _003_FosSimulator014
 
         private void StartAddNode(object sender, RoutedEventArgs e)
         {
-            TurnOnWindowSelecion(false);
+            WindowSelectionOn(false);
             MouseMove += ShowPointMarker_MouseMove;
             MouseDown += AddNode_MouseLeftDown;
             KeyUp += EndAddNode_Esc;
@@ -139,7 +138,7 @@ namespace _003_FosSimulator014
                 MouseDown -= AddNode_MouseLeftDown;
                 KeyUp -= EndAddNode_Esc;
                 draw.RedrawShapes();
-                TurnOnWindowSelecion(true);
+                WindowSelectionOn(true);
             }
         }
 
@@ -545,7 +544,7 @@ namespace _003_FosSimulator014
             }
 
             //입력값이 좌표인 경우
-            int isCoordinateInput = IsCoordinateInput(userInput); //좌표 아님: -1, 2차원 좌표: 2, 3차원 좌표: 3
+            int isCoordinateInput = IsCoordinateInput(userInput); //IsCoordinateInput: 좌표 아님: -1, 2차원 좌표: 2, 3차원 좌표: 3   ->  userInputPoint3D에 값을 저장.
             if (isCoordinateInput > 0)
             {
                 switch (isCoordinateInput)
@@ -733,14 +732,24 @@ namespace _003_FosSimulator014
                 case Key.Escape:
                     if (activeCommand != mainCommand)
                     {
-                        WriteText("*Cancel*");
-                        Enter();
-                        NewLine();
-                        activeCommand = mainCommand;
+                        Cancel();
+                    }
+                    else
+                    {
+                        Cancel();
                     }
                     break;
             }
         }
+
+        private void Cancel()
+        {
+            WriteText("*Cancel*");
+            Enter();
+            NewLine();
+            activeCommand = mainCommand;
+        }
+
         private void Tbx_PreviewKeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
             switch (e.Key)
@@ -1215,21 +1224,24 @@ namespace _003_FosSimulator014
     public partial class MainWindow : Window
     {
         private Point pointMouseDown;
-        private Point selectWindowStart;
-        private Point selectWindowEnd;
         internal bool orbiting = false;
 
-        internal void TurnOnWindowSelecion(bool on)
+        private bool windowSelectionOn = false;
+        internal void WindowSelectionOn(bool on)
         {
             if (orbiting) return;
             if (on)
             {
-                MouseDown += WindowSelection_MouseLeftDown;
+                if (!windowSelectionOn) //이벤트 중복생성 방지
+                {
+                    MouseDown += WindowSelection_MouseLeftDown;
+                }
             }
             else
             {
                 MouseDown -= WindowSelection_MouseLeftDown;
             }
+            windowSelectionOn = on;
         }
         internal void TurnOnUnSelectAll_Esc(bool on)
         {
@@ -1291,8 +1303,18 @@ namespace _003_FosSimulator014
             Vector3D v2 = new Vector3D();
             Vector3D v3 = new Vector3D();
 
+            //pespective view에서 사각형을 그리는 방법으로 개체를 선택하려면 카메라의 위치 p0에서 각 모서리의 벡터 v0~v3을 얻어야 함.
+            //draw에 사용자가 그린 사각형 정보 wP0, wP1을 전달해서 피라미드 정보를 얻어와서. fem에서 요소와 절점을 선택하도록 지시함.
             draw.GetInfinitePyramidBySelectionWindow(wP0, wP1, ref p0, ref v0, ref v1, ref v2, ref v3);
-            fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+            if (wP0.X > wP1.X)
+            {
+                //사각형을 반대방향으로 그린 경우 경계선에 겹친 모든 요소를 선택함.
+                fem.SelectByInfinitePyramid_Cross(p0, v0, v1, v2, v3);
+            }
+            else
+            {
+                fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+            }
         }
 
     } // 마우스 이벤트 관련
@@ -1581,7 +1603,7 @@ namespace _003_FosSimulator014
         }
         internal void Start()
         {
-            main.TurnOnWindowSelecion(false);
+            main.WindowSelectionOn(false);
             main.draw.selectionWindow.viewType = viewType;
 
             if (hasFirstPoint)
@@ -1636,7 +1658,7 @@ namespace _003_FosSimulator014
             main.MouseLeave -= WindowSelectionEnd;
             main.MouseDown -= WindowSelection_MouseLeftDown;
 
-            main.TurnOnWindowSelecion(true);
+            main.WindowSelectionOn(true);
         }
     }
     public class RequestUserMouseTwoPointInput
@@ -1669,7 +1691,7 @@ namespace _003_FosSimulator014
         }
         internal void Start()
         {
-            main.TurnOnWindowSelecion(false);
+            main.WindowSelectionOn(false);
             main.draw.selectionWindow.viewType = viewType;
 
             if (hasFirstPoint)
@@ -1725,7 +1747,7 @@ namespace _003_FosSimulator014
             main.MouseLeave -= WindowSelectionEnd;
             main.MouseDown -= WindowSelection_MouseLeftDown;
 
-            main.TurnOnWindowSelecion(true);
+            main.WindowSelectionOn(true);
         }
     }
     public class RequestUserCoordinatesInput
@@ -1745,8 +1767,6 @@ namespace _003_FosSimulator014
         internal ActionTwoPoint actionEveryLastTwoPoints;
         internal ActionPointList actionPointInputEnd;
         internal DRAW.SelectionWindow.ViewType viewType;
-
-        private bool mouseMoveOn = false;
 
         public RequestUserCoordinatesInput(MainWindow main)
         {
@@ -1772,7 +1792,7 @@ namespace _003_FosSimulator014
         internal void Start()
         {
             on = true;
-            main.TurnOnWindowSelecion(false);
+            main.WindowSelectionOn(false);
             main.TurnOnUnSelectAll_Esc(false);
             main.draw.selectionWindow.viewType = viewType;
 
@@ -1796,20 +1816,35 @@ namespace _003_FosSimulator014
             //    main.MouseDown += RequestUserCoordinates_MouseLeftDown;
             //}
         }
+        private bool mouseMoveOn = false;
         private void MouseMoveOn(bool on)
         {
             if (on)
             {
-                if(!mouseMoveOn) main.MouseMove += RequestUserCoordinates_MouseMove; //이벤트 중복 생성 방지
-                mouseMoveOn = true;
+                if (!mouseMoveOn) //이벤트 중복 생성 방지
+                {
+                    main.MouseMove += RequestUserCoordinates_MouseMove;
+                    MoveMouseLittle(); //마우스 이벤트 걸자마자 한번 움직이게~ 이걸 안하면 직선이 엉뚱한데 날라간 상태로 시작됨.
+                }
                 main.draw.selectionWindow.Start(points[points.Count-1]);
             }
             else
             {
-                mouseMoveOn = false;
                 main.MouseMove -= RequestUserCoordinates_MouseMove;
                 main.draw.selectionWindow.End();
             }
+            mouseMoveOn = on;
+        }
+        private void MoveMouseLittle()
+        {
+            //마우스 커서를 살짝 움직임. 마우스 이벤트 강제 발생용.
+            System.Drawing.Point p = System.Windows.Forms.Cursor.Position;
+            p.X += 1;
+            System.Windows.Forms.Cursor.Position = p;
+
+            //살짝 움직였다가 다시 돌아오는 경우 마우스 이벤트 발생 안함. 그냥 움직인 상태로 나두는게 좋을 듯.
+            //p.X -= 1;
+            //System.Windows.Forms.Cursor.Position = p;
         }
         private void RequestUserCoordinates_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
@@ -1875,7 +1910,7 @@ namespace _003_FosSimulator014
             main.cmd.Enter();
             main.cmd.NewLine();
 
-            main.TurnOnWindowSelecion(true);
+            main.WindowSelectionOn(true);
             main.TurnOnUnSelectAll_Esc(true);
         }
         private void AddPoint(Point p0)
@@ -1927,8 +1962,5 @@ namespace _003_FosSimulator014
         {
             
         }
-
     }
-
 }
-
