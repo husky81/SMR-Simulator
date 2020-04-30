@@ -58,7 +58,7 @@
                     <MenuItem Header="E_lement Number" Click="ViewElementNumber" IsCheckable="True" IsChecked="False"/>
                 </MenuItem>
                 <MenuItem Header="_Modify">
-                    <MenuItem Header="_Extrude" Click="FemExtrude"/>
+                    <MenuItem Header="E_xtrude" Click="FemExtrude"/>
                     <MenuItem Header="_Divide" Click="FemDivide"/>
                 </MenuItem>
                 <MenuItem Header="Add _Node" Click="StartAddNode"/>

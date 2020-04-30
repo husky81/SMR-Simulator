@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -391,10 +392,10 @@ namespace _003_FosSimulator014
             bool IsNodeOn(Node node)
             {
                 p = node.c0;
-                isOn0 = GF.IsPointOnPlane(p, p0, plane0);
-                isOn1 = GF.IsPointOnPlane(p, p0, plane1);
-                isOn2 = GF.IsPointOnPlane(p, p0, plane2);
-                isOn3 = GF.IsPointOnPlane(p, p0, plane3);
+                isOn0 = GF.IsPointUpperPlane(p, p0, plane0);
+                isOn1 = GF.IsPointUpperPlane(p, p0, plane1);
+                isOn2 = GF.IsPointUpperPlane(p, p0, plane2);
+                isOn3 = GF.IsPointUpperPlane(p, p0, plane3);
                 if (isOn0 & isOn1 & isOn2 & isOn3)
                 {
                     return true;
@@ -408,117 +409,66 @@ namespace _003_FosSimulator014
         /// </summary>
         internal void SelectByInfinitePyramid_Cross(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
         {
-            //피라미드에 걸리는 모든 요소 선택
-            Nodes selectedNodes = new Nodes();
-
-            Vector3D plane0 = Vector3D.CrossProduct(v0, v1);
-            Vector3D plane1 = Vector3D.CrossProduct(v1, v2);
-            Vector3D plane2 = Vector3D.CrossProduct(v2, v3);
-            Vector3D plane3 = Vector3D.CrossProduct(v3, v0);
-
-            Point3D p;
-            bool isOn0;
-            bool isOn1;
-            bool isOn2;
-            bool isOn3;
-            foreach (Node node in model.nodes)
-            {
-                node.selectedAtThisTime = false;
-            }
-            foreach (Node node in model.nodes)
-            {
-                if (IsNodeOn(node))
-                {
-                    selection.AddNode(node);
-                    node.selectedAtThisTime = true;
-                }
-
-                selectedNodes.Add(node);
-            }
-            bool flag;
-            foreach (Element element in model.elems)
-            {
-                flag = true;
-                foreach (Node node in element.nodes)
-                {
-                    if (node.selectedAtThisTime == false) flag = false;
-                }
-                if (flag)
-                {
-                    selection.AddElement(element);
-                }
-            }
-
-            //중복제거
-            selection.nodes.Distinct();
-            selection.elems.Distinct();
-
-            return;
-
-            bool IsNodeOn(Node node)
-            {
-                p = node.c0;
-                isOn0 = GF.IsPointOnPlane(p, p0, plane0);
-                isOn1 = GF.IsPointOnPlane(p, p0, plane1);
-                isOn2 = GF.IsPointOnPlane(p, p0, plane2);
-                isOn3 = GF.IsPointOnPlane(p, p0, plane3);
-                if (isOn0 & isOn1 & isOn2 & isOn3)
-                {
-                    return true;
-                }
-                return false;
-            }
+            SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+            SelectByInfiniteTriangle(p0, v0, v1);
+            SelectByInfiniteTriangle(p0, v1, v2);
+            SelectByInfiniteTriangle(p0, v2, v3);
+            SelectByInfiniteTriangle(p0, v3, v0);
         }
         /// <summary>
         /// 꼭지점과 2개의 벡터로 표현되는 부채꼴 면에 걸리는 모든 요소를 선택.
         /// </summary>
         internal void SelectByInfiniteTriangle(Point3D p0, Vector3D v0, Vector3D v1)
         {
-            Elements selectedElems = new Elements();
+            Elements selected1 = new Elements();
             Vector3D plane = Vector3D.CrossProduct(v0, v1);
 
             //절점 하나라도 평면에 걸리면 선택
             foreach (Element element in model.elems)
             {
-                bool firstFlag = GF.IsPointOnPlane(element.nodes[0].c0, p0, plane);
+                bool firstFlag = GF.IsPointUpperPlane(element.nodes[0].c0, p0, plane);
                 bool flag;
                 for (int i = 1; i < element.nodes.Count; i++)
                 {
-                    flag = GF.IsPointOnPlane(element.nodes[i].c0, p0, plane);
+                    flag = GF.IsPointUpperPlane(element.nodes[i].c0, p0, plane);
                     if (flag != firstFlag)
                     {
-                        selectedElems.Add(element);
+                        selected1.Add(element);
                         break;
                     }
                 }
             }
-            
 
-            foreach (Element elem in selectedElems)
+            Elements selected2 = new Elements();
+            Point3D n0;
+            Point3D n1;
+            Point3D crossPoint;
+            Vector3D downPlaneAxis;
+            Vector3D upPlaneAxis;
+            bool dFlag;
+            bool uFlag;
+            foreach (Element elem in selected1)
             {
                 for (int i = 0; i < elem.nodes.Count-1; i++)
                 {
-                    Point3D n0 = elem.nodes[i].c0;
-                    Point3D n1 = elem.nodes[i+1].c0;
-                    Point3D crossPoint = GF.CrossPoint_PlaneLine(plane, p0, n0, n1);
+                    n0 = elem.nodes[i].c0;
+                    n1 = elem.nodes[i+1].c0;
+                    crossPoint = GF.CrossPoint_PlaneLine(plane, p0, n0, n1);
 
-                    Vector3D downPlaneAxis = Vector3D.CrossProduct(plane, v0);
-                    Vector3D upPlaneAxis = Vector3D.CrossProduct(v1, plane);
-                    bool downFlag = GF.IsPointOnPlane(crossPoint, p0, downPlaneAxis);
-                    if(!downFlag)
+                    downPlaneAxis = Vector3D.CrossProduct(plane, v0);
+                    upPlaneAxis = Vector3D.CrossProduct(v1, plane);
+                    dFlag = GF.IsPointUpperPlane(crossPoint, p0, downPlaneAxis);
+                    uFlag = GF.IsPointUpperPlane(crossPoint, p0, upPlaneAxis);
+                    if (dFlag & uFlag)
                     {
-                        selectedElems.Remove(elem);
-                        return;
-                    }
-                    bool upFlag = GF.IsPointOnPlane(crossPoint, p0, upPlaneAxis);
-                    if (!upFlag)
-                    {
-                        selectedElems.Remove(elem);
-                        return;
+                        selected2.Add(elem);
                     }
                 }
             }
-            selection.AddElement(selectedElems);
+
+            selection.AddElement(selected2);
+            selected1.Clear();
+            selected2.Clear();
         }
     }
     class FemSelection

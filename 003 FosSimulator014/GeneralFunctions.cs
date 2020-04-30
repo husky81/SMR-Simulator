@@ -592,7 +592,7 @@ namespace _003_FosSimulator014
         /// <summary>
         /// quaryPoint가 plane의 위쪽에 있는지 확인. 위에 있으면 true, 아래면 false.
         /// </summary>
-        internal static bool IsPointOnPlane(Point3D quaryPoint, Point3D planePoint, Vector3D planeVector)
+        internal static bool IsPointUpperPlane(Point3D quaryPoint, Point3D planePoint, Vector3D planeVector)
         {
             Vector3D vq = quaryPoint - planePoint;
             double ang = AngleBetweenTwoVectors(planeVector, vq);

@@ -97,13 +97,6 @@ namespace _003_FosSimulator014
             }
         }
 
-
-        public void EraseAll()
-        {
-            fem.Initialize();
-            RedrawFemModel();
-        }
-
         private void StartAddNode(object sender, RoutedEventArgs e)
         {
             WindowSelectionOn(false);
@@ -328,13 +321,6 @@ namespace _003_FosSimulator014
             draw.RedrawShapes();
         }
 
-        internal void EraseSelected()
-        {
-            fem.DeleteSelection();
-            RedrawFemModel();
-        }
-
-
         internal void DrawCicle()
         {
 
@@ -345,14 +331,6 @@ namespace _003_FosSimulator014
             
         }
 
-        internal void AddLine_old()
-        {
-            RequestUserMouseTwoPointInput r = new RequestUserMouseTwoPointInput(this);
-            r.action = AddLineFem;
-            //r.viewType = RequestUserMouseTwoPointInput.viewTypes.Line;
-            r.viewType = DRAW.SelectionWindow.ViewType.Line;
-            r.Start();
-        }
         internal void AddLine()
         {
             requestUserCoordinatesInput.Reset(-1);
@@ -369,19 +347,29 @@ namespace _003_FosSimulator014
             fem.model.elems.AddFrame(n1, n2);
         }
 
+
         private void FemExtrude(object sender, RoutedEventArgs e)
         {
             Vector3D dir = new Vector3D(0, 1, 0);
             Elements ee = fem.Extrude(dir, 2);
             RedrawFemModel();
         }
-
         private void FemDivide(object sender, RoutedEventArgs e)
         {
             fem.Divide(2);
             RedrawFemModel();
         }
 
+        public void EraseAll()
+        {
+            fem.Initialize();
+            RedrawFemModel();
+        }
+        internal void EraseSelected()
+        {
+            fem.DeleteSelection();
+            RedrawFemModel();
+        }
         internal void EraseFence()
         {
             requestUserCoordinatesInput.Reset(2);
@@ -390,7 +378,6 @@ namespace _003_FosSimulator014
             requestUserCoordinatesInput.actionEnd += EraseSelected;
             requestUserCoordinatesInput.Start();
         }
-
         private void SelectElemByFenceLine(Point p0, Point p1)
         {
             Point3D pos = new Point3D();
@@ -401,13 +388,21 @@ namespace _003_FosSimulator014
 
             RedrawFemModel();
         }
+
+        internal void DivideElem()
+        {
+            fem.Divide(2);
+        }
     }
     public class CommandWindow
     {
         private readonly MainWindow main;
         private readonly System.Windows.Controls.TextBox textBox;
 
-        private readonly Command rootCommand; //모든 command의 상위 command
+        /// <summary>
+        /// 모든 command의 상위 command, root command.
+        /// </summary>
+        private readonly Command rC;
         private Command activeCommand;
         private Command lastCommand;
 
@@ -423,8 +418,8 @@ namespace _003_FosSimulator014
             Command.main = mainWindow;
             this.textBox = textBox;
 
-            rootCommand = new Command("Main");
-            activeCommand = rootCommand;
+            rC = new Command("Main");
+            activeCommand = rC;
 
             Clear();
             SetCommandStructure();
@@ -434,30 +429,29 @@ namespace _003_FosSimulator014
             textBox.KeyUp += Tbx_KeyUp; //space, enter 후처리
         }
 
-
         private void SetCommandStructure()
         {
-            Command cmd;
-            Command subCmd;
-            cmd = rootCommand.Add("Zoom", "z");
+            Command cmd, subCmd;
+            cmd = rC.Add("Regen", "re"); cmd.run += main.RedrawFemModel;
+            cmd = rC.Add("Redraw", "r"); cmd.run += main.RedrawShapes;
+
+            cmd = rC.Add("Zoom", "z");
             subCmd = cmd.Add("All", "a"); subCmd.run += main.ZoomAll;
             subCmd = cmd.Add("Extents", "e"); subCmd.run += main.ZoomExtents;
             subCmd = cmd.Add("Window", "w"); subCmd.run += main.ZoomWindow;
 
-            cmd = rootCommand.Add("Circle", "ci"); subCmd.run += main.DrawCicleCenterRadius;
+            cmd = rC.Add("Circle", "ci"); subCmd.run += main.DrawCicleCenterRadius;
             subCmd = cmd.Add("Radius", "r"); subCmd.run += main.DrawCicle;
 
-            cmd = rootCommand.Add("Regen", "re");cmd.run += main.RedrawFemModel;
-
-            cmd = rootCommand.Add("Redraw", "r");cmd.run += main.RedrawShapes;
-
-            cmd = rootCommand.Add("Erase", "e"); cmd.runSelected += main.EraseSelected;
+            cmd = rC.Add("Erase", "e"); cmd.runSelected += main.EraseSelected;
             subCmd = cmd.Add("All", "a"); subCmd.run += main.EraseAll;
             subCmd = cmd.Add("Fence", "f"); subCmd.run += main.EraseFence;
 
-            cmd = rootCommand.Add("LineOld", "ll"); cmd.run += main.AddLine_old;
-            cmd = rootCommand.Add("Line", "l"); cmd.run += main.AddLine;
-        }
+            cmd = rC.Add("Line", "l"); cmd.run += main.AddLine;
+
+            cmd = rC.Add("Divide", "d"); cmd.runSelected += main.DivideElem;
+
+        } //명령어 구성!!!
         private void ExecuteCommand(Command cmd)
         {
             WriteCommandName(cmd.name);
@@ -493,7 +487,7 @@ namespace _003_FosSimulator014
             }
             else
             {
-                activeCommand = rootCommand;
+                activeCommand = rC;
                 NewLine();
             }
         }
@@ -572,7 +566,7 @@ namespace _003_FosSimulator014
             //명령어가 없는 경우.
             WriteText(" Unknown command.");
             Enter();
-            if (activeCommand == rootCommand)
+            if (activeCommand == rC)
             {
                 textBox.AppendText(initialCmdMark + cmdMark);
             }
@@ -724,7 +718,7 @@ namespace _003_FosSimulator014
             switch (e.Key)
             {
                 case Key.Escape:
-                    if (activeCommand != rootCommand)
+                    if (activeCommand != rC)
                     {
                         Cancel();
                     }
@@ -756,7 +750,7 @@ namespace _003_FosSimulator014
             WriteText("*Cancel*");
             Enter();
             NewLine();
-            activeCommand = rootCommand;
+            activeCommand = rC;
         }
         private void Clear()
         {
@@ -811,6 +805,249 @@ namespace _003_FosSimulator014
             WriteText(cmdMark);
         }
     } //명령창 명령어 관리
+    public class RequestUserCoordinatesInput
+    {
+        private readonly MainWindow main;
+        public bool on = false;
+        public int numRequestPoint = 1;
+        private List<Point> points = new List<Point>();
+        private List<Point3D> point3Ds = new List<Point3D>();
+        /// <summary>
+        /// 사용자가 마우스를 움직이면 보여지는 입력 모양을 선택합니다.
+        /// </summary>
+        internal DRAW.SelectionWindow.ViewType viewType;
+
+        /// <summary>
+        /// 매 입력마다 실행할 액션을 지정합니다.
+        /// 마지막에 입력한 절점을 넘겨줍니다.
+        /// Point p0
+        /// </summary>
+        internal ActionOnePoint actionEveryPoint;
+        internal delegate void ActionOnePoint(Point p0);
+        /// <summary>
+        /// 첫 포인트를 제외하고 매 입력마다 실행할 Action을 지정합니다.
+        /// 마지막에 입력한 절점 두개를 넘겨줍니다.
+        /// Point p0, Point p1
+        /// </summary>
+        internal ActionTwoPoint actionEveryLastTwoPoints;
+        internal delegate void ActionTwoPoint(Point p0, Point p1);
+        /// <summary>
+        /// 사용자 입력이 끝났을 때 실행할 Action을 지정합니다.
+        /// 포인트리스트를 넘겨줍니다.
+        /// List<Point> Plist
+        /// </summary>
+        internal ActionPointList actionPointInputEnd;
+        internal delegate void ActionPointList(List<Point> Plist);
+        /// <summary>
+        /// 사용자 입력이 끝났을 때 실행할 Action을 지정합니다.
+        /// 넘겨주는 값이 없습니다.
+        /// 입력값이 없는 함수를 지정해야 합니다.
+        /// </summary>
+        internal ActionWithNone actionEnd;
+        internal delegate void ActionWithNone();
+
+        public RequestUserCoordinatesInput(MainWindow main)
+        {
+            this.main = main;
+        }
+        /// <summary>
+        /// RequestUserCoordinatesInput을 초기화합니다. 시작하기 전에 무조건 실행해야 함.
+        /// </summary>
+        /// <param name="numRequestPoint">사용자한테 몇개 입력 받을까?</param>
+        internal void Reset(int numRequestPoint)
+        {
+            this.numRequestPoint = numRequestPoint;
+            points.Clear();
+            point3Ds.Clear();
+            actionEveryPoint = null;
+            actionEveryLastTwoPoints = null;
+            actionPointInputEnd = null;
+            viewType = DRAW.SelectionWindow.ViewType.Line;
+
+            //중복실행되는 경우 초기화
+            main.MouseLeave -= RequestUserCoordinates_End;
+            main.MouseDown -= PutUserClickInput_MouseLeftDown;
+            main.KeyDown -= RequestUserCoordinates_EscKey;
+            MouseMoveOn(false);
+        }
+        internal void Start()
+        {
+            on = true;
+            main.WindowSelectionOn(false);
+            main.TurnOnUnSelectAll_Esc(false);
+            main.draw.selectionWindow.viewType = viewType;
+
+            //main.MouseLeave += RequestUserCoordinates_End;
+            main.KeyDown += RequestUserCoordinates_EscKey;
+            main.MouseDown += PutUserClickInput_MouseLeftDown;
+
+            main.cmd.PointInputRequestTextWrite("Specify first point");
+
+            //if (numPoint==1)
+            //{
+            //    // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
+            //    //if (main.orbiting) return;
+            //    main.draw.selectionWindow.Start(points[0]);
+            //    main.MouseMove += RequestUserCoordinates_MouseMove;
+            //    main.MouseLeave += RequestUserCoordinates_End;
+            //    main.KeyDown += RequestUserCoordinates_EscKey;
+            //}
+            //else
+            //{
+            //    main.MouseDown += RequestUserCoordinates_MouseLeftDown;
+            //}
+        }
+        private bool mouseMoveOn = false;
+        private void MouseMoveOn(bool on)
+        {
+            if (on)
+            {
+                if (!mouseMoveOn) //이벤트 중복 생성 방지
+                {
+                    main.MouseMove += RequestUserCoordinates_MouseMove;
+                    MoveMouseLittle(); //마우스 이벤트 걸자마자 한번 움직이게~ 이걸 안하면 직선이 엉뚱한데 날라간 상태로 시작됨.
+                }
+                main.draw.selectionWindow.Start(points[points.Count - 1]);
+            }
+            else
+            {
+                main.MouseMove -= RequestUserCoordinates_MouseMove;
+                main.draw.selectionWindow.End();
+            }
+            mouseMoveOn = on;
+        }
+        private void MoveMouseLittle()
+        {
+            //마우스 커서를 살짝 움직임. 마우스 이벤트 강제 발생용.
+            System.Drawing.Point p = System.Windows.Forms.Cursor.Position;
+            p.X += 1;
+            System.Windows.Forms.Cursor.Position = p;
+
+            //살짝 움직였다가 다시 돌아오는 경우 마우스 이벤트 발생 안함. 그냥 움직인 상태로 나두는게 좋을 듯.
+            //p.X -= 1;
+            //System.Windows.Forms.Cursor.Position = p;
+        }
+        private void CallFunctionAfterPointInput(Point p0)
+        {
+            actionEveryPoint?.Invoke(p0); //if(actionEveryPoint!=null) actionEveryPoint(p0);
+            if (points.Count > 1)
+            {
+                actionEveryLastTwoPoints?.Invoke(points[points.Count - 2], points[points.Count - 1]);
+            }
+
+            if (numRequestPoint == points.Count)
+            {
+                End();
+
+                actionPointInputEnd?.Invoke(points);
+                actionEnd?.Invoke();
+                //p0 = points[points.Count-1];
+
+                //main.bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
+                //main.fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+                main.RedrawFemModel();
+                return;
+            }
+            main.RedrawFemModel();
+            MouseMoveOn(true);
+            main.cmd.PointInputRequestTextWrite("Specify next point");
+        }
+        private void RequestUserCoordinates_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (main.draw.selectionWindow.started)
+            {
+                Point p0 = e.GetPosition(main.grdMain);
+                main.draw.selectionWindow.Move(p0);
+            }
+            //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
+        }
+        private void RequestUserCoordinates_EscKey(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                End();
+            }
+        }
+        private void RequestUserCoordinates_End(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            End();
+        }
+        public void End()
+        {
+            on = false;
+            main.MouseLeave -= RequestUserCoordinates_End;
+            main.MouseDown -= PutUserClickInput_MouseLeftDown;
+            main.KeyDown -= RequestUserCoordinates_EscKey;
+            MouseMoveOn(false);
+            //main.cmd.Enter();
+            main.cmd.NewLine();
+
+            main.WindowSelectionOn(true);
+            main.TurnOnUnSelectAll_Esc(true);
+        }
+
+        private void PutUserClickInput_MouseLeftDown(object sender, MouseButtonEventArgs e)
+        {
+            //if (main.orbiting) return;
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                main.cmd.Enter();
+                Point p0 = e.GetPosition(main.grdMain);
+                Put(p0);
+            }
+        }
+        private void AddPoint(Point p0)
+        {
+            points.Add(p0);
+            Point3D p3d = GetPoint3dFromPoint2D(p0);
+            point3Ds.Add(p3d);
+        }
+        private Point AddPoint(Point3D p3d)
+        {
+            point3Ds.Add(p3d);
+            Point p0 = GetPointFromPoint3D(p3d);
+            points.Add(p0);
+            return p0;
+        }
+
+        internal void Put(Point3D userInputPoint3D)
+        {
+            Point p0 = AddPoint(userInputPoint3D);
+            CallFunctionAfterPointInput(p0);
+        }
+        internal void Put(Point userInputPoint)
+        {
+            AddPoint(userInputPoint);
+            CallFunctionAfterPointInput(userInputPoint);
+        }
+        private Point3D GetPoint3dFromPoint2D(Point p0)
+        {
+            return main.draw.GetPoint3dOnBasePlane_FromPoint2D(p0);
+        }
+        private Point GetPointFromPoint3D(Point3D p3d)
+        {
+            return main.draw.GetPoint2D_FromPoint3D(p3d);
+        }
+
+        Point beforPanMove;
+        internal void PanMoveStart()
+        {
+            if (points.Count > 0)
+            {
+                beforPanMove = points[points.Count - 1];
+            }
+        }
+        internal void PanMove(Vector mov)
+        {
+            points[points.Count - 1] = beforPanMove + mov;
+            main.draw.selectionWindow.wP0 = beforPanMove + mov;
+        }
+        internal void PanMoveEnd()
+        {
+
+        }
+    } //사용자 입력 요청
+
     public partial class MainWindow : Window
     {
         private void OpenPannelCameraControl(object sender, RoutedEventArgs e)
@@ -1197,7 +1434,7 @@ namespace _003_FosSimulator014
             RedrawShapes(null,null);
         }
 
-    } // 패널 표시여부, 그리드 및 좌표계 표시여부, Redraw 등
+    } // 패널, 격자배경, 좌표계, Redraw 등
     public partial class MainWindow : Window
     {
         private Point pointMouseDown;
@@ -1247,11 +1484,17 @@ namespace _003_FosSimulator014
             if (orbiting) return;
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
-                r.viewType = DRAW.SelectionWindow.ViewType.SelectionWindow;
-                r.FirstPoint = e.GetPosition(grdMain);
-                r.action = SelectFemByWindow;
-                r.Start();
+                //RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
+                //r.viewType = DRAW.SelectionWindow.ViewType.SelectionWindow;
+                //r.FirstPoint = e.GetPosition(grdMain);
+                //r.action = SelectFemByWindow;
+                //r.Start();
+
+                requestUserCoordinatesInput.Reset(2);
+                requestUserCoordinatesInput.viewType = DRAW.SelectionWindow.ViewType.SelectionWindow;
+                requestUserCoordinatesInput.Put(e.GetPosition(grdMain));
+                requestUserCoordinatesInput.actionEveryLastTwoPoints = SelectFemByWindow;
+                requestUserCoordinatesInput.Start();
             }
         }
         private void UnselectAll_Esc(object sender, System.Windows.Input.KeyEventArgs e)
@@ -1293,7 +1536,6 @@ namespace _003_FosSimulator014
                 fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
             }
         }
-
     } // 마우스 이벤트 관련
     public partial class MainWindow : Window
     {
@@ -1356,21 +1598,6 @@ namespace _003_FosSimulator014
             requestUserCoordinatesInput.viewType = DRAW.SelectionWindow.ViewType.Rectangle;
             requestUserCoordinatesInput.actionEveryLastTwoPoints += draw.ViewZoomRectangle;
             requestUserCoordinatesInput.Start();
-        }
-        internal void ZoomRectangle_old()
-        {
-
-
-            RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
-            r.action += draw.ViewZoomRectangle;
-            r.Start();
-        }
-        internal void ZoomRectangle(Point p0)
-        {
-            RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
-            r.FirstPoint = p0;
-            r.action += draw.ViewZoomRectangle;
-            r.Start();
         }
 
         private void TurnOnWheelPanZoom()
@@ -1550,424 +1777,4 @@ namespace _003_FosSimulator014
             RedrawFemModel();
         }
     } // View 관련
-    public class RequestUserMouseWindowInput
-    {
-        private readonly MainWindow main;
-        private Point p0, p1;
-
-        internal delegate void Action(Point p0, Point p1);
-        internal Action action;
-        private bool hasFirstPoint = false;
-        private Point firstPoint;
-        internal DRAW.SelectionWindow.ViewType viewType;
-
-        internal Point FirstPoint
-        {
-            get
-            {
-                return firstPoint;
-            }
-            set
-            {
-                hasFirstPoint = true;
-                firstPoint = value;
-            }
-        }
-
-        public RequestUserMouseWindowInput(MainWindow main)
-        {
-            this.main = main;
-        }
-        internal void Start()
-        {
-            main.WindowSelectionOn(false);
-            main.draw.selectionWindow.viewType = viewType;
-
-            if (hasFirstPoint)
-            {
-                // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
-                if (main.orbiting) return;
-                p0 = FirstPoint;
-                main.draw.selectionWindow.Start(p0);
-                main.MouseMove += WindowSelection_MouseMove;
-                main.MouseUp += WindowSelection_MouseLeftUp;
-                main.MouseLeave += WindowSelectionEnd;
-            }
-            else
-            {
-                main.MouseDown += WindowSelection_MouseLeftDown;
-            }
-        }
-        private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
-        {
-            if (main.orbiting) return;
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                p0 = e.GetPosition(main.grdMain);
-                main.draw.selectionWindow.Start(p0);
-                main.MouseMove += WindowSelection_MouseMove;
-                main.MouseUp += WindowSelection_MouseLeftUp;
-                main.MouseLeave += WindowSelectionEnd;
-            }
-        }
-        private void WindowSelection_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            p1 = e.GetPosition(main.grdMain);
-            main.draw.selectionWindow.Move(p1);
-            //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
-        }
-        private void WindowSelection_MouseLeftUp(object sender, MouseButtonEventArgs e)
-        {
-            WindowSelectionEnd(null, null);
-
-            if (p0.Equals(p1)) return; //사각형 크기가 0인 경우 pass~
-
-            action(p0, p1);
-            //main.bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
-            //main.fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
-            main.RedrawFemModel();
-        }
-        private void WindowSelectionEnd(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            main.draw.selectionWindow.End();
-            main.MouseMove -= WindowSelection_MouseMove;
-            main.MouseUp -= WindowSelection_MouseLeftUp;
-            main.MouseLeave -= WindowSelectionEnd;
-            main.MouseDown -= WindowSelection_MouseLeftDown;
-
-            main.WindowSelectionOn(true);
-        }
-    }
-    public class RequestUserMouseTwoPointInput
-    {
-        private readonly MainWindow main;
-        private Point p0, p1;
-
-        internal delegate void Action(Point p0, Point p1);
-        internal Action action;
-        private bool hasFirstPoint = false;
-        private Point firstPoint;
-        internal DRAW.SelectionWindow.ViewType viewType;
-
-        internal Point FirstPoint
-        {
-            get
-            {
-                return firstPoint;
-            }
-            set
-            {
-                hasFirstPoint = true;
-                firstPoint = value;
-            }
-        }
-
-        public RequestUserMouseTwoPointInput(MainWindow main)
-        {
-            this.main = main;
-        }
-        internal void Start()
-        {
-            main.WindowSelectionOn(false);
-            main.draw.selectionWindow.viewType = viewType;
-
-            if (hasFirstPoint)
-            {
-                // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
-                //if (main.orbiting) return;
-                p0 = FirstPoint;
-                main.draw.selectionWindow.Start(p0);
-                main.MouseMove += WindowSelection_MouseMove;
-                main.MouseLeave += WindowSelectionEnd;
-            }
-            else
-            {
-                main.MouseDown += WindowSelection_MouseLeftDown;
-            }
-        }
-        private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
-        {
-            //if (main.orbiting) return;
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                if (hasFirstPoint)
-                {
-                    WindowSelectionEnd(null, null);
-
-                    if (p0.Equals(p1)) return; //사각형 크기가 0인 경우 pass~
-
-                    action(p0, p1);
-                    //main.bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
-                    //main.fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
-                    main.RedrawFemModel();
-                }
-                else
-                {
-                    p0 = e.GetPosition(main.grdMain);
-                    FirstPoint = p0;
-                    main.draw.selectionWindow.Start(p0);
-                    main.MouseMove += WindowSelection_MouseMove;
-                    main.MouseLeave += WindowSelectionEnd;
-                }
-            }
-        }
-        private void WindowSelection_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            p1 = e.GetPosition(main.grdMain);
-            main.draw.selectionWindow.Move(p1);
-            //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
-        }
-        private void WindowSelectionEnd(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            main.draw.selectionWindow.End();
-            main.MouseMove -= WindowSelection_MouseMove;
-            main.MouseLeave -= WindowSelectionEnd;
-            main.MouseDown -= WindowSelection_MouseLeftDown;
-
-            main.WindowSelectionOn(true);
-        }
-    }
-    public class RequestUserCoordinatesInput
-    {
-        private readonly MainWindow main;
-        public bool on = false;
-        public int numRequestPoint = 1;
-        public int numPoint = 0;
-        private List<Point> points = new List<Point>();
-        private List<Point3D> point3Ds = new List<Point3D>();
-        /// <summary>
-        /// 사용자가 마우스를 움직이면 보여지는 입력 모양을 선택합니다.
-        /// </summary>
-        internal DRAW.SelectionWindow.ViewType viewType;
-
-        /// <summary>
-        /// 매 입력마다 실행할 액션을 지정합니다.
-        /// 마지막에 입력한 절점을 넘겨줍니다.
-        /// Point p0
-        /// </summary>
-        internal ActionOnePoint actionEveryPoint;
-        internal delegate void ActionOnePoint(Point p0);
-        /// <summary>
-        /// 첫 포인트를 제외하고 매 입력마다 실행할 Action을 지정합니다.
-        /// 마지막에 입력한 절점 두개를 넘겨줍니다.
-        /// Point p0, Point p1
-        /// </summary>
-        internal ActionTwoPoint actionEveryLastTwoPoints;
-        internal delegate void ActionTwoPoint(Point p0, Point p1);
-        /// <summary>
-        /// 사용자 입력이 끝났을 때 실행할 Action을 지정합니다.
-        /// 포인트리스트를 넘겨줍니다.
-        /// List<Point> Plist
-        /// </summary>
-        internal ActionPointList actionPointInputEnd;
-        internal delegate void ActionPointList(List<Point> Plist);
-        /// <summary>
-        /// 사용자 입력이 끝났을 때 실행할 Action을 지정합니다.
-        /// 넘겨주는 값이 없습니다.
-        /// 입력값이 없는 함수를 지정해야 합니다.
-        /// </summary>
-        internal ActionWithNone actionEnd;
-        internal delegate void ActionWithNone();
-
-        public RequestUserCoordinatesInput(MainWindow main)
-        {
-            this.main = main;
-        }
-        /// <summary>
-        /// RequestUserCoordinatesInput을 초기화합니다. 시작하기 전에 무조건 실행해야 함.
-        /// </summary>
-        /// <param name="numRequestPoint">사용자한테 몇개 입력 받을까?</param>
-        internal void Reset(int numRequestPoint)
-        {
-            this.numRequestPoint = numRequestPoint;
-            numPoint = 0;
-            points.Clear();
-            point3Ds.Clear();
-            actionEveryPoint = null;
-            actionEveryLastTwoPoints = null;
-            actionPointInputEnd = null;
-            viewType = DRAW.SelectionWindow.ViewType.Line;
-
-            //중복실행되는 경우 초기화
-            main.MouseLeave -= RequestUserCoordinates_End;
-            main.MouseDown -= PutUserClickInput_MouseLeftDown;
-            main.KeyDown -= RequestUserCoordinates_EscKey;
-            MouseMoveOn(false);
-        }
-        internal void Start()
-        {
-            on = true;
-            main.WindowSelectionOn(false);
-            main.TurnOnUnSelectAll_Esc(false);
-            main.draw.selectionWindow.viewType = viewType;
-
-            //main.MouseLeave += RequestUserCoordinates_End;
-            main.KeyDown += RequestUserCoordinates_EscKey;
-            main.MouseDown += PutUserClickInput_MouseLeftDown;
-
-            main.cmd.PointInputRequestTextWrite("Specify first point");
-
-            //if (numPoint==1)
-            //{
-            //    // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
-            //    //if (main.orbiting) return;
-            //    main.draw.selectionWindow.Start(points[0]);
-            //    main.MouseMove += RequestUserCoordinates_MouseMove;
-            //    main.MouseLeave += RequestUserCoordinates_End;
-            //    main.KeyDown += RequestUserCoordinates_EscKey;
-            //}
-            //else
-            //{
-            //    main.MouseDown += RequestUserCoordinates_MouseLeftDown;
-            //}
-        }
-        private bool mouseMoveOn = false;
-        private void MouseMoveOn(bool on)
-        {
-            if (on)
-            {
-                if (!mouseMoveOn) //이벤트 중복 생성 방지
-                {
-                    main.MouseMove += RequestUserCoordinates_MouseMove;
-                    MoveMouseLittle(); //마우스 이벤트 걸자마자 한번 움직이게~ 이걸 안하면 직선이 엉뚱한데 날라간 상태로 시작됨.
-                }
-                main.draw.selectionWindow.Start(points[points.Count-1]);
-            }
-            else
-            {
-                main.MouseMove -= RequestUserCoordinates_MouseMove;
-                main.draw.selectionWindow.End();
-            }
-            mouseMoveOn = on;
-        }
-        private void MoveMouseLittle()
-        {
-            //마우스 커서를 살짝 움직임. 마우스 이벤트 강제 발생용.
-            System.Drawing.Point p = System.Windows.Forms.Cursor.Position;
-            p.X += 1;
-            System.Windows.Forms.Cursor.Position = p;
-
-            //살짝 움직였다가 다시 돌아오는 경우 마우스 이벤트 발생 안함. 그냥 움직인 상태로 나두는게 좋을 듯.
-            //p.X -= 1;
-            //System.Windows.Forms.Cursor.Position = p;
-        }
-        private void CallFunctionAfterPointInput(Point p0)
-        {
-            actionEveryPoint?.Invoke(p0); //if(actionEveryPoint!=null) actionEveryPoint(p0);
-            if (numPoint > 1)
-            {
-                actionEveryLastTwoPoints?.Invoke(points[points.Count - 2], points[points.Count - 1]);
-            }
-
-            if (numRequestPoint == numPoint)
-            {
-                End();
-
-                actionPointInputEnd?.Invoke(points);
-                actionEnd?.Invoke();
-                //p0 = points[points.Count-1];
-
-                //main.bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
-                //main.fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
-                main.RedrawFemModel();
-                return;
-            }
-            main.RedrawFemModel();
-            MouseMoveOn(true);
-            main.cmd.PointInputRequestTextWrite("Specify next point");
-        }
-        private void RequestUserCoordinates_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (main.draw.selectionWindow.started)
-            {
-                Point p0 = e.GetPosition(main.grdMain);
-                main.draw.selectionWindow.Move(p0);
-            }
-            //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
-        }
-        private void RequestUserCoordinates_EscKey(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == Key.Escape)
-            {
-                End();
-            }
-        }
-        private void RequestUserCoordinates_End(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            End();
-        }
-        public void End()
-        {
-            on = false;
-            main.MouseLeave -= RequestUserCoordinates_End;
-            main.MouseDown -= PutUserClickInput_MouseLeftDown;
-            main.KeyDown -= RequestUserCoordinates_EscKey;
-            MouseMoveOn(false);
-            //main.cmd.Enter();
-            main.cmd.NewLine();
-
-            main.WindowSelectionOn(true);
-            main.TurnOnUnSelectAll_Esc(true);
-        }
-
-        private void PutUserClickInput_MouseLeftDown(object sender, MouseButtonEventArgs e)
-        {
-            //if (main.orbiting) return;
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                main.cmd.Enter();
-                Point p0 = e.GetPosition(main.grdMain);
-                Put(p0);
-            }
-        }
-        private void AddPoint(Point p0)
-        {
-            points.Add(p0);
-            Point3D p3d = GetPoint3dFromPoint2D(p0);
-            point3Ds.Add(p3d);
-            numPoint += 1;
-        }
-        private Point AddPoint(Point3D p3d)
-        {
-            point3Ds.Add(p3d);
-            Point p0 = GetPointFromPoint3D(p3d);
-            points.Add(p0);
-            numPoint += 1;
-            return p0;
-        }
-
-        internal void Put(Point3D userInputPoint3D)
-        {
-            Point p0 = AddPoint(userInputPoint3D);
-            CallFunctionAfterPointInput(p0);
-        }
-        internal void Put(Point userInputPoint)
-        {
-            AddPoint(userInputPoint);
-            CallFunctionAfterPointInput(userInputPoint);
-        }
-        private Point3D GetPoint3dFromPoint2D(Point p0)
-        {
-            return main.draw.GetPoint3dOnBasePlane_FromPoint2D(p0);
-        }
-        private Point GetPointFromPoint3D(Point3D p3d)
-        {
-            return main.draw.GetPoint2D_FromPoint3D(p3d);
-        }
-
-        Point beforPanMove;
-        internal void PanMoveStart()
-        {
-            beforPanMove = points[points.Count - 1];
-        }
-        internal void PanMove(Vector mov)
-        {
-            points[points.Count - 1] = beforPanMove + mov;
-            main.draw.selectionWindow.wP0 = beforPanMove + mov;
-        }
-        internal void PanMoveEnd()
-        {
-            
-        }
-    }
 }
