@@ -456,7 +456,7 @@ namespace _003_FosSimulator014
                     crossPoint = GF.CrossPointBetweenPlaneAndLine(plane, p0, n0, n1);
                     if (crossPoint.X == 0 & crossPoint.Y == 0 & crossPoint.Z == 0)
                     {
-                        break;
+                        continue;
                     }
 
                     downPlaneAxis = Vector3D.CrossProduct(plane, v0);
