@@ -531,33 +531,59 @@ namespace _003_FosSimulator014
             };
             return rotatedVector;
         }
-        internal static Point3D CrossPoint_PlaneLine(Vector3D planeAxis, Point3D planePoint, Point3D lineP0, Point3D lineP1)
+        /// <summary>
+        /// 평면과 직선의 교차점 반환.
+        /// 평면이 lineP0와 lineP1 사이에 있지 않아도 무한 직선과의 교차점을 반환하므로 주의!
+        /// </summary>
+        /// <param name="planeAxis"></param>
+        /// <param name="planePoint"></param>
+        /// <param name="lineP0"></param>
+        /// <param name="lineP1"></param>
+        /// <returns></returns>
+        internal static Point3D CrossPointBetweenPlaneAndInfiniteLine(Vector3D planeAxis, Point3D planePoint, Point3D lineP0, Point3D lineP1)
         {
             //ref. http://www.gisdeveloper.co.kr/?p=792
             double u = Vector3D.DotProduct(planeAxis, planePoint - lineP0) / Vector3D.DotProduct(planeAxis, lineP1 - lineP0);
             Point3D p = lineP0 + u * (lineP1 - lineP0);
             return p;
         }
+        /// <summary>
+        /// 평면과 직선의 교차점 반환.
+        /// 평면이 lineP0와 lineP1 사이에 있지 않은 경우 (0,0,0)을 반환함. 왜 null 안되지? nan이라도 넣으려고 했는데 강제로는 안들어가네...
+        /// </summary>
+        /// <param name="planeAxis"></param>
+        /// <param name="planePoint"></param>
+        /// <param name="lineP0"></param>
+        /// <param name="lineP1"></param>
+        /// <returns></returns>
+        internal static Point3D CrossPointBetweenPlaneAndLine(Vector3D planeAxis, Point3D planePoint, Point3D lineP0, Point3D lineP1)
+        {
+            //ref. http://www.gisdeveloper.co.kr/?p=792
+            double u = Vector3D.DotProduct(planeAxis, planePoint - lineP0) / Vector3D.DotProduct(planeAxis, lineP1 - lineP0);
+            Point3D p = new Point3D();
+            if(0 <= u & u <= 1.0) p= lineP0 + u * (lineP1 - lineP0);
+            return p;
+        }
         internal static Point3D CrossPoint_3Planes(Vector3D v1, Point3D p1, Vector3D v2, Point3D p2, Vector3D v3, Point3D p3)
         {
             Vector3D crossLineP1P2 = Vector3D.CrossProduct(v1, v2);
             Vector3D p1toCrossLine = Vector3D.CrossProduct(crossLineP1P2, v1);
-            Point3D crossPointP1P2 = CrossPoint_PlaneLine(v2, p2, p1, p1 + p1toCrossLine);
-            Point3D crossPoint3Planes = CrossPoint_PlaneLine(v3, p3, crossPointP1P2, crossPointP1P2 + crossLineP1P2);
+            Point3D crossPointP1P2 = CrossPointBetweenPlaneAndInfiniteLine(v2, p2, p1, p1 + p1toCrossLine);
+            Point3D crossPoint3Planes = CrossPointBetweenPlaneAndInfiniteLine(v3, p3, crossPointP1P2, crossPointP1P2 + crossLineP1P2);
             return crossPoint3Planes;
         }
         /// <summary>
-        /// point가 planeVector의 어느 위치에 있는지 반환.
+        /// point가 planeAxis의 어느 위치에 있는지 반환.
         /// </summary>
-        /// <param name="planeVector"></param>
+        /// <param name="planeAxis"></param>
         /// <param name="point"></param>
         /// <returns></returns>
-        internal static double PlanePosition(Vector3D planeVector, Point3D point)
+        internal static double PlanePosition(Vector3D planeAxis, Point3D point)
         {
             //ref. https://m.blog.naver.com/PostView.nhn?blogId=joy3x94&logNo=70145080536&proxyReferer=https:%2F%2Fwww.google.com%2F
             Point3D P = new Point3D(0, 0, 0);
             Point3D A = point;
-            Vector3D u = planeVector;
+            Vector3D u = planeAxis;
 
             Vector3D PA = A - P;
             if (PA.Length == 0) return 0;

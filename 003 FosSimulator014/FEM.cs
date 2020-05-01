@@ -453,7 +453,11 @@ namespace _003_FosSimulator014
                 {
                     n0 = elem.nodes[i].c0;
                     n1 = elem.nodes[i+1].c0;
-                    crossPoint = GF.CrossPoint_PlaneLine(plane, p0, n0, n1);
+                    crossPoint = GF.CrossPointBetweenPlaneAndLine(plane, p0, n0, n1);
+                    if (crossPoint.X == 0 & crossPoint.Y == 0 & crossPoint.Z == 0)
+                    {
+                        break;
+                    }
 
                     downPlaneAxis = Vector3D.CrossProduct(plane, v0);
                     upPlaneAxis = Vector3D.CrossProduct(v1, plane);
