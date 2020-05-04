@@ -31,6 +31,12 @@ namespace _003_FosSimulator014
             Add(t);
             return t;
         }
+        internal RectangleShape AddRectangle(Point3D p0, Point3D p1, Point3D p2, Point3D p3)
+        {
+            RectangleShape t = new RectangleShape(p0, p1, p3, p2);
+            Add(t);
+            return t;
+        }
         internal Line3D AddLine(Point3D sp, Point3D ep)
         {
             Line3D l = new Line3D(sp, ep);
@@ -142,6 +148,7 @@ namespace _003_FosSimulator014
             cp.Z /= Count;
             return cp;
         }
+
     }
     public class Shape
     {
@@ -235,9 +242,9 @@ namespace _003_FosSimulator014
     }
     class Triangle : Shape
     {
-        public Point3D p0;
-        public Point3D p1;
-        public Point3D p2;
+        private Point3D p0;
+        private Point3D p1;
+        private Point3D p2;
         public Triangle(Point3D p0, Point3D p1, Point3D p2)
         {
             this.p0 = p0;
@@ -245,6 +252,22 @@ namespace _003_FosSimulator014
             this.p2 = p2;
 
             mesh = MeshGenerator.Triangle(p0, p1, p2);
+        }
+    }
+    class RectangleShape : Shape
+    {
+        private Point3D p0;
+        private Point3D p1;
+        private Point3D p2;
+        private Point3D p3;
+        public RectangleShape(Point3D p0, Point3D p1, Point3D p2, Point3D p3)
+        {
+            this.p0 = p0;
+            this.p1 = p1;
+            this.p2 = p2;
+            this.p3 = p3;
+
+            mesh = MeshGenerator.Rectangle(p0, p1, p2, p3);
         }
     }
     class Line3D : Shape
@@ -883,7 +906,7 @@ namespace _003_FosSimulator014
             }
             return mesh;
         }
-        internal static MeshGeometry3D Triangle(Point3D p0, Point3D p1, Point3D p2)
+        internal static MeshGeometry3D TriangleOneSide(Point3D p0, Point3D p1, Point3D p2)
         {
             MeshGeometry3D mesh = new MeshGeometry3D();
             mesh.Positions.Add(p0);
@@ -898,6 +921,60 @@ namespace _003_FosSimulator014
             mesh.Normals.Add(normal);
             mesh.Normals.Add(normal);
             mesh.Normals.Add(normal);
+            return mesh;
+        }
+        internal static MeshGeometry3D Triangle(Point3D p0, Point3D p1, Point3D p2)
+        {
+            MeshGeometry3D mesh = new MeshGeometry3D();
+            mesh.Positions.Add(p0);
+            mesh.Positions.Add(p1);
+            mesh.Positions.Add(p2);
+
+            mesh.TriangleIndices.Add(0);
+            mesh.TriangleIndices.Add(2);
+            mesh.TriangleIndices.Add(1);
+
+            //맞나 확인 필요 200505
+            mesh.TriangleIndices.Add(0);
+            mesh.TriangleIndices.Add(1);
+            mesh.TriangleIndices.Add(2);
+
+            Vector3D normal = new Vector3D(0, 0, 1);
+            mesh.Normals.Add(normal);
+            mesh.Normals.Add(normal);
+            mesh.Normals.Add(normal);
+            return mesh;
+        }
+        internal static MeshGeometry3D Rectangle(Point3D p0, Point3D p1, Point3D p2, Point3D p3)
+        {
+            MeshGeometry3D mesh = new MeshGeometry3D();
+            mesh.Positions.Add(p0);
+            mesh.Positions.Add(p1);
+            mesh.Positions.Add(p2);
+            mesh.Positions.Add(p3);
+
+            mesh.TriangleIndices.Add(0);
+            mesh.TriangleIndices.Add(1);
+            mesh.TriangleIndices.Add(2);
+
+            mesh.TriangleIndices.Add(1);
+            mesh.TriangleIndices.Add(2);
+            mesh.TriangleIndices.Add(3);
+
+            mesh.TriangleIndices.Add(0);
+            mesh.TriangleIndices.Add(2);
+            mesh.TriangleIndices.Add(1);
+
+            mesh.TriangleIndices.Add(1);
+            mesh.TriangleIndices.Add(3);
+            mesh.TriangleIndices.Add(2);
+
+            Vector3D normal = new Vector3D(0, 0, 1);
+            mesh.Normals.Add(normal);
+            mesh.Normals.Add(normal);
+            mesh.Normals.Add(normal);
+            mesh.Normals.Add(normal);
+
             return mesh;
         }
         internal static MeshGeometry3D Polygon(SectionPoly poly, double length)

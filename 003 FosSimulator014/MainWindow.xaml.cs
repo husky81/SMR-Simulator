@@ -1063,6 +1063,62 @@ namespace _003_FosSimulator014
             textBox.KeyDown += Tbx_KeyDown; //esc 처리
             textBox.KeyUp += Tbx_KeyUp; //space, enter 후처리
         }
+        internal class Command
+        {
+            internal static MainWindow main;
+            internal Run run; //하위 Command가 있든 없든 무조건 실행
+            internal delegate void Run();
+            internal Run runSelected; //이미 선택된 개체가 있는 경우 실행
+            internal RunMouse runMouseDown; //하위명령 커리 중 마우스를 클릭하는 경우 실행
+            internal delegate void RunMouse(Point p0);
+            internal string name; //ex. _zoom , _line
+            internal string shortName = "";
+
+            public List<Command> commands = new List<Command>();
+            private Command mouseDownSubCommand;
+
+            public Command(string name, string shortName = "")
+            {
+                this.name = name;
+                this.shortName = shortName;
+            }
+            public Command Add(string name, string shortName = "")
+            {
+                Command subCmd = new Command(name, shortName);
+                commands.Add(subCmd);
+                return subCmd;
+            } // 서브 명령 추가.
+
+            internal string GetSubCmdQuaryString()
+            {
+                //cmd가 subCmd를 가지고 있는 경우 사용자에게 subCmd 선택을 요청하는 메시지를 생성함.
+                //string quary = " : ";
+                string quary = "";
+                foreach (Command cmd in commands)
+                {
+                    quary += cmd.name;
+                    if (cmd.runMouseDown != null)
+                    {
+                        //main.MouseDown += Main_MouseDown;
+                        mouseDownSubCommand = cmd;
+                        quary += " (window)";
+                    }
+                    quary += " / ";
+                }
+                quary = quary.Substring(0, quary.Length - 2);
+                return quary;
+            }
+
+            private void Main_MouseDown(object sender, MouseButtonEventArgs e)
+            {
+                main.MouseDown -= Main_MouseDown;
+                if (e.LeftButton == MouseButtonState.Pressed)
+                {
+                    Point p0 = e.GetPosition(main.grdMain);
+                    mouseDownSubCommand.runMouseDown(p0);
+                }
+            }
+        }
 
         private void SetCommandStructure()
         {
@@ -1410,62 +1466,6 @@ namespace _003_FosSimulator014
             return isCoordinateInput;
         } //사용자 입력에 의한 userInputPoint3D 반환
 
-        internal class Command
-        {
-            internal static MainWindow main;
-            internal Run run; //하위 Command가 있든 없든 무조건 실행
-            internal delegate void Run();
-            internal Run runSelected; //이미 선택된 개체가 있는 경우 실행
-            internal RunMouse runMouseDown; //하위명령 커리 중 마우스를 클릭하는 경우 실행
-            internal delegate void RunMouse(Point p0);
-            internal string name; //ex. _zoom , _line
-            internal string shortName = "";
-
-            public List<Command> commands = new List<Command>();
-            private Command mouseDownSubCommand;
-
-            public Command(string name, string shortName = "")
-            {
-                this.name = name;
-                this.shortName = shortName;
-            }
-            public Command Add(string name, string shortName = "")
-            {
-                Command subCmd = new Command(name, shortName);
-                commands.Add(subCmd);
-                return subCmd;
-            } // 서브 명령 추가.
-
-            internal string GetSubCmdQuaryString()
-            {
-                //cmd가 subCmd를 가지고 있는 경우 사용자에게 subCmd 선택을 요청하는 메시지를 생성함.
-                //string quary = " : ";
-                string quary = "";
-                foreach (Command cmd in commands)
-                {
-                    quary += cmd.name;
-                    if (cmd.runMouseDown != null)
-                    {
-                        //main.MouseDown += Main_MouseDown;
-                        mouseDownSubCommand = cmd;
-                        quary += " (window)";
-                    }
-                    quary += " / ";
-                }
-                quary = quary.Substring(0, quary.Length - 2);
-                return quary;
-            }
-
-            private void Main_MouseDown(object sender, MouseButtonEventArgs e)
-            {
-                main.MouseDown -= Main_MouseDown;
-                if(e.LeftButton == MouseButtonState.Pressed)
-                {
-                    Point p0 = e.GetPosition(main.grdMain);
-                    mouseDownSubCommand.runMouseDown(p0);
-                }
-            }
-        }
         private void Tbx_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             switch (e.Key)
@@ -1920,7 +1920,8 @@ namespace _003_FosSimulator014
                                 break;
                             case 40:
                                 Plate p = (Plate)e;
-                                draw.shapes.AddBox(p.nodes[0].c0, p.nodes[2].c0 - p.nodes[0].c0);
+                                //draw.shapes.AddBox(p.nodes[0].c0, p.nodes[2].c0 - p.nodes[0].c0);
+                                draw.shapes.AddRectangle(p.nodes[0].c0, p.nodes[1].c0, p.nodes[2].c0, p.nodes[3].c0);
                                 break;
                             case 80:
                                 Solid s = (Solid)e;
