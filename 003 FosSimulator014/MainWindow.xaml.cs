@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
@@ -51,11 +52,18 @@ namespace _003_FosSimulator014
             draw.ViewZoomExtend();
 
             //TestNodeGrid();
-            TestExtrude();
+            //TestExtrude();
+            TestDivide();
 
             RedrawFemModel();
         }
 
+        private void TestDivide()
+        {
+            Node n1 = fem.model.nodes.Add(0, 0, 0);
+            Node n2 = fem.model.nodes.Add(10, 0, 0);
+            fem.model.elems.AddFrame(n1, n2);
+        }
         private void TestExtrude()
         {
             fem.Initialize();
@@ -306,7 +314,7 @@ namespace _003_FosSimulator014
             draw.shapes.RecentShape.Color(Colors.Red);
             draw.RedrawShapes();
         }
-        private void PerformanceTest(object sender, RoutedEventArgs e)
+        private void DrawPerformanceTest(object sender, RoutedEventArgs e)
         {
             for (int i = 1; i < 20; i++)
             {
@@ -326,7 +334,6 @@ namespace _003_FosSimulator014
         {
 
         }
-
         internal void DrawCicleCenterRadius()
         {
             
@@ -348,18 +355,6 @@ namespace _003_FosSimulator014
             fem.model.elems.AddFrame(n1, n2);
         }
 
-
-        private void FemExtrude(object sender, RoutedEventArgs e)
-        {
-            Vector3D dir = new Vector3D(0, 1, 0);
-            Elements ee = fem.Extrude(dir, 2);
-            RedrawFemModel();
-        }
-        private void FemDivide(object sender, RoutedEventArgs e)
-        {
-            fem.Divide(2);
-            RedrawFemModel();
-        }
 
         public void EraseAll()
         {
@@ -390,12 +385,16 @@ namespace _003_FosSimulator014
             RedrawFemModel();
         }
 
+        private void FemDivide(object sender, RoutedEventArgs e)
+        {
+            cmd.CallCommand("Divide");
+        }
         internal void DivideElem()
         {
             requestUserInput = new RequestUserInput(this);
             requestUserInput.RequestElemSelection("분할할 개체를 선택하세요.");
             requestUserInput.RequestInt("몇개로 나눌까요?");
-            requestUserInput.actionInt += fem.Divide;
+            requestUserInput.actionAfterIntWithInt += fem.Divide;
             requestUserInput.Start();
 
             //if (fem.selection.elems.Count == 0)
@@ -411,7 +410,23 @@ namespace _003_FosSimulator014
             //int dividedNumber = RequestInt("몇개로 나눌까요?");
             //fem.Divide(dividedNumber);
         }
+        private void FemExtrude(object sender, RoutedEventArgs e)
+        {
+            Vector3D dir = new Vector3D(0, 1, 0);
+            Elements ee = fem.Extrude(dir, 2);
+            RedrawFemModel();
+        }
+        internal void ExtrudeElem()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestElemSelection("연장시킬 개체를 선택하세요.");
+            requestUserInput.RequestDirection("연장시킬 방향을 지정하세요.");
+            requestUserInput.RequestInt("몇번 반복할까요?");
+            requestUserInput.actionAfterIntWithDirInt += fem.ExtrudeWoRetern;
+            requestUserInput.Start();
+        }
     }
+
     internal class UserInputAction
     {
         internal enum RequestInputType
@@ -434,14 +449,73 @@ namespace _003_FosSimulator014
     public class RequestUserInput
     {
         private MainWindow main;
+        public RequestUserInput(MainWindow main)
+        {
+            this.main = main;
+        }
 
-        internal intInput actionInt;
-        private bool isSelectionBasedAction;
-        internal bool on = false;
+        private bool on = false;
+        internal bool On
+        {
+            get
+            {
+                return on;
+            }
+            set
+            {
+                if (value != on)
+                {
+                    TurnOnMainWindowEvents(on);
+                    main.KeyDown += ExitCommand_EscKey;
+                }
+                on = value;
+            }
+        }
+        internal void End()
+        {
+            On = false;
+            TurnOffAllEvents();
+            RedrawFemModel();
+            main.cmd.NewLine();
+        }
+        internal void End_Cancle()
+        {
+            On = false;
+            TurnOffAllEvents();
+            RedrawFemModel();
+        }
 
-        internal delegate void intInput(int n);
+        private void TurnOffAllEvents()
+        {
+            main.KeyDown -= ExitCommand_EscKey;
 
-        private readonly List<UserInputAction> userInputActions = new List<UserInputAction>();
+            main.MouseDown -= GetDirection;
+            main.MouseMove -= GetDirection_Moving;
+            main.MouseDown -= GetDirection_SecondPoint;
+        }
+
+        private void ExitCommand_EscKey(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                End_Cancle();
+            }
+        }
+
+        internal UserInputAction.RequestInputType doingActionType;
+
+        private void TurnOnMainWindowEvents(bool on)
+        {
+            main.WindowSelectionOn(on);
+            main.TurnOnDeselectAll_Esc(on);
+        }
+
+
+        internal delegate void inputInt(int n);
+        internal inputInt actionAfterIntWithInt;
+        internal delegate void inputDirInt(Vector3D dir, int n);
+        internal inputDirInt actionAfterIntWithDirInt;
+
         private UserInputAction LastAction
         {
             get
@@ -449,11 +523,11 @@ namespace _003_FosSimulator014
                 return userInputActions[userInputActions.Count - 1];
             }
         }
+        private readonly List<UserInputAction> userInputActions = new List<UserInputAction>();
+        private int actionStep = 0;
 
-        public RequestUserInput(MainWindow main)
-        {
-            this.main = main;
-        }
+        private Vector3D userInputVector;
+        private double userInputDouble;
 
         internal void RequestInt(string message)
         {
@@ -464,7 +538,15 @@ namespace _003_FosSimulator014
             };
             userInputActions.Add(userInputAction);
         }
-
+        internal void RequestDirection(string message)
+        {
+            UserInputAction userInputAction = new UserInputAction
+            {
+                requestInputType = UserInputAction.RequestInputType.Direction,
+                message = message
+            };
+            userInputActions.Add(userInputAction);
+        }
         internal void RequestElemSelection(string message)
         {
             UserInputAction userInputAction = new UserInputAction
@@ -473,60 +555,144 @@ namespace _003_FosSimulator014
                 message = message
             };
             userInputActions.Add(userInputAction);
-            this.isSelectionBasedAction = true;
         }
 
         internal void Start()
         {
-            on = true;
-            foreach (UserInputAction userInputAction in userInputActions)
+            actionStep = -1;
+            On = true;
+            NextAction();
+        }
+        internal void DoAction()
+        {
+            if (actionStep >= userInputActions.Count)
             {
-                switch (userInputAction.requestInputType)
-                {
-                    case UserInputAction.RequestInputType.Point:
-                        break;
-                    case UserInputAction.RequestInputType.TwoPoints:
-                        break;
-                    case UserInputAction.RequestInputType.Points:
-                        break;
-                    case UserInputAction.RequestInputType.ElemSelection:
-                        if (main.fem.selection.elems.Count == 0)
-                        {
-                            main.cmd.SendRequestMessage(userInputAction.message);
-                            End();
-                            return;
-                        }
-                        break;
-                    case UserInputAction.RequestInputType.NodeSelection:
-                        break;
-                    case UserInputAction.RequestInputType.Selection:
-                        break;
-                    case UserInputAction.RequestInputType.Int:
-                        main.cmd.SendRequestMessage(userInputAction.message);
-
-                        break;
-                    case UserInputAction.RequestInputType.Double:
-                        break;
-                    case UserInputAction.RequestInputType.Distance:
-                        break;
-                    case UserInputAction.RequestInputType.Direction:
-                        break;
-                    default:
-                        break;
-                }
-
+                End();
+                return;
             }
+            UserInputAction userInputAction = userInputActions[actionStep];
+            doingActionType = userInputAction.requestInputType;
+            switch (userInputAction.requestInputType)
+            {
+                case UserInputAction.RequestInputType.Point:
+                    break;
+                case UserInputAction.RequestInputType.TwoPoints:
+                    break;
+                case UserInputAction.RequestInputType.Points:
+                    break;
+                case UserInputAction.RequestInputType.ElemSelection:
+                    if (main.fem.selection.elems.Count == 0)
+                    {
+                        main.cmd.SendRequestMessage(userInputAction.message);
+                        End();
+                    }
+                    else
+                    {
+                        NextAction();
+                    }
+                    return;
+                case UserInputAction.RequestInputType.NodeSelection:
+                    break;
+                case UserInputAction.RequestInputType.Selection:
+                    break;
+                case UserInputAction.RequestInputType.Int:
+                    main.cmd.SendRequestMessage(userInputAction.message);
+                    return;
+                case UserInputAction.RequestInputType.Double:
+                    break;
+                case UserInputAction.RequestInputType.Distance:
+                    break;
+                case UserInputAction.RequestInputType.Direction:
+                    main.cmd.SendRequestMessage(userInputAction.message);
+                    main.MouseDown += GetDirection;
+                    return;
+                default:
+                    break;
+            }
+            main.cmd.ErrorMessage("NextAction이 정의되지 않았습니다.");
             End();
             return;
         }
-        private void End()
+
+        private void GetDirection(object sender, MouseButtonEventArgs e)
         {
-            on = false;
+            if(e.LeftButton == MouseButtonState.Pressed)
+            {
+                Point p = e.GetPosition(main.grdMain);
+                Point3D p3 = GetPoint3dFromPoint2D(p);
+                main.MouseDown -= GetDirection;
+                main.cmd.CallCommand(p3.X + "," + p3.Y + "," + p3.Z);
+            }
         }
-        internal void PutInt(int userInputInt)
+        private Point3D directionFirstPoint;
+        internal void PutDirectionFirstPoint(Point3D userInputPoint3D)
         {
-            actionInt(userInputInt);
+            directionFirstPoint = userInputPoint3D;
+            Point p = GetPointFromPoint3D(userInputPoint3D);
+
+            main.MouseMove += GetDirection_Moving;
+            main.draw.selectionWindow.viewType = DRAW.SelectionWindow.ViewType.Line;
+            main.draw.selectionWindow.Start(p);
+
+            main.MouseDown += GetDirection_SecondPoint;
         }
+        private void GetDirection_Moving(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            Point p0 = e.GetPosition(main.grdMain);
+            main.draw.selectionWindow.Move(p0);
+        }
+        private void GetDirection_SecondPoint(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                Point p = e.GetPosition(main.grdMain);
+                Point3D p3 = GetPoint3dFromPoint2D(p);
+
+                main.MouseDown -= GetDirection_SecondPoint;
+                main.MouseMove -= GetDirection_Moving;
+                main.draw.selectionWindow.End();
+
+                Vector3D inputDirection = p3 - directionFirstPoint;
+                Put(inputDirection);
+            }
+        }
+
+        private void NextAction()
+        {
+            actionStep += 1;
+            DoAction();
+        }
+        internal void Put(int userInputInt)
+        {
+            actionAfterIntWithInt?.Invoke(userInputInt);
+            actionAfterIntWithDirInt?.Invoke(userInputVector, userInputInt);
+            NextAction();
+        }
+        internal void Put(double userInputDouble)
+        {
+            this.userInputDouble = userInputDouble;
+            NextAction();
+        }
+        internal void Put(Vector3D userInputVector)
+        {
+            this.userInputVector = userInputVector;
+            NextAction();
+        }
+
+        private void RedrawFemModel()
+        {
+            main.RedrawFemModel();
+        }
+        private Point3D GetPoint3dFromPoint2D(Point p0)
+        {
+            return main.draw.GetPoint3dOnBasePlane_FromPoint2D(p0);
+        }
+        private Point GetPointFromPoint3D(Point3D p3d)
+        {
+            return main.draw.GetPoint2D_FromPoint3D(p3d);
+        }
+
+
     }
     public class RequestUserCoordinatesInput
     {
@@ -770,6 +936,96 @@ namespace _003_FosSimulator014
 
         }
     } //사용자 입력 요청
+    public class RequestUserMouseWindowInput
+
+    {
+        private readonly MainWindow main;
+        private Point p0, p1;
+
+        internal delegate void Action(Point p0, Point p1);
+        internal Action action;
+        private bool hasFirstPoint = false;
+        private Point firstPoint;
+        internal DRAW.SelectionWindow.ViewType viewType;
+
+        internal Point FirstPoint
+        {
+            get
+            {
+                return firstPoint;
+            }
+            set
+            {
+                hasFirstPoint = true;
+                firstPoint = value;
+            }
+        }
+
+        public RequestUserMouseWindowInput(MainWindow main)
+        {
+            this.main = main;
+        }
+        internal void Start()
+        {
+            main.WindowSelectionOn(false);
+            main.draw.selectionWindow.viewType = viewType;
+
+            if (hasFirstPoint)
+            {
+                // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
+                if (main.orbiting) return;
+                p0 = FirstPoint;
+                main.draw.selectionWindow.Start(p0);
+                main.MouseMove += WindowSelection_MouseMove;
+                main.MouseUp += WindowSelection_MouseLeftUp;
+                main.MouseLeave += WindowSelectionEnd;
+            }
+            else
+            {
+                main.MouseDown += WindowSelection_MouseLeftDown;
+            }
+        }
+        private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
+        {
+            if (main.orbiting) return;
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                p0 = e.GetPosition(main.grdMain);
+                main.draw.selectionWindow.Start(p0);
+                main.MouseMove += WindowSelection_MouseMove;
+                main.MouseUp += WindowSelection_MouseLeftUp;
+                main.MouseLeave += WindowSelectionEnd;
+            }
+        }
+        private void WindowSelection_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            p1 = e.GetPosition(main.grdMain);
+            main.draw.selectionWindow.Move(p1);
+            //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
+        }
+        private void WindowSelection_MouseLeftUp(object sender, MouseButtonEventArgs e)
+        {
+            WindowSelectionEnd(null, null);
+
+            if (p0.Equals(p1)) return; //사각형 크기가 0인 경우 pass~
+
+            action(p0, p1);
+            //main.bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
+            //main.fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+            main.RedrawFemModel();
+        }
+        private void WindowSelectionEnd(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            main.draw.selectionWindow.End();
+            main.MouseMove -= WindowSelection_MouseMove;
+            main.MouseUp -= WindowSelection_MouseLeftUp;
+            main.MouseLeave -= WindowSelectionEnd;
+            main.MouseDown -= WindowSelection_MouseLeftDown;
+
+            main.WindowSelectionOn(true);
+        }
+    } //개체 선택 사용자 입력
+
     public class CommandWindow
     {
         private readonly MainWindow main;
@@ -784,6 +1040,7 @@ namespace _003_FosSimulator014
 
         private string userInput;
         private Point3D userInputPoint3D;
+        private Vector3D userInputVector3D;
         private double userInputDouble;
         private int userInputInt;
 
@@ -827,12 +1084,173 @@ namespace _003_FosSimulator014
 
             cmd = rC.Add("Line", "l"); cmd.run += main.AddLine;
 
-            cmd = rC.Add("Divide", "d"); cmd.runSelected += main.DivideElem;
+            cmd = rC.Add("Divide", "d"); cmd.run += main.DivideElem;
+
+            cmd = rC.Add("Extrude", "ex"); cmd.run += main.ExtrudeElem;
 
         } //명령어 구성!!!
+
+        private void GetCommand()
+        {
+            //입력 명령어 추출
+            userInput = "";
+            for (int i = textBox.Text.Length - cmdMark.Length; i >= 0; i--)
+            {
+                string a = textBox.Text.Substring(i, cmdMark.Length);
+                if (textBox.Text.Substring(i, cmdMark.Length).Equals(cmdMark))
+                {
+                    int cmdStrPoint = i + cmdMark.Length;
+                    userInput = textBox.Text.Substring(cmdStrPoint, textBox.Text.Length - cmdStrPoint).Trim();
+                    break;
+                }
+            }
+
+            //명령어 없이 스페이스만 누르는 경우
+            if (userInput.Equals(""))
+            {
+                if (lastCommand == null)
+                {
+                    //WriteText("직전에 실행한 명령이 없습니다.");
+                    Enter();
+                    NewLine();
+                    return;
+                }
+                if (main.requestUserCoordinatesInput.on) //이미 명령이 실행중인 경우 종료
+                {
+                    main.requestUserCoordinatesInput.End();
+                }
+                if (main.requestUserInput.On) //이미 명령이 실행중인 경우 다시 실행
+                {
+                    Enter();
+                    main.requestUserInput.DoAction();
+                }
+                else
+                {
+                    WriteText("(last command) " + lastCommand.name);
+                    Enter();
+                    ExecuteCommand(lastCommand); // 직전 명령 다시 실행
+                }
+                return;
+            }
+
+            //대문자로 변경
+            userInput = userInput.ToUpper();
+
+            //입력 명령어와 동일한 명령 실행
+            foreach (Command cmd in activeCommand.commands)
+            {
+                if (userInput.Equals(cmd.shortName.ToUpper()))
+                {
+                    WriteText(" " + cmd.name);
+                    Enter();
+                    ExecuteCommand(cmd);
+                    return;
+                }
+                if (userInput.Equals(cmd.name.ToUpper()))
+                {
+                    Enter();
+                    ExecuteCommand(cmd);
+                    return;
+                }
+            }
+
+            //입력값이 상대좌표인 경우. @로 시작하는 경우 상대좌표로 인식.
+            if (userInput.Substring(0, 1).Equals("@"))
+            {
+                int isRelativeCoordinateInput = IsRelativeCoordinateInput(userInput.Substring(1));
+                if (isRelativeCoordinateInput >= 0) Enter();
+                switch (isRelativeCoordinateInput)
+                {
+                    case 2:
+                        if (main.requestUserInput.On)
+                        {
+                            main.requestUserInput.Put(userInputVector3D);
+                        }
+                        return;
+                    case 3:
+                        if (main.requestUserInput.On)
+                        {
+                            main.requestUserInput.Put(userInputVector3D);
+                        }
+                        return;
+                    default:
+                        break;
+                }
+            }
+
+            //입력값이 좌표인 경우
+            int isCoordinateInput = IsCoordinateInput(userInput);
+            if (isCoordinateInput >= 0)
+            {
+                Enter();
+
+                //상대좌표를 요청했는데 절대좌표가 입력된 경우.
+                if (main.requestUserInput.doingActionType == UserInputAction.RequestInputType.Direction)
+                {
+                    main.requestUserInput.PutDirectionFirstPoint(userInputPoint3D);
+
+                    return;
+                }
+
+                switch (isCoordinateInput)
+                {
+                    case 0:
+                        if (main.requestUserInput.On)
+                        {
+                            main.requestUserInput.Put(userInputInt);
+                        }
+                        return;
+                    case 1:
+                        if (main.requestUserInput.On)
+                        {
+                            main.requestUserInput.Put(userInputDouble);
+                        }
+                        return;
+                    case 2:
+                        if (main.requestUserCoordinatesInput.on)
+                        {
+                            main.requestUserCoordinatesInput.Put(userInputPoint3D);
+                        }
+                        return;
+                    case 3:
+                        if (main.requestUserCoordinatesInput.on)
+                        {
+                            main.requestUserCoordinatesInput.Put(userInputPoint3D);
+                        }
+                        return;
+                    default:
+                        break;
+                }
+
+            }
+
+
+            //상대좌표를 요청했는데 입력되지 않은 경우.
+            if (main.requestUserInput.doingActionType == UserInputAction.RequestInputType.Direction)
+            {
+                WriteText(" (상대좌표값이 아닙니다. 상대좌표를 입력하세요. ex: @0,1 or @0,1,0)");
+                Enter();
+                main.requestUserInput.DoAction();
+                return;
+            }
+
+            //명령어가 없는 경우.
+            WriteText(" Unknown command.");
+            Enter();
+            if (activeCommand == rC)
+            {
+                textBox.AppendText(initialCmdMark + cmdMark);
+            }
+            else
+            {
+                WriteText(activeCommand.GetSubCmdQuaryString());
+                textBox.AppendText(cmdMark);
+            }
+            SetCursorLast();
+            return;
+        }
         private void ExecuteCommand(Command cmd)
         {
-            WriteCommandName(cmd.name);
             lastCommand = cmd;
 
             if (main.orbiting) main.TurnOnOrbit(false);
@@ -864,108 +1282,25 @@ namespace _003_FosSimulator014
         }
         private void AfterCommandRun()
         {
-            if (main.requestUserCoordinatesInput.on)
+            if(main.requestUserInput == null)
             {
-                activeCommand = rC;
-                NewLine();
-            }
-            else
-            {
-                activeCommand = rC;
-                NewLine();
-            }
-        }
-
-        private void GetCommand()
-        {
-            //입력 명령어 추출
-            userInput = "";
-            for (int i = textBox.Text.Length - cmdMark.Length; i >= 0; i--)
-            {
-                string a = textBox.Text.Substring(i, cmdMark.Length);
-                if (textBox.Text.Substring(i, cmdMark.Length).Equals(cmdMark))
-                {
-                    int cmdStrPoint = i + cmdMark.Length;
-                    userInput = textBox.Text.Substring(cmdStrPoint, textBox.Text.Length - cmdStrPoint).Trim();
-                    break;
-                }
-            }
-
-            //명령어 없이 스페이스만 누르는 경우
-            if (userInput.Equals(""))
-            {
-                if (lastCommand == null)
-                {
-                    //WriteText("직전에 실행한 명령이 없습니다.");
-                    Enter();
-                    NewLine();
-                    return;
-                }
-                if (main.requestUserCoordinatesInput.on) //이미 명령이 실행중인 경우 종료
-                {
-                    main.requestUserCoordinatesInput.End();
-                    //NewLine();
-                }
-                else
-                {
-                    ExecuteCommand(lastCommand); // 직전 명령 다시 실행
-                }
+                SetForOtherCommand();
                 return;
             }
-
-            //입력 명령어와 동일한 명령 실행
-            foreach (Command cmd in activeCommand.commands)
+            if (main.requestUserCoordinatesInput.on | main.requestUserInput.On)
             {
-                if (userInput.Equals(cmd.shortName))
-                {
-                    WriteText(" ");
-                    ExecuteCommand(cmd);
-                    return;
-                }
-            }
-
-            //입력값이 좌표인 경우
-            int isCoordinateInput = IsCoordinateInput(userInput);
-            switch (isCoordinateInput)
-            {
-                case 0:
-                    break;
-                case 1:
-                    if (main.requestUserInput.on)
-                    {
-                        main.requestUserInput.PutInt(userInputInt);
-                    }
-                    break;
-                case 2:
-                    if(main.requestUserCoordinatesInput.on)
-                    {
-                        main.requestUserCoordinatesInput.Put(userInputPoint3D);
-                    }
-                    return;
-                case 3:
-                    if (main.requestUserCoordinatesInput.on)
-                    {
-                        main.requestUserCoordinatesInput.Put(userInputPoint3D);
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            //명령어가 없는 경우.
-            WriteText(" Unknown command.");
-            Enter();
-            if (activeCommand == rC)
-            {
-                textBox.AppendText(initialCmdMark + cmdMark);
             }
             else
             {
-                WriteText(activeCommand.GetSubCmdQuaryString());
-                textBox.AppendText(cmdMark);
+                SetForOtherCommand();
             }
-            SetCursorLast();
+
             return;
+            void SetForOtherCommand()
+            {
+                activeCommand = rC;
+                NewLine();
+            }
         }
 
         /// <summary>
@@ -1023,8 +1358,8 @@ namespace _003_FosSimulator014
                 return falseResult;
             }
 
-            string restString = userInput.Substring(firstCommaLocation+1, userInput.Length - firstCommaLocation-1);
-            
+            string restString = userInput.Substring(firstCommaLocation + 1);
+
             int secondCommaLocation = restString.IndexOf(",");
             string secondString;
             double secondValue = 0;
@@ -1034,7 +1369,7 @@ namespace _003_FosSimulator014
                 try
                 {
                     secondValue = double.Parse(secondString);
-                    userInputPoint3D = new Point3D(firstValue, secondValue,0);
+                    userInputPoint3D = new Point3D(firstValue, secondValue, 0);
                     return 2;
                 }
                 catch (Exception)
@@ -1043,7 +1378,17 @@ namespace _003_FosSimulator014
                 }
             }
 
-            restString = restString.Substring(secondCommaLocation + 1, restString.Length- secondCommaLocation -1);
+            secondString = restString.Substring(0,secondCommaLocation);
+            try
+            {
+                secondValue = double.Parse(secondString);
+            }
+            catch (Exception)
+            {
+                return falseResult;
+            }
+
+            restString = restString.Substring(secondCommaLocation + 1);
             string thirdString = restString.Substring(0, restString.Length);
             double thirdValue;
             try
@@ -1057,6 +1402,12 @@ namespace _003_FosSimulator014
                 return falseResult;
             }
 
+        } //사용자 입력에 의한 userInputPoint3D 반환
+        private int IsRelativeCoordinateInput(string userInput)
+        {
+            int isCoordinateInput = IsCoordinateInput(userInput);
+            userInputVector3D = new Vector3D(userInputPoint3D.X, userInputPoint3D.Y, userInputPoint3D.Z);
+            return isCoordinateInput;
         } //사용자 입력에 의한 userInputPoint3D 반환
 
         internal class Command
@@ -1194,25 +1545,16 @@ namespace _003_FosSimulator014
             textBox.AppendText(initialCmdMark + cmdMark);
             SetCursorLast();
         }
-
-        private void WriteCommandName(string fullCommandName)
-        {
-            WriteText(fullCommandName);
-            Enter();
-        }
-
         private void BackSpace(int length = 1)
         {
             textBox.Text = textBox.Text.Substring(0, textBox.Text.Length - length);
             SetCursorLast();
         }
-
         public void Enter()
         {
             textBox.AppendText(Environment.NewLine);
             SetCursorLast();
         }
-
         private void WriteText(String text)
         {
             textBox.AppendText(text);
@@ -1227,96 +1569,20 @@ namespace _003_FosSimulator014
             WriteText(message);
             WriteText(cmdMark);
         }
+
+        internal void CallCommand(string v)
+        {
+            WriteText(v);
+            SetCursorLast();
+            GetCommand();
+        }
+
+        internal void ErrorMessage(string v)
+        {
+            WriteText("Error!!! " + v);
+            NewLine();
+        }
     } //명령창 명령어 관리
-    public class RequestUserMouseWindowInput
-
-    {
-        private readonly MainWindow main;
-        private Point p0, p1;
-
-        internal delegate void Action(Point p0, Point p1);
-        internal Action action;
-        private bool hasFirstPoint = false;
-        private Point firstPoint;
-        internal DRAW.SelectionWindow.ViewType viewType;
-
-        internal Point FirstPoint
-        {
-            get
-            {
-                return firstPoint;
-            }
-            set
-            {
-                hasFirstPoint = true;
-                firstPoint = value;
-            }
-        }
-
-        public RequestUserMouseWindowInput(MainWindow main)
-        {
-            this.main = main;
-        }
-        internal void Start()
-        {
-            main.WindowSelectionOn(false);
-            main.draw.selectionWindow.viewType = viewType;
-
-            if (hasFirstPoint)
-            {
-                // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
-                if (main.orbiting) return;
-                p0 = FirstPoint;
-                main.draw.selectionWindow.Start(p0);
-                main.MouseMove += WindowSelection_MouseMove;
-                main.MouseUp += WindowSelection_MouseLeftUp;
-                main.MouseLeave += WindowSelectionEnd;
-            }
-            else
-            {
-                main.MouseDown += WindowSelection_MouseLeftDown;
-            }
-        }
-        private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
-        {
-            if (main.orbiting) return;
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                p0 = e.GetPosition(main.grdMain);
-                main.draw.selectionWindow.Start(p0);
-                main.MouseMove += WindowSelection_MouseMove;
-                main.MouseUp += WindowSelection_MouseLeftUp;
-                main.MouseLeave += WindowSelectionEnd;
-            }
-        }
-        private void WindowSelection_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            p1 = e.GetPosition(main.grdMain);
-            main.draw.selectionWindow.Move(p1);
-            //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
-        }
-        private void WindowSelection_MouseLeftUp(object sender, MouseButtonEventArgs e)
-        {
-            WindowSelectionEnd(null, null);
-
-            if (p0.Equals(p1)) return; //사각형 크기가 0인 경우 pass~
-
-            action(p0, p1);
-            //main.bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
-            //main.fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
-            main.RedrawFemModel();
-        }
-        private void WindowSelectionEnd(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            main.draw.selectionWindow.End();
-            main.MouseMove -= WindowSelection_MouseMove;
-            main.MouseUp -= WindowSelection_MouseLeftUp;
-            main.MouseLeave -= WindowSelectionEnd;
-            main.MouseDown -= WindowSelection_MouseLeftDown;
-
-            main.WindowSelectionOn(true);
-        }
-    } //개체 선택 사용자 입력
 
     public partial class MainWindow : Window
     {
@@ -1655,7 +1921,6 @@ namespace _003_FosSimulator014
                             case 40:
                                 Plate p = (Plate)e;
                                 draw.shapes.AddBox(p.nodes[0].c0, p.nodes[2].c0 - p.nodes[0].c0);
-
                                 break;
                             case 80:
                                 Solid s = (Solid)e;
@@ -1809,6 +2074,21 @@ namespace _003_FosSimulator014
     } // 마우스 이벤트 관련
     public partial class MainWindow : Window
     {
+        private void FullScreenWindow(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
+            switch (sd.IsChecked)
+            {
+                case true:
+                    WindowState = System.Windows.WindowState.Maximized;
+                    break;
+                case false:
+                    WindowState = System.Windows.WindowState.Normal;
+                    break;
+            }
+            draw.RedrawShapes();
+        }
+
         private void ViewSW(object sender, RoutedEventArgs e)
         {
             draw.ViewSW();

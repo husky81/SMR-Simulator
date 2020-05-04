@@ -137,6 +137,7 @@ namespace _003_FosSimulator014
 
         internal void Divide(int numDivide)
         {
+            selection.Deduplicate();
             foreach (Element elem in selection.elems)
             {
                 switch (elem.type)
@@ -201,6 +202,10 @@ namespace _003_FosSimulator014
         internal Elements Extrude(Vector3D dir, int iter)
         {
             return Extrude(selection.elems, dir, iter);
+        }
+        internal void ExtrudeWoRetern(Vector3D dir, int iter)
+        {
+            Extrude(selection.elems, dir, iter);
         }
         private Elements Extrude_Frame(Frames frames, Vector3D dir, int iter)
         {
@@ -487,10 +492,12 @@ namespace _003_FosSimulator014
                 return nodes.Count + elems.Count;
             }
         }
+
         public FemSelection(FEM fem)
         {
             this.fem = fem;
         }
+
         internal void AddNode(Node node)
         {
             node.selected = true;
@@ -529,6 +536,11 @@ namespace _003_FosSimulator014
         internal void Clear()
         {
             DeselectAll();
+        }
+        internal void Deduplicate()
+        {
+            nodes.Deduplicate();
+            elems.Deduplicate();
         }
     }
     class FemLoads : List<FemLoad>
@@ -825,8 +837,7 @@ namespace _003_FosSimulator014
                 node.UpdateC1();
             }
         }
-
-        internal void RemoveDuplicates()
+        internal void Deduplicate()
         {
             Nodes list = this;
             int count = list.Count;
@@ -1010,7 +1021,7 @@ namespace _003_FosSimulator014
             {
                 connectedNodes.AddRange(element.nodes);
             }
-            connectedNodes.RemoveDuplicates();
+            connectedNodes.Deduplicate();
             return connectedNodes;
         } // Elements와 연결된 모든 노드 찾기
         internal static Nodes ConnectedNodes(Elements elems)
@@ -1023,6 +1034,24 @@ namespace _003_FosSimulator014
             //connectedNodes.RemoveDuplicates();
             return connectedNodes;
         } // Elements와 연결된 모든 노드 찾기
+
+        internal void Deduplicate()
+        {
+            Elements list = this;
+            int count = list.Count;
+            for (int i = 0; i < count - 1; i++)
+            {
+                for (int j = i + 1; j < count; j++)
+                {
+                    if (list[i] == list[j])
+                    {
+                        list.RemoveAt(j);
+                        j -= 1;
+                        count -= 1;
+                    }
+                }
+            }
+        }
     }
     class Element
     {
