@@ -97,6 +97,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Bck3D.cs" />
+    <Compile Include="CommandWindow.cs" />
     <Compile Include="GeneralFunctions.cs" />
     <Compile Include="Shapes.cs" />
     <Compile Include="SMR.cs" />
