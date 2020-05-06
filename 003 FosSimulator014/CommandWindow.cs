@@ -157,17 +157,20 @@ namespace _003_FosSimulator014
                 {
                     main.requestUserCoordinatesInput.End();
                 }
-                if (main.requestUserInput.On) //이미 명령이 실행중인 경우 다시 실행
+
+                if (main.requestUserInput != null)
                 {
-                    Enter();
-                    main.requestUserInput.DoAction();
+                    if (main.requestUserInput.On) //이미 명령이 실행중인 경우 다시 실행
+                    {
+                        Enter();
+                        main.requestUserInput.DoAction();
+                        return;
+                    }
                 }
-                else
-                {
-                    WriteText("(last command) " + lastCommand.name);
-                    Enter();
-                    ExecuteCommand(lastCommand); // 직전 명령 다시 실행
-                }
+
+                WriteText("(last command) " + lastCommand.name);
+                Enter();
+                ExecuteCommand(lastCommand); // 직전 명령 다시 실행
                 return;
             }
 
