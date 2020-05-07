@@ -36,7 +36,6 @@ namespace _003_FosSimulator014
         internal inputDirInt actionAfterIntWithDirInt;
         internal delegate void inputDir(Vector3D dir);
         internal inputDir actionAfterDirWithDir;
-        
 
         public CommandWindow(MainWindow mainWindow, System.Windows.Controls.TextBox textBox)
         {
@@ -129,7 +128,7 @@ namespace _003_FosSimulator014
             subCmd = cmd.Add("All", "a"); subCmd.run += main.EraseAll;
             subCmd = cmd.Add("Fence", "f"); subCmd.run += main.EraseFence;
 
-            cmd = rC.Add("Line", "l"); cmd.run += main.AddLine;
+            cmd = rC.Add("Line", "l"); cmd.run += main.AddLine001;
 
             cmd = rC.Add("Divide", "d"); cmd.run += main.DivideElem;
 
@@ -137,6 +136,7 @@ namespace _003_FosSimulator014
 
         } //명령어 구성!!!
 
+        
         private void GetCommand()
         {
             //명령창에서 사용자가 입력한 명령어 반환
@@ -185,7 +185,7 @@ namespace _003_FosSimulator014
             }
 
             //사용자가 입력한 값의 형식에 따라서 구분
-            InputTypes userInputType = GetTypeOfUserInput(userInput);
+            InputTypes userInputType = GetTypeOfUserInput001(userInput);
             switch (requestedInputType)
             {
                 case InputTypes.None:
@@ -198,8 +198,9 @@ namespace _003_FosSimulator014
                             actionAfterIntWithInt(userInputInt);
                             actionAfterIntWithInt = null;
                         }
+                        return;
                     }
-                    return;
+                    break;
                 case InputTypes.Double:
                     break;
                 case InputTypes.Point:
@@ -216,7 +217,8 @@ namespace _003_FosSimulator014
                     }
                     if (userInputType == InputTypes.Point)
                     {
-                        main.requestUserInput.PutDirectionFirstPoint(userInputPoint3D);
+                        //상대좌표를 요청했는데 절대좌표가 입력된 경우.
+                        PutDirectionFirstPoint(userInputPoint3D);
                         return;
                     }
                     else
@@ -249,92 +251,114 @@ namespace _003_FosSimulator014
             SetCursorLast();
             return;
 
-            InputTypes GetTypeOfUserInput(string uInp)
-            {
-                //입력값이 상대좌표인 경우. @로 시작하는 경우 상대좌표로 인식.
-                if (uInp.Substring(0, 1).Equals("@"))
-                {
-                    int isRelativeCoordinateInput = IsRelativeCoordinateInput(uInp.Substring(1));
-                    if (isRelativeCoordinateInput >= 0) Enter();
-                    switch (isRelativeCoordinateInput)
-                    {
-                        case 2:
-                            if (main.requestUserInput.On)
-                            {
-                                main.requestUserInput.Put(userInputVector3D);
-                            }
-                            return InputTypes.Direction;
-                        case 3:
-                            if (main.requestUserInput.On)
-                            {
-                                main.requestUserInput.Put(userInputVector3D);
-                            }
-                            return InputTypes.Direction;
-                        default:
-                            break;
-                    }
-                }
 
-                //입력값이 좌표이거나 double, int 인 경우
-                int isCoordinateInput = IsCoordinateInput(uInp);
-                if (isCoordinateInput >= 0)
-                {
-                    Enter();
-
-
-                    switch (isCoordinateInput)
-                    {
-                        case 0:
-                            if (main.requestUserInput.On)
-                            {
-                                main.requestUserInput.Put(userInputInt);
-                            }
-                            return InputTypes.Int;
-                        case 1:
-                            if (main.requestUserInput.On)
-                            {
-                                main.requestUserInput.Put(userInputDouble);
-                            }
-                            return InputTypes.Double;
-                        case 2:
-                            if (main.requestUserCoordinatesInput.on)
-                            {
-                                main.requestUserCoordinatesInput.Put(userInputPoint3D);
-                            }
-                            return InputTypes.Point;
-                        case 3:
-                            if (main.requestUserCoordinatesInput.on)
-                            {
-                                main.requestUserCoordinatesInput.Put(userInputPoint3D);
-                            }
-                            return InputTypes.Point; ;
-                        default:
-                            break;
-                    }
-
-                }
-                return InputTypes.None;
-            }
-
-        }
-
-        private Command FindCommandFromUserInput(string userInput)
+        } // 사용자가 입력한 명령 실행. 커멘드 창에서 space, enter를 누르면 실행됨.
+        private InputTypes GetTypeOfUserInput001(string uInp)
         {
-            //입력 명령어와 동일한 명령 실행
-            foreach (Command cmd in activeCommand.commands)
+            //입력값이 상대좌표인 경우. @로 시작하는 경우 상대좌표로 인식.
+            if (uInp.Substring(0, 1).Equals("@"))
             {
-                if (userInput.Equals(cmd.shortName.ToUpper()))
+                int isRelativeCoordinateInput = IsRelativeCoordinateInput(uInp.Substring(1));
+                if (isRelativeCoordinateInput >= 0) Enter();
+                switch (isRelativeCoordinateInput)
                 {
-                    return cmd;
-                }
-                if (userInput.Equals(cmd.name.ToUpper()))
-                {
-                    return cmd;
+                    case 2:
+                        return InputTypes.Direction;
+                    case 3:
+                        return InputTypes.Direction;
+                    default:
+                        break;
                 }
             }
-            return null;
-        }
 
+            //입력값이 좌표이거나 double, int 인 경우
+            int isCoordinateInput = IsCoordinateInput(uInp);
+            if (isCoordinateInput >= 0)
+            {
+                Enter();
+
+                switch (isCoordinateInput)
+                {
+                    case 0:
+                        return InputTypes.Int;
+                    case 1:
+                        return InputTypes.Double;
+                    case 2:
+                        return InputTypes.Point;
+                    case 3:
+                        return InputTypes.Point; ;
+                    default:
+                        break;
+                }
+
+            }
+            return InputTypes.None;
+        }
+        private InputTypes GetTypeOfUserInput000(string uInp)
+        {
+            //입력값이 상대좌표인 경우. @로 시작하는 경우 상대좌표로 인식.
+            if (uInp.Substring(0, 1).Equals("@"))
+            {
+                int isRelativeCoordinateInput = IsRelativeCoordinateInput(uInp.Substring(1));
+                if (isRelativeCoordinateInput >= 0) Enter();
+                switch (isRelativeCoordinateInput)
+                {
+                    case 2:
+                        if (main.requestUserInput.On)
+                        {
+                            main.requestUserInput.Put(userInputVector3D);
+                        }
+                        return InputTypes.Direction;
+                    case 3:
+                        if (main.requestUserInput.On)
+                        {
+                            main.requestUserInput.Put(userInputVector3D);
+                        }
+                        return InputTypes.Direction;
+                    default:
+                        break;
+                }
+            }
+
+            //입력값이 좌표이거나 double, int 인 경우
+            int isCoordinateInput = IsCoordinateInput(uInp);
+            if (isCoordinateInput >= 0)
+            {
+                Enter();
+
+                switch (isCoordinateInput)
+                {
+                    case 0:
+                        if (main.requestUserInput.On)
+                        {
+                            main.requestUserInput.Put(userInputInt);
+                        }
+                        return InputTypes.Int;
+                    case 1:
+                        if (main.requestUserInput.On)
+                        {
+                            main.requestUserInput.Put(userInputDouble);
+                        }
+                        return InputTypes.Double;
+                    case 2:
+                        if (main.requestUserCoordinatesInput.on)
+                        {
+                            main.requestUserCoordinatesInput.Put(userInputPoint3D);
+                        }
+                        return InputTypes.Point;
+                    case 3:
+                        if (main.requestUserCoordinatesInput.on)
+                        {
+                            main.requestUserCoordinatesInput.Put(userInputPoint3D);
+                        }
+                        return InputTypes.Point; ;
+                    default:
+                        break;
+                }
+
+            }
+            return InputTypes.None;
+        }
         private string GetCommandTextFromCommandWindowText()
         {
             //커맨드 창에 입력된 명령어 추출
@@ -351,61 +375,22 @@ namespace _003_FosSimulator014
             }
             return userInput;
         }
-
-        private void ExecuteCommand(Command cmd)
+        private Command FindCommandFromUserInput(string userInput)
         {
-            lastCommand = cmd;
-
-            if (main.orbiting) main.TurnOnOrbit(false);
-
-            if (main.fem.selection.Count > 0 & cmd.runSelected != null) //선택된 개체가 있고, cmd.runSelected를 지정한 경우.
+            //입력 명령어와 동일한 명령 실행
+            foreach (Command cmd in activeCommand.commands)
             {
-                WriteText("선택된 개체의 " + cmd.name + "을(를) 실행합니다.");
-                Enter();
-                cmd.runSelected();
-                AfterCommandRun();
-                return;
+                if (userInput.Equals(cmd.shortName.ToUpper()))
+                {
+                    return cmd;
+                }
+                if (userInput.Equals(cmd.name.ToUpper()))
+                {
+                    return cmd;
+                }
             }
-            if (cmd.run != null) //cmd.run이 지정된 경우
-            {
-                cmd.run();
-                AfterCommandRun();
-                return;
-            }
-            if (cmd.commands.Count == 0) //서브명령 개수가 0인 경우
-            {
-                SendRequestMessage("개체를 선택하고 실행하세요.");
-                return;
-            }
-
-            //서브명령 선택 요청
-            WriteText(cmd.GetSubCmdQuaryString());
-            activeCommand = cmd;
-            WriteText(cmdMark);
+            return null;
         }
-        private void AfterCommandRun()
-        {
-            if (main.requestUserInput == null)
-            {
-                SetForOtherCommand();
-                return;
-            }
-            if (main.requestUserCoordinatesInput.on | main.requestUserInput.On)
-            {
-            }
-            else
-            {
-                SetForOtherCommand();
-            }
-
-            return;
-            void SetForOtherCommand()
-            {
-                activeCommand = rC;
-                NewLine();
-            }
-        }
-
         /// <summary>
         ///  userInput의 입력값 종류 판별값 반환.
         ///  0: int
@@ -513,6 +498,60 @@ namespace _003_FosSimulator014
             return isCoordinateInput;
         } //사용자 입력에 의한 userInputPoint3D 반환
 
+        private void ExecuteCommand(Command cmd)
+        {
+            lastCommand = cmd;
+
+            if (main.orbiting) main.TurnOnOrbit(false);
+
+            if (main.fem.selection.Count > 0 & cmd.runSelected != null) //선택된 개체가 있고, cmd.runSelected를 지정한 경우.
+            {
+                WriteText("선택된 개체의 " + cmd.name + "을(를) 실행합니다.");
+                Enter();
+                cmd.runSelected();
+                AfterCommandRun();
+                return;
+            }
+            if (cmd.run != null) //cmd.run이 지정된 경우
+            {
+                cmd.run();
+                AfterCommandRun();
+                return;
+            }
+            if (cmd.commands.Count == 0) //서브명령 개수가 0인 경우
+            {
+                SendRequestMessage("개체를 선택하고 실행하세요.");
+                return;
+            }
+
+            //서브명령 선택 요청
+            WriteText(cmd.GetSubCmdQuaryString());
+            activeCommand = cmd;
+            WriteText(cmdMark);
+        }
+        private void AfterCommandRun()
+        {
+            if (main.requestUserInput == null)
+            {
+                SetForOtherCommand();
+                return;
+            }
+            if (main.requestUserCoordinatesInput.on | main.requestUserInput.On)
+            {
+            }
+            else
+            {
+                SetForOtherCommand();
+            }
+
+            return;
+            void SetForOtherCommand()
+            {
+                activeCommand = rC;
+                NewLine();
+            }
+        }
+
         private void Tbx_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             switch (e.Key)
@@ -541,11 +580,11 @@ namespace _003_FosSimulator014
                 case Key.Escape:
                     if (activeCommand != rC)
                     {
-                        Cancel();
+                        Cancel_EscKey();
                     }
                     else
                     {
-                        Cancel();
+                        Cancel_EscKey();
                     }
                     break;
             }
@@ -566,7 +605,7 @@ namespace _003_FosSimulator014
             }
         }
 
-        private void Cancel()
+        private void Cancel_EscKey()
         {
             WriteText("*Cancel*");
             Enter();
@@ -584,14 +623,6 @@ namespace _003_FosSimulator014
             textBox.AppendText(" ");
             SetCursorLast();
         }
-
-
-        public void NewLine()
-        {
-            textBox.Focus();
-            textBox.AppendText(initialCmdMark + cmdMark);
-            SetCursorLast();
-        }
         private void BackSpace(int length = 1)
         {
             textBox.Text = textBox.Text.Substring(0, textBox.Text.Length - length);
@@ -600,6 +631,12 @@ namespace _003_FosSimulator014
         public void Enter()
         {
             textBox.AppendText(Environment.NewLine);
+            SetCursorLast();
+        }
+        public void NewLine()
+        {
+            textBox.Focus();
+            textBox.AppendText(initialCmdMark + cmdMark);
             SetCursorLast();
         }
         private void WriteText(String text)
@@ -611,25 +648,28 @@ namespace _003_FosSimulator014
         {
             textBox.Select(textBox.Text.Length, 0);
         }
+
         public void SendRequestMessage(string message)
         {
             WriteText(message);
             WriteText(cmdMark);
         }
-
-        internal void CallCommand(string v)
-        {
-            WriteText(v);
-            SetCursorLast();
-            GetCommand();
-        }
-
         internal void ErrorMessage(string v)
         {
             WriteText("Error!!! " + v);
             NewLine();
         }
+        internal void CallCommand(string v)
+        {
+            WriteText(v);
+            SetCursorLast();
+            GetCommand();
+        } //외부에서 명령어 실행 요청
 
+        /// <summary>
+        /// 사용자에게 Int 값을 입력하도록 요청.
+        /// </summary>
+        /// <param name="message"></param>
         internal void RequestInput_Int(string message)
         {
             WriteText(message + cmdMark);
@@ -637,6 +677,10 @@ namespace _003_FosSimulator014
             requestedInputType = InputTypes.Int;
         }
 
+        /// <summary>
+        /// 사용자에게 Vector3D 값을 입력하도록 요청. 마우스 혹은 키보드 입력 가능함.
+        /// </summary>
+        /// <param name="message"></param>
         internal void RequestInput_Direction(string message)
         {
             WriteText(message + cmdMark);
@@ -652,7 +696,6 @@ namespace _003_FosSimulator014
                 Point3D p3 = GetPoint3dFromPoint2D(p);
                 main.MouseDown -= GetDirection;
                 main.cmd.CallCommand(p3.X + "," + p3.Y + "," + p3.Z);
-
             }
         }
         private Point3D directionFirstPoint;
@@ -665,21 +708,21 @@ namespace _003_FosSimulator014
             main.draw.selectionWindow.viewType = DRAW.SelectionWindow.ViewType.Line;
             main.draw.selectionWindow.Start(p);
 
-            main.MouseDown += GetDirection_SecondPoint;
+            main.MouseDown += PutDirection_SecondPoint;
         }
         private void GetDirection_Moving(object sender, System.Windows.Input.MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
             main.draw.selectionWindow.Move(p0);
         }
-        private void GetDirection_SecondPoint(object sender, MouseButtonEventArgs e)
+        private void PutDirection_SecondPoint(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
 
-                main.MouseDown -= GetDirection_SecondPoint;
+                main.MouseDown -= PutDirection_SecondPoint;
                 main.MouseMove -= GetDirection_Moving;
                 main.draw.selectionWindow.End();
 

@@ -27,7 +27,7 @@ namespace _003_FosSimulator014
         public readonly DRAW draw;
         public readonly CommandWindow cmd;
         internal readonly RequestUserCoordinatesInput requestUserCoordinatesInput;
-        internal RequestUserInput requestUserInput;
+        internal RequestUserInput002 requestUserInput;
 
         public MainWindow()
         {
@@ -339,7 +339,7 @@ namespace _003_FosSimulator014
             
         }
 
-        internal void AddLine()
+        internal void AddLine000()
         {
             requestUserCoordinatesInput.Reset(-1);
             requestUserCoordinatesInput.actionEveryLastTwoPoints = AddLineFem;
@@ -391,40 +391,40 @@ namespace _003_FosSimulator014
         }
         internal void DivideElem()
         {
-            requestUserInput = new RequestUserInput(this);
+            requestUserInput = new RequestUserInput002(this);
             requestUserInput.RequestElemSelection("분할할 개체를 선택하세요.");
             requestUserInput.RequestInt("몇개로 나눌까요?");
             requestUserInput.actionAfterIntWithInt += fem.Divide;
             requestUserInput.Start();
-
-            //if (fem.selection.elems.Count == 0)
-            //{
-            //    Elements elems = RequestSelectElement("분할할 개체를 선택하세요.");
-            //    if (elems.Count == 0)
-            //    {
-            //        cmd.sendMessage("선택된 개체가 없습니다.");
-            //        cmd.NewLine();
-            //        return;
-            //    }
-            //}
-            //int dividedNumber = RequestInt("몇개로 나눌까요?");
-            //fem.Divide(dividedNumber);
         }
         private void FemExtrude(object sender, RoutedEventArgs e)
         {
-            Vector3D dir = new Vector3D(0, 1, 0);
-            Elements ee = fem.Extrude(dir, 2);
-            RedrawFemModel();
+            cmd.CallCommand("Extrude");
         }
         internal void ExtrudeElem()
         {
-            requestUserInput = new RequestUserInput(this);
+            requestUserInput = new RequestUserInput002(this);
             requestUserInput.RequestElemSelection("연장시킬 개체를 선택하세요.");
             requestUserInput.RequestDirection("연장시킬 방향을 지정하세요.");
             requestUserInput.RequestInt("몇번 반복할까요?");
             requestUserInput.actionAfterIntWithDirInt += fem.ExtrudeWoRetern;
             requestUserInput.Start();
         }
+        internal void AddLineFem3D(Point3D p0, Point3D p1)
+        {
+            Node n1 = fem.model.nodes.Add(p0);
+            Node n2 = fem.model.nodes.Add(p1);
+            fem.model.elems.AddFrame(n1, n2);
+        }
+        internal void AddLine001()
+        {
+            requestUserInput = new RequestUserInput002(this);
+            requestUserInput.viewType = DRAW.SelectionWindow.ViewType.Line;
+            requestUserInput.RequestPoints("절점을 입력하세요.");
+            requestUserInput.actionEveryLastTwoPoints = AddLineFem3D;
+            requestUserInput.Start();
+        }
+
     }
 
     internal class UserInputAction
@@ -446,10 +446,235 @@ namespace _003_FosSimulator014
         internal string message;
         internal bool hasAction;
     }
-    public class RequestUserInput
+    public class RequestUserInput002
     {
         private MainWindow main;
-        public RequestUserInput(MainWindow main)
+        public RequestUserInput002(MainWindow main)
+        {
+            this.main = main;
+        }
+
+        private bool on = false;
+        internal bool On
+        {
+            get
+            {
+                return on;
+            }
+            set
+            {
+                if (value != on)
+                {
+                    TurnOnMainWindowEvents(on);
+                    main.KeyDown += ExitCommand_EscKey;
+                }
+                on = value;
+            }
+        }
+        internal void End()
+        {
+            On = false;
+            TurnOffAllEvents();
+            RedrawFemModel();
+            main.cmd.NewLine();
+        }
+        internal void End_Cancle()
+        {
+            On = false;
+            TurnOffAllEvents();
+            RedrawFemModel();
+        }
+        private void TurnOffAllEvents()
+        {
+            main.KeyDown -= ExitCommand_EscKey;
+        }
+        private void ExitCommand_EscKey(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                End_Cancle();
+            }
+        }
+
+        internal UserInputAction.RequestInputType doingActionType;
+
+        private void TurnOnMainWindowEvents(bool on)
+        {
+            main.WindowSelectionOn(on);
+            main.TurnOnDeselectAll_Esc(on);
+        }
+
+        internal delegate void inputInt(int n);
+        internal inputInt actionAfterIntWithInt;
+        internal delegate void inputDirInt(Vector3D dir, int n);
+        internal inputDirInt actionAfterIntWithDirInt;
+        internal delegate void inputP3dP3d(Point3D p0, Point3D p1);
+        internal inputP3dP3d actionEveryLastTwoPoints;
+
+        private UserInputAction LastAction
+        {
+            get
+            {
+                return userInputActions[userInputActions.Count - 1];
+            }
+        }
+        private readonly List<UserInputAction> userInputActions = new List<UserInputAction>();
+        private int actionStep = 0;
+        internal DRAW.SelectionWindow.ViewType viewType;
+
+        private Vector3D userInputVector;
+        private double userInputDouble;
+        private Point3D userInputPoint;
+
+        internal void RequestInt(string message)
+        {
+            UserInputAction userInputAction = new UserInputAction
+            {
+                requestInputType = UserInputAction.RequestInputType.Int,
+                message = message
+            };
+            userInputActions.Add(userInputAction);
+        }
+        internal void RequestDirection(string message)
+        {
+            UserInputAction userInputAction = new UserInputAction
+            {
+                requestInputType = UserInputAction.RequestInputType.Direction,
+                message = message
+            };
+            userInputActions.Add(userInputAction);
+        }
+        internal void RequestElemSelection(string message)
+        {
+            UserInputAction userInputAction = new UserInputAction
+            {
+                requestInputType = UserInputAction.RequestInputType.ElemSelection,
+                message = message
+            };
+            userInputActions.Add(userInputAction);
+        }
+        internal void RequestPoints(string message)
+        {
+            UserInputAction userInputAction = new UserInputAction
+            {
+                requestInputType = UserInputAction.RequestInputType.Points,
+                message = message
+            };
+            userInputActions.Add(userInputAction);
+        }
+
+        internal void Start()
+        {
+            actionStep = -1;
+            On = true;
+            NextAction();
+        }
+        private void NextAction()
+        {
+            actionStep += 1;
+            DoAction();
+        }
+        internal void DoAction()
+        {
+            if (actionStep >= userInputActions.Count)
+            {
+                End();
+                return;
+            }
+            UserInputAction userInputAction = userInputActions[actionStep];
+            doingActionType = userInputAction.requestInputType;
+            switch (userInputAction.requestInputType)
+            {
+                case UserInputAction.RequestInputType.Point:
+                    break;
+                case UserInputAction.RequestInputType.TwoPoints:
+                    break;
+                case UserInputAction.RequestInputType.Points:
+                    main.cmd.RequestInput_Points(userInputAction.message);
+                    main.cmd.actionAfterPoint += Put_Points;
+                    break;
+                case UserInputAction.RequestInputType.ElemSelection:
+                    if (main.fem.selection.elems.Count == 0)
+                    {
+                        main.cmd.SendRequestMessage(userInputAction.message);
+                        End();
+                    }
+                    else
+                    {
+                        NextAction();
+                    }
+                    return;
+                case UserInputAction.RequestInputType.NodeSelection:
+                    break;
+                case UserInputAction.RequestInputType.Selection:
+                    break;
+                case UserInputAction.RequestInputType.Int:
+                    main.cmd.RequestInput_Int(userInputAction.message);
+                    main.cmd.actionAfterIntWithInt += Put;
+                    return;
+                case UserInputAction.RequestInputType.Double:
+                    break;
+                case UserInputAction.RequestInputType.Distance:
+                    break;
+                case UserInputAction.RequestInputType.Direction:
+                    //main.cmd.SendRequestMessage(userInputAction.message);
+                    //main.MouseDown += GetDirection;
+                    main.cmd.RequestInput_Direction(userInputAction.message);
+                    main.cmd.actionAfterDirWithDir += Put;
+                    return;
+                default:
+                    break;
+            }
+            main.cmd.ErrorMessage("NextAction이 정의되지 않았습니다.");
+            End();
+            return;
+        }
+
+        internal void Put(int userInputInt)
+        {
+            actionAfterIntWithInt?.Invoke(userInputInt);
+            actionAfterIntWithDirInt?.Invoke(userInputVector, userInputInt);
+            NextAction();
+        }
+        internal void Put(double userInputDouble)
+        {
+            this.userInputDouble = userInputDouble;
+            NextAction();
+        }
+        internal void Put(Vector3D userInputVector)
+        {
+            this.userInputVector = userInputVector;
+            NextAction();
+        }
+        internal void Put(Point3D userInputPoint)
+        {
+            this.userInputPoint = userInputPoint;
+            NextAction();
+        }
+        internal void Put_Points(Point3D userInputPoint)
+        {
+            this.userInputPoint = userInputPoint;
+            DoAction();
+        }
+
+        private void RedrawFemModel()
+        {
+            main.RedrawFemModel();
+        }
+        private Point3D GetPoint3dFromPoint2D(Point p0)
+        {
+            return main.draw.GetPoint3dOnBasePlane_FromPoint2D(p0);
+        }
+        private Point GetPointFromPoint3D(Point3D p3d)
+        {
+            return main.draw.GetPoint2D_FromPoint3D(p3d);
+        }
+
+    }
+    public class RequestUserInput001
+    {
+        private MainWindow main;
+        public RequestUserInput001(MainWindow main)
         {
             this.main = main;
         }
@@ -693,10 +918,10 @@ namespace _003_FosSimulator014
             return main.draw.GetPoint2D_FromPoint3D(p3d);
         }
     }
-    public class RequestUserInput_old
+    public class RequestUserInput000
     {
         private MainWindow main;
-        public RequestUserInput_old(MainWindow main)
+        public RequestUserInput000(MainWindow main)
         {
             this.main = main;
         }
@@ -1175,8 +1400,11 @@ namespace _003_FosSimulator014
         }
         internal void PanMove(Vector mov)
         {
-            points[points.Count - 1] = beforPanMove + mov;
-            main.draw.selectionWindow.wP0 = beforPanMove + mov;
+            if (points.Count >= 1)
+            {
+                points[points.Count - 1] = beforPanMove + mov;
+                main.draw.selectionWindow.wP0 = beforPanMove + mov;
+            }
         }
         internal void PanMoveEnd()
         {
