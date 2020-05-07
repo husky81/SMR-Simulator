@@ -525,6 +525,7 @@ namespace _003_FosSimulator014
         private Vector3D userInputVector;
         private double userInputDouble;
         private Point3D userInputPoint;
+        private List<Point3D> userInputPoints;
 
         internal void RequestInt(string message)
         {
@@ -591,7 +592,8 @@ namespace _003_FosSimulator014
                     break;
                 case UserInputAction.RequestInputType.Points:
                     main.cmd.RequestInput_Points(userInputAction.message);
-                    main.cmd.actionAfterPoint += Put_Points;
+                    main.cmd.actionAfterPoint += Put_ContinuousPoint;
+                    main.cmd.actionAfterPoints += Put;
                     break;
                 case UserInputAction.RequestInputType.ElemSelection:
                     if (main.fem.selection.elems.Count == 0)
@@ -651,10 +653,15 @@ namespace _003_FosSimulator014
             this.userInputPoint = userInputPoint;
             NextAction();
         }
-        internal void Put_Points(Point3D userInputPoint)
+        internal void Put_ContinuousPoint(Point3D userInputPoint)
         {
             this.userInputPoint = userInputPoint;
             DoAction();
+        }
+        internal void Put(List<Point3D> userInputPoints)
+        {
+            this.userInputPoints = userInputPoints;
+            NextAction();
         }
 
         private void RedrawFemModel()

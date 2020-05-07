@@ -17,25 +17,11 @@ namespace _003_FosSimulator014
         /// <summary>
         /// 모든 command의 상위 command, root command.
         /// </summary>
-        private readonly Command rC;
+        private readonly Command rootCommand;
         private Command activeCommand;
         private Command lastCommand;
         private readonly string initialCmdMark = "Command";
         private readonly string cmdMark = ": ";
-
-        private string userInput;
-        private Point3D userInputPoint3D;
-        private Vector3D userInputVector3D;
-        private double userInputDouble;
-        private int userInputInt;
-        private InputTypes requestedInputType = InputTypes.None;
-
-        internal delegate void inputInt(int n);
-        internal inputInt actionAfterIntWithInt;
-        internal delegate void inputDirInt(Vector3D dir, int n);
-        internal inputDirInt actionAfterIntWithDirInt;
-        internal delegate void inputDir(Vector3D dir);
-        internal inputDir actionAfterDirWithDir;
 
         public CommandWindow(MainWindow mainWindow, System.Windows.Controls.TextBox textBox)
         {
@@ -43,8 +29,8 @@ namespace _003_FosSimulator014
             Command.main = mainWindow;
             this.textBox = textBox;
 
-            rC = new Command("Main");
-            activeCommand = rC;
+            rootCommand = new Command("Main");
+            activeCommand = rootCommand;
 
             Clear();
             SetCommandStructure();
@@ -113,26 +99,26 @@ namespace _003_FosSimulator014
         private void SetCommandStructure()
         {
             Command cmd, subCmd;
-            cmd = rC.Add("Regen", "re"); cmd.run += main.RedrawFemModel;
-            cmd = rC.Add("Redraw", "r"); cmd.run += main.RedrawShapes;
+            cmd = rootCommand.Add("Regen", "re"); cmd.run += main.RedrawFemModel;
+            cmd = rootCommand.Add("Redraw", "r"); cmd.run += main.RedrawShapes;
 
-            cmd = rC.Add("Zoom", "z");
+            cmd = rootCommand.Add("Zoom", "z");
             subCmd = cmd.Add("All", "a"); subCmd.run += main.ZoomAll;
             subCmd = cmd.Add("Extents", "e"); subCmd.run += main.ZoomExtents;
             subCmd = cmd.Add("Window", "w"); subCmd.run += main.ZoomWindow;
 
-            cmd = rC.Add("Circle", "ci"); subCmd.run += main.DrawCicleCenterRadius;
+            cmd = rootCommand.Add("Circle", "ci"); subCmd.run += main.DrawCicleCenterRadius;
             subCmd = cmd.Add("Radius", "r"); subCmd.run += main.DrawCicle;
 
-            cmd = rC.Add("Erase", "e"); cmd.runSelected += main.EraseSelected;
+            cmd = rootCommand.Add("Erase", "e"); cmd.runSelected += main.EraseSelected;
             subCmd = cmd.Add("All", "a"); subCmd.run += main.EraseAll;
             subCmd = cmd.Add("Fence", "f"); subCmd.run += main.EraseFence;
 
-            cmd = rC.Add("Line", "l"); cmd.run += main.AddLine001;
+            cmd = rootCommand.Add("Line", "l"); cmd.run += main.AddLine001;
 
-            cmd = rC.Add("Divide", "d"); cmd.run += main.DivideElem;
+            cmd = rootCommand.Add("Divide", "d"); cmd.run += main.DivideElem;
 
-            cmd = rC.Add("Extrude", "ex"); cmd.run += main.ExtrudeElem;
+            cmd = rootCommand.Add("Extrude", "ex"); cmd.run += main.ExtrudeElem;
 
         } //명령어 구성!!!
 
@@ -232,6 +218,13 @@ namespace _003_FosSimulator014
                     break;
                 case InputTypes.Dist:
                     break;
+                case InputTypes.Points:
+                    if(userInputType == InputTypes.Point)
+                    {
+                        PutPoints_FirstPoint(userInputPoint3D);
+                        return;
+                    }
+                    break;
                 default:
                     break;
             }
@@ -239,7 +232,7 @@ namespace _003_FosSimulator014
             //명령어가 없는 경우.
             WriteText(" Unknown command.");
             Enter();
-            if (activeCommand == rC)
+            if (activeCommand == rootCommand)
             {
                 textBox.AppendText(initialCmdMark + cmdMark);
             }
@@ -547,7 +540,7 @@ namespace _003_FosSimulator014
             return;
             void SetForOtherCommand()
             {
-                activeCommand = rC;
+                activeCommand = rootCommand;
                 NewLine();
             }
         }
@@ -578,7 +571,7 @@ namespace _003_FosSimulator014
             switch (e.Key)
             {
                 case Key.Escape:
-                    if (activeCommand != rC)
+                    if (activeCommand != rootCommand)
                     {
                         Cancel_EscKey();
                     }
@@ -610,7 +603,7 @@ namespace _003_FosSimulator014
             WriteText("*Cancel*");
             Enter();
             NewLine();
-            activeCommand = rC;
+            activeCommand = rootCommand;
         }
         private void Clear()
         {
@@ -666,6 +659,25 @@ namespace _003_FosSimulator014
             GetCommand();
         } //외부에서 명령어 실행 요청
 
+        //입력요청 관련
+        private InputTypes requestedInputType = InputTypes.None;
+        private string userInput;
+        private Point3D userInputPoint3D;
+        private Vector3D userInputVector3D;
+        private double userInputDouble;
+        private int userInputInt;
+
+        internal delegate void inputInt(int n);
+        internal inputInt actionAfterIntWithInt;
+        internal delegate void inputDirInt(Vector3D dir, int n);
+        internal inputDirInt actionAfterIntWithDirInt;
+        internal delegate void inputDir(Vector3D dir);
+        internal inputDir actionAfterDirWithDir;
+        internal delegate void inputPoint(Point3D p0);
+        internal inputPoint actionAfterPoint;
+        internal delegate void inputPoints(List<Point3D> pointList);
+        internal inputPoints actionAfterPoints;
+
         /// <summary>
         /// 사용자에게 Int 값을 입력하도록 요청.
         /// </summary>
@@ -675,6 +687,58 @@ namespace _003_FosSimulator014
             WriteText(message + cmdMark);
             SetCursorLast();
             requestedInputType = InputTypes.Int;
+        }
+
+        internal void RequestInput_Points(string message)
+        {
+            WriteText(message + cmdMark);
+            SetCursorLast();
+            requestedInputType = InputTypes.Points;
+            main.MouseDown += GetPoint;
+        }
+        private void GetPoint(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                Point p = e.GetPosition(main.grdMain);
+                Point3D p3 = GetPoint3dFromPoint2D(p);
+                main.MouseDown -= GetPoint;
+                main.cmd.CallCommand(p3.X + "," + p3.Y + "," + p3.Z);
+            }
+        }
+        internal void PutPoints_FirstPoint(Point3D userInputPoint3D)
+        {
+            Point p = GetPointFromPoint3D(userInputPoint3D);
+
+            main.MouseMove += GetPoints_Moving;
+            main.draw.selectionWindow.viewType = DRAW.SelectionWindow.ViewType.Line;
+            main.draw.selectionWindow.Start(p);
+
+            actionAfterPoint(userInputPoint3D);
+            WriteText("다음 점을 입력하세요" + cmdMark);
+            SetCursorLast();
+
+            main.MouseDown += PutPoints_SecondAfterPoint;
+        }
+        private void PutPoints_SecondAfterPoint(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                Point p = e.GetPosition(main.grdMain);
+                Point3D p3 = GetPoint3dFromPoint2D(p);
+
+                main.MouseDown -= PutPoints_SecondAfterPoint;
+                main.MouseMove -= GetDirection_Moving;
+                main.draw.selectionWindow.End();
+
+                Vector3D inputDirection = p3 - directionFirstPoint;
+                main.requestUserInput.Put(inputDirection);
+            }
+        }
+        private void GetPoints_Moving(object sender, MouseEventArgs e)
+        {
+            Point p0 = e.GetPosition(main.grdMain);
+            main.draw.selectionWindow.Move(p0);
         }
 
         /// <summary>
@@ -746,7 +810,8 @@ namespace _003_FosSimulator014
             Double,
             Point,
             Direction,
-            Dist
+            Dist,
+            Points
         }
     } //명령창 명령어 관리
 
