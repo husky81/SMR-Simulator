@@ -114,7 +114,7 @@ namespace _003_FosSimulator014
             subCmd = cmd.Add("All", "a"); subCmd.run += main.EraseAll;
             subCmd = cmd.Add("Fence", "f"); subCmd.run += main.EraseFence;
 
-            cmd = rootCommand.Add("Line", "l"); cmd.run += main.AddLine001;
+            cmd = rootCommand.Add("Line", "l"); cmd.run += main.AddLine;
 
             cmd = rootCommand.Add("Divide", "d"); cmd.run += main.DivideElem;
 
@@ -139,22 +139,28 @@ namespace _003_FosSimulator014
                     NewLine();
                     return;
                 }
-                if (main.requestUserCoordinatesInput.on) //이미 명령이 실행중인 경우 종료
-                {
-                    main.requestUserCoordinatesInput.End();
-                }
-
                 if (main.requestUserInput != null)
                 {
                     if (main.requestUserInput.On) //이미 명령이 실행중인 경우 다시 실행
                     {
-                        Enter();
-                        main.requestUserInput.DoAction();
-                        return;
+                        if (requestedInputType == InputTypes.Points)
+                        {
+                            //Points를 요청하는 절점의 끝을 입력한 경우.
+                            Enter();
+                            PutPoints_End();
+                            //NewLine();
+                            return;
+                        }
+                        else
+                        {
+                            Enter();
+                            main.requestUserInput.DoAction();
+                            return;
+                        }
                     }
                 }
 
-                WriteText("(last command) " + lastCommand.name);
+                WriteText(lastCommand.name + " (last command)");
                 Enter();
                 ExecuteCommand(lastCommand); // 직전 명령 다시 실행
                 return;
@@ -221,7 +227,7 @@ namespace _003_FosSimulator014
                 case InputTypes.Points:
                     if(userInputType == InputTypes.Point)
                     {
-                        PutPoints_FirstPoint(userInputPoint3D);
+                        PutPoints_Point(userInputPoint3D);
                         return;
                     }
                     break;
@@ -279,71 +285,6 @@ namespace _003_FosSimulator014
                     case 2:
                         return InputTypes.Point;
                     case 3:
-                        return InputTypes.Point; ;
-                    default:
-                        break;
-                }
-
-            }
-            return InputTypes.None;
-        }
-        private InputTypes GetTypeOfUserInput000(string uInp)
-        {
-            //입력값이 상대좌표인 경우. @로 시작하는 경우 상대좌표로 인식.
-            if (uInp.Substring(0, 1).Equals("@"))
-            {
-                int isRelativeCoordinateInput = IsRelativeCoordinateInput(uInp.Substring(1));
-                if (isRelativeCoordinateInput >= 0) Enter();
-                switch (isRelativeCoordinateInput)
-                {
-                    case 2:
-                        if (main.requestUserInput.On)
-                        {
-                            main.requestUserInput.Put(userInputVector3D);
-                        }
-                        return InputTypes.Direction;
-                    case 3:
-                        if (main.requestUserInput.On)
-                        {
-                            main.requestUserInput.Put(userInputVector3D);
-                        }
-                        return InputTypes.Direction;
-                    default:
-                        break;
-                }
-            }
-
-            //입력값이 좌표이거나 double, int 인 경우
-            int isCoordinateInput = IsCoordinateInput(uInp);
-            if (isCoordinateInput >= 0)
-            {
-                Enter();
-
-                switch (isCoordinateInput)
-                {
-                    case 0:
-                        if (main.requestUserInput.On)
-                        {
-                            main.requestUserInput.Put(userInputInt);
-                        }
-                        return InputTypes.Int;
-                    case 1:
-                        if (main.requestUserInput.On)
-                        {
-                            main.requestUserInput.Put(userInputDouble);
-                        }
-                        return InputTypes.Double;
-                    case 2:
-                        if (main.requestUserCoordinatesInput.on)
-                        {
-                            main.requestUserCoordinatesInput.Put(userInputPoint3D);
-                        }
-                        return InputTypes.Point;
-                    case 3:
-                        if (main.requestUserCoordinatesInput.on)
-                        {
-                            main.requestUserCoordinatesInput.Put(userInputPoint3D);
-                        }
                         return InputTypes.Point; ;
                     default:
                         break;
@@ -502,13 +443,13 @@ namespace _003_FosSimulator014
                 WriteText("선택된 개체의 " + cmd.name + "을(를) 실행합니다.");
                 Enter();
                 cmd.runSelected();
-                AfterCommandRun();
+                EndCommand();
                 return;
             }
             if (cmd.run != null) //cmd.run이 지정된 경우
             {
                 cmd.run();
-                AfterCommandRun();
+                EndCommand();
                 return;
             }
             if (cmd.commands.Count == 0) //서브명령 개수가 0인 경우
@@ -522,17 +463,15 @@ namespace _003_FosSimulator014
             activeCommand = cmd;
             WriteText(cmdMark);
         }
-        private void AfterCommandRun()
+        private void EndCommand()
         {
+
             if (main.requestUserInput == null)
             {
                 SetForOtherCommand();
                 return;
             }
-            if (main.requestUserCoordinatesInput.on | main.requestUserInput.On)
-            {
-            }
-            else
+            if (!main.requestUserInput.On)
             {
                 SetForOtherCommand();
             }
@@ -540,6 +479,8 @@ namespace _003_FosSimulator014
             return;
             void SetForOtherCommand()
             {
+                RemoveEvents_All();
+                ClearActions();
                 activeCommand = rootCommand;
                 NewLine();
             }
@@ -602,8 +543,8 @@ namespace _003_FosSimulator014
         {
             WriteText("*Cancel*");
             Enter();
-            NewLine();
-            activeCommand = rootCommand;
+            main.requestUserInput = new RequestUserInput(main);
+            EndCommand();
         }
         private void Clear()
         {
@@ -666,6 +607,7 @@ namespace _003_FosSimulator014
         private Vector3D userInputVector3D;
         private double userInputDouble;
         private int userInputInt;
+        private List<Point3D> userInputPoints;
 
         internal delegate void inputInt(int n);
         internal inputInt actionAfterIntWithInt;
@@ -689,56 +631,89 @@ namespace _003_FosSimulator014
             requestedInputType = InputTypes.Int;
         }
 
-        internal void RequestInput_Points(string message)
+        int numPointRequested;
+        internal void RequestInput_Points(string message, int numPoint)
         {
+            numPointRequested = numPoint;
+
             WriteText(message + cmdMark);
             SetCursorLast();
             requestedInputType = InputTypes.Points;
-            main.MouseDown += GetPoint;
+            userInputPoints = new List<Point3D>();
+            main.MouseDown += GetPoints_Point;
         }
-        private void GetPoint(object sender, MouseButtonEventArgs e)
+
+        private void ClearActions()
+        {
+            actionAfterIntWithInt = null;
+            actionAfterIntWithDirInt = null;
+            actionAfterDirWithDir = null;
+            actionAfterPoint = null;
+            actionAfterPoints = null;
+        }
+
+        private void GetPoints_Point(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
-                main.MouseDown -= GetPoint;
+                main.MouseDown -= GetPoints_Point;
                 main.cmd.CallCommand(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
-        internal void PutPoints_FirstPoint(Point3D userInputPoint3D)
+        internal void PutPoints_Point(Point3D userInputPoint3D)
         {
-            Point p = GetPointFromPoint3D(userInputPoint3D);
+            userInputPoints.Add(userInputPoint3D);
+            actionAfterPoint?.Invoke(userInputPoint3D);
 
-            main.MouseMove += GetPoints_Moving;
+            if(numPointRequested == userInputPoints.Count)
+            {
+                PutPoints_End();
+                return;
+            }
+
             main.draw.selectionWindow.viewType = DRAW.SelectionWindow.ViewType.Line;
+            Point p = GetPointFromPoint3D(userInputPoint3D);
+            main.draw.selectionWindow.viewType = viewType;
             main.draw.selectionWindow.Start(p);
+            main.MouseMove += GetPoints_Moving;
 
-            actionAfterPoint(userInputPoint3D);
             WriteText("다음 점을 입력하세요" + cmdMark);
             SetCursorLast();
 
-            main.MouseDown += PutPoints_SecondAfterPoint;
-        }
-        private void PutPoints_SecondAfterPoint(object sender, MouseButtonEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                Point p = e.GetPosition(main.grdMain);
-                Point3D p3 = GetPoint3dFromPoint2D(p);
-
-                main.MouseDown -= PutPoints_SecondAfterPoint;
-                main.MouseMove -= GetDirection_Moving;
-                main.draw.selectionWindow.End();
-
-                Vector3D inputDirection = p3 - directionFirstPoint;
-                main.requestUserInput.Put(inputDirection);
-            }
+            main.MouseDown += GetPoints_SecondAfterPoint;
         }
         private void GetPoints_Moving(object sender, MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
             main.draw.selectionWindow.Move(p0);
+        }
+        private void GetPoints_SecondAfterPoint(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                Point p = e.GetPosition(main.grdMain);
+                Point3D p3 = GetPoint3dFromPoint2D(p);
+
+                main.MouseMove -= GetPoints_Moving;
+                main.MouseDown -= GetPoints_SecondAfterPoint;
+                main.draw.selectionWindow.End();
+
+                main.cmd.CallCommand(p3.X + "," + p3.Y + "," + p3.Z);
+            }
+        }
+        private void PutPoints_End()
+        {
+            main.draw.selectionWindow.End();
+            actionAfterPoints?.Invoke(userInputPoints);
+            EndCommand();
+        }
+        private void RemoveEvents_GetPoints()
+        {
+            main.MouseMove -= GetPoints_Moving;
+            main.MouseDown -= GetPoints_SecondAfterPoint;
+            main.MouseDown -= GetPoints_Point;
         }
 
         /// <summary>
@@ -763,6 +738,8 @@ namespace _003_FosSimulator014
             }
         }
         private Point3D directionFirstPoint;
+        internal DRAW.SelectionWindow.ViewType viewType;
+
         internal void PutDirectionFirstPoint(Point3D userInputPoint3D)
         {
             directionFirstPoint = userInputPoint3D;
@@ -786,13 +763,24 @@ namespace _003_FosSimulator014
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
 
-                main.MouseDown -= PutDirection_SecondPoint;
-                main.MouseMove -= GetDirection_Moving;
+                RemoveEvents_GetDirection();
                 main.draw.selectionWindow.End();
 
                 Vector3D inputDirection = p3 - directionFirstPoint;
                 main.requestUserInput.Put(inputDirection);
             }
+        }
+        private void RemoveEvents_GetDirection()
+        {
+            main.MouseDown -= GetDirection;
+            main.MouseDown -= PutDirection_SecondPoint;
+            main.MouseMove -= GetDirection_Moving;
+        }
+
+        private void RemoveEvents_All()
+        {
+            RemoveEvents_GetPoints();
+            RemoveEvents_GetDirection();
         }
 
         private Point3D GetPoint3dFromPoint2D(Point p0)

@@ -1232,11 +1232,14 @@ namespace _003_FosSimulator014
             }
             ViewZoomPoints(points);
         }
-        internal void ViewZoomRectangle(Point inpP0, Point inpP1)
+        internal void ViewZoomWindow(Point inpP0, Point inpP1)
         {
             Point3D p0 = GetPoint3dOnBasePlane_FromPoint2D(inpP0);
             Point3D p1 = GetPoint3dOnBasePlane_FromPoint2D(inpP1);
-
+            ViewZoomWindow(p0, p1);
+        }
+        internal void ViewZoomWindow(Point3D p0, Point3D p1)
+        {
             List<Point3D> points = new List<Point3D>();
             points.Add(p0);
             points.Add(p1);
