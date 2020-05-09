@@ -120,9 +120,15 @@ namespace _003_FosSimulator014
 
             cmd = rootCommand.Add("Extrude", "ex"); cmd.run += main.ExtrudeElem;
 
+            cmd = rootCommand.Add("Select", "s");
+            subCmd = cmd.Add("Node", "n"); subCmd.run += main.SelectNode;
+            subCmd = cmd.Add("Element", "e"); subCmd.run += main.SelectElem;
+
         } //명령어 구성!!!
 
-        
+        /// <summary>
+        /// 명령창에 입력된 명령어 인식 및 처리. 명령창에서 스페이스를 누르면이 이 함수가 실행됨.
+        /// </summary>
         private void GetCommand()
         {
             //명령창에서 사용자가 입력한 명령어 반환
@@ -177,7 +183,7 @@ namespace _003_FosSimulator014
             }
 
             //사용자가 입력한 값의 형식에 따라서 구분
-            InputTypes userInputType = GetTypeOfUserInput001(userInput);
+            InputTypes userInputType = GetTypeOfUserInput(userInput);
             switch (requestedInputType)
             {
                 case InputTypes.None:
@@ -189,8 +195,27 @@ namespace _003_FosSimulator014
                         {
                             actionAfterIntWithInt(userInputInt);
                             actionAfterIntWithInt = null;
+                            EndCommand();
                         }
                         return;
+                    }
+                    break;
+                case InputTypes.Ints:
+                    switch (userInputType)
+                    {
+                        case InputTypes.Int:
+                            userInputInts = new List<int>();
+                            userInputInts.Add(userInputInt);
+                            actionAfterIntsWithInts(userInputInts);
+                            EndCommand();
+                            return;
+                        case InputTypes.Ints:
+                            actionAfterIntsWithInts(userInputInts);
+                            NewLine();
+                            EndCommand();
+                            return;
+                        default:
+                            break;
                     }
                     break;
                 case InputTypes.Double:
@@ -225,10 +250,16 @@ namespace _003_FosSimulator014
                 case InputTypes.Dist:
                     break;
                 case InputTypes.Points:
-                    if(userInputType == InputTypes.Point)
+                    switch (userInputType)
                     {
-                        PutPoints_Point(userInputPoint3D);
-                        return;
+                        case InputTypes.Point:
+                            PutPoints_Point(userInputPoint3D);
+                            return;
+                        case InputTypes.Direction:
+                            PutPoints_Direction(userInputVector3D);
+                            return;
+                        default:
+                            break;
                     }
                     break;
                 default:
@@ -252,7 +283,7 @@ namespace _003_FosSimulator014
 
 
         } // 사용자가 입력한 명령 실행. 커멘드 창에서 space, enter를 누르면 실행됨.
-        private InputTypes GetTypeOfUserInput001(string uInp)
+        private InputTypes GetTypeOfUserInput(string uInp)
         {
             //입력값이 상대좌표인 경우. @로 시작하는 경우 상대좌표로 인식.
             if (uInp.Substring(0, 1).Equals("@"))
@@ -291,8 +322,24 @@ namespace _003_FosSimulator014
                 }
 
             }
+
+            //입력값이 1~5,10-15 형태의 List<int>표현인 경우.
+            bool isIntList = IsIntList(uInp);
+            if (isIntList)
+            {
+                return InputTypes.Ints;
+            }
+
             return InputTypes.None;
         }
+
+        private bool IsIntList(string uInp)
+        {
+            userInputInts = GF.ConvertStringsToIntList(uInp);
+            if (userInputInts == null) return false;
+            return true;
+        }
+
         private string GetCommandTextFromCommandWindowText()
         {
             //커맨드 창에 입력된 명령어 추출
@@ -582,6 +629,12 @@ namespace _003_FosSimulator014
         {
             textBox.Select(textBox.Text.Length, 0);
         }
+        public string GetLastLine()
+        {
+            string text = textBox.Text;
+            string lastLineText = text.Split('\n').Last();
+            return lastLineText;
+        }
 
         public void SendRequestMessage(string message)
         {
@@ -593,9 +646,9 @@ namespace _003_FosSimulator014
             WriteText("Error!!! " + v);
             NewLine();
         }
-        internal void CallCommand(string v)
+        public void Call(string cmdText)
         {
-            WriteText(v);
+            WriteText(cmdText);
             SetCursorLast();
             GetCommand();
         } //외부에서 명령어 실행 요청
@@ -607,10 +660,13 @@ namespace _003_FosSimulator014
         private Vector3D userInputVector3D;
         private double userInputDouble;
         private int userInputInt;
+        private List<int> userInputInts;
         private List<Point3D> userInputPoints;
 
         internal delegate void inputInt(int n);
         internal inputInt actionAfterIntWithInt;
+        internal delegate void inputInts(List<int> n);
+        internal inputInts actionAfterIntsWithInts;
         internal delegate void inputDirInt(Vector3D dir, int n);
         internal inputDirInt actionAfterIntWithDirInt;
         internal delegate void inputDir(Vector3D dir);
@@ -629,6 +685,12 @@ namespace _003_FosSimulator014
             WriteText(message + cmdMark);
             SetCursorLast();
             requestedInputType = InputTypes.Int;
+        }
+        internal void RequestInput_Ints(string message)
+        {
+            WriteText(message + cmdMark);
+            SetCursorLast();
+            requestedInputType = InputTypes.Ints;
         }
 
         int numPointRequested;
@@ -659,7 +721,7 @@ namespace _003_FosSimulator014
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
                 main.MouseDown -= GetPoints_Point;
-                main.cmd.CallCommand(p3.X + "," + p3.Y + "," + p3.Z);
+                main.cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
         internal void PutPoints_Point(Point3D userInputPoint3D)
@@ -684,6 +746,13 @@ namespace _003_FosSimulator014
 
             main.MouseDown += GetPoints_SecondAfterPoint;
         }
+
+
+        private void PutPoints_Direction(Vector3D userInputPoint3D)
+        {
+            Point3D nextPoint = userInputPoints[userInputPoints.Count - 1] + userInputPoint3D;
+            PutPoints_Point(nextPoint);
+        }
         private void GetPoints_Moving(object sender, MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
@@ -700,7 +769,7 @@ namespace _003_FosSimulator014
                 main.MouseDown -= GetPoints_SecondAfterPoint;
                 main.draw.selectionWindow.End();
 
-                main.cmd.CallCommand(p3.X + "," + p3.Y + "," + p3.Z);
+                main.cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
         private void PutPoints_End()
@@ -734,7 +803,7 @@ namespace _003_FosSimulator014
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
                 main.MouseDown -= GetDirection;
-                main.cmd.CallCommand(p3.X + "," + p3.Y + "," + p3.Z);
+                main.cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
         private Point3D directionFirstPoint;
@@ -795,6 +864,7 @@ namespace _003_FosSimulator014
         {
             None,
             Int,
+            Ints,
             Double,
             Point,
             Direction,

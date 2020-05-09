@@ -10,7 +10,7 @@ using System.Windows.Media.Media3D;
 
 namespace _003_FosSimulator014
 {
-    class FEM
+    public class FEM
     {
         public readonly ModelFem model = new ModelFem();
         public readonly FemLoads loads = new FemLoads();
@@ -44,14 +44,48 @@ namespace _003_FosSimulator014
 
             solved = false;
         }
-        
-        internal void Select(Element element)
-        {
-            selection.AddElement(element);
-        }
+
         internal void Select(Node node)
         {
             selection.AddNode(node);
+        }
+        internal void SelectNode(int n)
+        {
+            foreach (Node node in model.nodes)
+            {
+                if (node.num == n)
+                {
+                    selection.AddNode(node);
+                }
+            }
+        }
+        internal void SelectNode(List<int> nList)
+        {
+            foreach (int i in nList)
+            {
+                SelectNode(i);
+            }
+        }
+        internal void SelectElem(int elemNumber)
+        {
+            foreach (Element elem in model.elems)
+            {
+                if (elem.num == elemNumber)
+                {
+                    selection.AddElement(elem);
+                }
+            }
+        }
+        internal void SelectElem(List<int> nList)
+        {
+            foreach (int i in nList)
+            {
+                SelectElem(i);
+            }
+        }
+        internal void Select(Element element)
+        {
+            selection.AddElement(element);
         }
         internal void SelectElems(int strElemNum, int endElemNum)
         {
@@ -175,6 +209,7 @@ namespace _003_FosSimulator014
             }
             selection.elems.Clear();
         }
+
         internal Elements Extrude(Elements elems, Vector3D dir, int iter)
         {
             Elements extrudedElems = new Elements();
@@ -480,7 +515,7 @@ namespace _003_FosSimulator014
             selected2.Clear();
         }
     }
-    class FemSelection
+    public class FemSelection
     {
         private readonly FEM fem;
         internal Nodes nodes = new Nodes();
@@ -543,7 +578,7 @@ namespace _003_FosSimulator014
             elems.Deduplicate();
         }
     }
-    class FemLoads : List<FemLoad>
+    public class FemLoads : List<FemLoad>
     {
         public int maxNum = 1;
 
@@ -581,7 +616,7 @@ namespace _003_FosSimulator014
             return maxLoadLength;
         }
     }
-    class FemLoad
+    public class FemLoad
     {
         internal int numNodalLoad = 0;
         internal List<NodalLoad> nodalLoads = new List<NodalLoad>();
@@ -593,7 +628,7 @@ namespace _003_FosSimulator014
        }
 
     }
-    class NodalLoad : FemLoad
+    public class NodalLoad : FemLoad
     {
         internal int num;
         internal Node node;
@@ -628,7 +663,7 @@ namespace _003_FosSimulator014
         }
     }
 
-    class ModelFem
+    public class ModelFem
     {
         public readonly Nodes nodes = new Nodes();
         public readonly Elements elems = new Elements();
@@ -776,7 +811,7 @@ namespace _003_FosSimulator014
             }
         }
     }
-    class Nodes : List<Node>
+    public class Nodes : List<Node>
     {
         internal int maxNum = 1;
         internal bool show = true;
@@ -869,7 +904,7 @@ namespace _003_FosSimulator014
             return newNodes;
         }
     }
-    class Node
+    public class Node
     {
         public int num;
         /// <summary>
@@ -905,7 +940,7 @@ namespace _003_FosSimulator014
         }
 
     }
-    class Elements : List<Element>
+    public class Elements : List<Element>
     {
         public int maxNum = 1;
         //internal int countTruss = 0;
@@ -914,9 +949,9 @@ namespace _003_FosSimulator014
         //internal int countPlate = 0;
         //internal int countSolid = 0;
         //internal List<Frame> frames = new List<Frame>();
-        internal Frames frames = new Frames();
-        internal Plates plates = new Plates();
-        internal List<Solid> solids = new List<Solid>();
+        public Frames frames = new Frames();
+        public Plates plates = new Plates();
+        public List<Solid> solids = new List<Solid>();
         internal bool show = true;
         internal bool showNumber = false;
 
@@ -1053,7 +1088,7 @@ namespace _003_FosSimulator014
             }
         }
     }
-    class Element
+    public class Element
     {
         public int num;
         public int numNode;
@@ -1210,7 +1245,7 @@ namespace _003_FosSimulator014
             }
         }
     }
-    class Frames : List<Frame>
+    public class Frames : List<Frame>
     {
         internal Nodes ConnectedNodes()
         {
@@ -1223,7 +1258,7 @@ namespace _003_FosSimulator014
             return connectedNodes;
         } // Elements와 연결된 모든 노드 찾기
     }
-    class Frame : Element
+    public class Frame : Element
     {
         //internal Node node1, node2;
         private Section section2;
@@ -1437,7 +1472,7 @@ namespace _003_FosSimulator014
         }
 
     }
-    class Plates : List<Plate>
+    public class Plates : List<Plate>
     {
         internal Nodes ConnectedNodes()
         {
@@ -1450,7 +1485,7 @@ namespace _003_FosSimulator014
             return connectedNodes;
         } // Elements와 연결된 모든 노드 찾기
     }
-    class Plate : Element
+    public class Plate : Element
     {
         public Plate(Node n1, Node n2, Node n3, Node n4)
         {
@@ -1464,7 +1499,7 @@ namespace _003_FosSimulator014
             AddConnectedElementAtNodes(this);
         }
     }
-    class Solid : Element
+    public class Solid : Element
     {
         //internal Node node1, node2, node3, node4, node5, node6, node7, node8;
 
@@ -1656,7 +1691,7 @@ namespace _003_FosSimulator014
         }
     }
 
-    class MaterialsFem : List<MaterialFem>
+    public class MaterialsFem : List<MaterialFem>
     {
         public int maxNum = 1;
         MaterialFem activeMaterial;
@@ -1682,7 +1717,7 @@ namespace _003_FosSimulator014
             return m;
         }
     }
-    class MaterialFem
+    public class MaterialFem
     {
         internal int num;
         public double E, G;
@@ -1698,7 +1733,7 @@ namespace _003_FosSimulator014
         }
     }
 
-    class Sections : List<Section>
+    public class Sections : List<Section>
     {
         public int maxNum=1;
         Section activeSection;
@@ -1714,7 +1749,7 @@ namespace _003_FosSimulator014
             return s;
         }
     }
-    class Section
+    public class Section
     {
         internal int num;
         public double Iy, Iz, J, A, Asy, Asz;
@@ -1750,7 +1785,7 @@ namespace _003_FosSimulator014
         }
     }
     
-    class Boundaries : List<Boundary>
+    public class Boundaries : List<Boundary>
     {
         int maxNum = 1;
         public Boundary AddBoundary(Node node,int Dx, int Dy, int Dz, int Rx, int Ry, int Rz)
@@ -1762,7 +1797,7 @@ namespace _003_FosSimulator014
             return b;
         }
     }
-    class Boundary
+    public class Boundary
     {
         internal int num;
         internal Node node;

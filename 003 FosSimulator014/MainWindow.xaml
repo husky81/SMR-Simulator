@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:_003_FosSimulator014"
         mc:Ignorable="d"
-        Title="SMR simulator 2.0" Height="570" Width="908" Icon="SMR.png">
+        Title="SMR simulator 2.0" Height="570" Width="908" Icon="Resources/SMR.png">
 
     <DockPanel x:Name="baseDockPanel">
 
