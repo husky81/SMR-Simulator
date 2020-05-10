@@ -124,6 +124,17 @@ namespace _003_FosSimulator014
             subCmd = cmd.Add("Node", "n"); subCmd.run += main.SelectNode;
             subCmd = cmd.Add("Element", "e"); subCmd.run += main.SelectElem;
 
+            cmd = rootCommand.Add("Boundary", "b");
+            subCmd = cmd.Add("FixAll", "f"); subCmd.run += main.BoundaryFixAll;
+            subCmd = cmd.Add("FixDXYZ", "fd"); subCmd.run += main.BoundaryFixDXYZ;
+            subCmd = cmd.Add("DX",  "x"); subCmd.run += main.BoundaryFixDx;
+            subCmd = cmd.Add("DY",  "y"); subCmd.run += main.BoundaryFixDy;
+            subCmd = cmd.Add("DZ",  "z"); subCmd.run += main.BoundaryFixDz;
+            subCmd = cmd.Add("RX", "rx"); subCmd.run += main.BoundaryFixRx;
+            subCmd = cmd.Add("RY", "ry"); subCmd.run += main.BoundaryFixRy;
+            subCmd = cmd.Add("RZ", "rz"); subCmd.run += main.BoundaryFixRz;
+            subCmd = cmd.Add("Remove", "r"); subCmd.run += main.BoundaryRemove;
+
         } //명령어 구성!!!
 
         /// <summary>

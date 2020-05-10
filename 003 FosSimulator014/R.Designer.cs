@@ -79,6 +79,15 @@ namespace _003_FosSimulator014 {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 경계조건을 추가할 절점을 선택하세요..
+        /// </summary>
+        internal static string String10 {
+            get {
+                return ResourceManager.GetString("String10", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 선택할 노드번호를 입력하세요. (ex. 1~10,15-20).
         /// </summary>
         internal static string String2 {

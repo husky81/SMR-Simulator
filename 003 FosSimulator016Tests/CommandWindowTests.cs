@@ -13,14 +13,14 @@ namespace _003_FosSimulator014.Tests
     {
         string initialCommandLineText = "Command: ";
 
-        MainWindow mainWindow = new MainWindow();
+        MainWindow main = new MainWindow();
         CommandWindow cmd;
         FEM fem;
 
         public CommandWindowTests()
         {
-            cmd = mainWindow.cmd;
-            fem = mainWindow.fem;
+            cmd = main.cmd;
+            fem = main.fem;
         }
 
         public void EraseAll()
@@ -33,7 +33,8 @@ namespace _003_FosSimulator014.Tests
         public void EraseAllTest()
         {
             EraseAll();
-            Assert.AreEqual(0, mainWindow.fem.model.nodes.Count);
+            Assert.AreEqual(0, main.fem.model.nodes.Count);
+            Assert.AreEqual(0, main.fem.model.elems.Count);
         }
 
         [TestMethod()]
@@ -71,23 +72,24 @@ namespace _003_FosSimulator014.Tests
         [TestMethod()]
         public void ExtrudeTest()
         {
-
-            cmd.Call("Erase");
-            cmd.Call("All");
-            cmd.Call("Line");
-            cmd.Call("0,0");
-            cmd.Call("10,0");
-            cmd.Call(" ");
-            cmd.Call("Select");
-            cmd.Call("Element");
-            cmd.Call("1");
-            cmd.Call("Extrude");
-            cmd.Call("@0,1");
-            cmd.Call("5");
-
-            Assert.AreEqual(12, fem.model.nodes.Count);
-            Assert.AreEqual(10, fem.model.elems.plates.Count); //원래 5가 되어야하는데 계속 10으로 나옴. 왜? 본파일에서는 잘되는데..ㅜㅜ
-            Assert.IsTrue(cmd.GetLastLine().Equals(initialCommandLineText));
+            for(int i = 0; i < 2; i++)
+            {
+                cmd.Call("Erase");
+                cmd.Call("All");
+                cmd.Call("Line");
+                cmd.Call("0,0");
+                cmd.Call("10,0");
+                cmd.Call(" ");
+                cmd.Call("Select");
+                cmd.Call("Element");
+                cmd.Call("1");
+                cmd.Call("Extrude");
+                cmd.Call("@0,1");
+                cmd.Call("5");
+                Assert.AreEqual(12, fem.model.nodes.Count);
+                Assert.AreEqual(5, fem.model.elems.plates.Count);
+                Assert.IsTrue(cmd.GetLastLine().Equals(initialCommandLineText));
+            }
         }
 
     }

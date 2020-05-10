@@ -73,6 +73,7 @@ namespace _003_FosSimulator014
                 if (elem.num == elemNumber)
                 {
                     selection.AddElement(elem);
+                    break;
                 }
             }
         }

@@ -40,7 +40,7 @@ namespace _003_FosSimulator014
         internal void End_Cancle()
         {
             On = false;
-            ClearActions();
+            ClearDelegateActions();
             TurnOffAllEvents();
             
         }
@@ -86,13 +86,16 @@ namespace _003_FosSimulator014
         /// </summary>
         internal Action actionEnd;
         internal Action actionEveryLastTwoPoints;
-        private void ClearActions()
+        private void ClearDelegateActions()
         {
             actionAfterIntWithInt = null;
+            actionAfterIntsWithInts = null;
             actionAfterIntWithDirInt = null;
             actionEveryLastTwoPointsWithPointPoint = null;
+            actionAfterPoints = null;
             actionEnd = null;
-        }
+            actionEveryLastTwoPoints = null;
+        }  // delegate를 추가할 때 꼭 여기도 추가할 것.
 
         private UserInputAction LastAction
         {
@@ -133,6 +136,15 @@ namespace _003_FosSimulator014
             UserInputAction userInputAction = new UserInputAction
             {
                 requestInputType = UserInputAction.RequestInputType.Direction,
+                message = message
+            };
+            userInputActions.Add(userInputAction);
+        }
+        internal void RequestNodeSelection(string message)
+        {
+            UserInputAction userInputAction = new UserInputAction
+            {
+                requestInputType = UserInputAction.RequestInputType.NodeSelection,
                 message = message
             };
             userInputActions.Add(userInputAction);
@@ -212,9 +224,27 @@ namespace _003_FosSimulator014
                     }
                     return;
                 case UserInputAction.RequestInputType.NodeSelection:
-                    break;
+                    if (main.fem.selection.nodes.Count == 0)
+                    {
+                        main.cmd.SendRequestMessage(userInputAction.message);
+                        End();
+                    }
+                    else
+                    {
+                        NextAction();
+                    }
+                    return;
                 case UserInputAction.RequestInputType.Selection:
-                    break;
+                    if (main.fem.selection.nodes.Count + main.fem.selection.elems.Count == 0)
+                    {
+                        main.cmd.SendRequestMessage(userInputAction.message);
+                        End();
+                    }
+                    else
+                    {
+                        NextAction();
+                    }
+                    return;
                 case UserInputAction.RequestInputType.Int:
                     main.cmd.RequestInput_Int(userInputAction.message);
                     main.cmd.actionAfterIntWithInt += Put;

@@ -51,16 +51,27 @@ namespace _003_FosSimulator014
 
             //TestNodeGrid();
             //TestExtrude();
-            TestDivide();
+            TwiceExtrudeTest();
 
             RedrawFemModel();
         }
 
-        private void TestDivide()
+        public bool TwiceExtrudeTest()
         {
-            Node n1 = fem.model.nodes.Add(0, 0, 0);
-            Node n2 = fem.model.nodes.Add(10, 0, 0);
-            fem.model.elems.AddFrame(n1, n2);
+            cmd.Call("Erase");
+            cmd.Call("All");
+            cmd.Call("Line");
+            cmd.Call("0,0");
+            cmd.Call("10,0");
+            cmd.Call(" ");
+            cmd.Call("Select");
+            cmd.Call("Element");
+            cmd.Call("1");
+            cmd.Call("Extrude");
+            cmd.Call("@0,1");
+            cmd.Call("5");
+
+            if (fem.model.elems.Count != 5) return false;
 
             cmd.Call("Erase");
             cmd.Call("All");
@@ -75,6 +86,9 @@ namespace _003_FosSimulator014
             cmd.Call("@0,1");
             cmd.Call("5");
 
+            if (fem.model.elems.Count != 5) return false;
+
+            return true;
         }
         private void TestExtrude()
         {
@@ -153,6 +167,122 @@ namespace _003_FosSimulator014
                 KeyUp -= EndAddNode_Esc;
                 draw.RedrawShapes();
                 WindowSelectionOn(true);
+            }
+        }
+
+        internal void BoundaryFixRx()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 0, 0, 0, 1, 0, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        internal void BoundaryFixRy()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 1, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        internal void BoundaryRemove()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.actionEnd += BoundaryRemoveAll;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        private void BoundaryRemoveAll()
+        {
+        }
+
+        internal void BoundaryFixRz()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 0, 1 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        internal void BoundaryFixDz()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 0, 0, 1, 0, 0, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        internal void BoundaryFixDy()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 0, 1, 0, 0, 0, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        internal void BoundaryFixDx()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 1, 0, 0, 0, 0, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        internal void BoundaryFixDXYZ()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 1, 1, 1, 0, 0, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        internal void BoundaryFixAll()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 1, 1, 1, 1, 1, 1};
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        private int[] boundaryFixFreeCondition;
+        private void BoundaryAdd_SelectedNode()
+        {
+            int dx = boundaryFixFreeCondition[0];
+            int dy = boundaryFixFreeCondition[1];
+            int dz = boundaryFixFreeCondition[2];
+            int rx = boundaryFixFreeCondition[3];
+            int ry = boundaryFixFreeCondition[4];
+            int rz = boundaryFixFreeCondition[5];
+            foreach (Node node in fem.selection.nodes)
+            {
+                fem.model.boundaries.AddBoundary(node, dx, dy, dz, rx, ry, rz);
             }
         }
 
