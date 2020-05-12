@@ -602,6 +602,7 @@ namespace _003_FosSimulator014
             WriteText("*Cancel*");
             Enter();
             main.requestUserInput = new RequestUserInput(main);
+            main.draw.selectionWindow.End();
             EndCommand();
         }
         private void Clear()
