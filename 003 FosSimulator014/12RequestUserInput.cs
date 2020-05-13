@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Draw3D;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -106,7 +107,7 @@ namespace _003_FosSimulator014
         }
         private readonly List<UserInputAction> userInputActions = new List<UserInputAction>();
         private int actionStep = 0;
-        internal DRAW.SelectionWindow.ViewType viewType;
+        internal SelectionWindow.ViewType viewType;
 
         private Vector3D userInputVector;
         private double userInputDouble;
@@ -336,7 +337,7 @@ namespace _003_FosSimulator014
         /// <summary>
         /// 사용자가 마우스를 움직이면 보여지는 입력 모양을 선택합니다.
         /// </summary>
-        internal DRAW.SelectionWindow.ViewType viewType;
+        internal SelectionWindow.ViewType viewType;
 
         /// <summary>
         /// 매 입력마다 실행할 액션을 지정합니다.
@@ -373,7 +374,7 @@ namespace _003_FosSimulator014
             actionEveryPoint = null;
             actionEveryLastTwoPoints = null;
             actionPointInputEnd = null;
-            viewType = DRAW.SelectionWindow.ViewType.Line;
+            viewType = SelectionWindow.ViewType.Line;
 
             //중복실행되는 경우 초기화
             main.MouseLeave -= RequestUserCoordinates_End;

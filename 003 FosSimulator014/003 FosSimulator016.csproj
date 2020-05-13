@@ -97,15 +97,16 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="20Draw.cs" />
+    <Compile Include="20Draw3D.cs" />
     <Compile Include="11CommandWindow.cs" />
     <Compile Include="90GeneralFunctions.cs" />
+    <Compile Include="22Draw2D.cs" />
     <Compile Include="R.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>R.resx</DependentUpon>
     </Compile>
-    <Compile Include="21Shapes.cs" />
+    <Compile Include="21Shapes3D.cs" />
     <Compile Include="40SMR.cs" />
     <Compile Include="30FEM.cs" />
     <Compile Include="MainWindow.xaml.cs">

@@ -1,10 +1,12 @@
-﻿using System;
+﻿using _003_FosSimulator014;
+using GeneralFunctions;
+using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-namespace _003_FosSimulator014
+namespace Draw3D
 {
-    public class Shapes : List<Shape>
+    public class Shapes3D : List<Shape>
     {
         public Model3DGroup modelGroup = new Model3DGroup();
         private Shape recentShape;
@@ -13,7 +15,7 @@ namespace _003_FosSimulator014
 
         internal Shape RecentShape { get => recentShape; set => recentShape = value; }
 
-        public Shapes()
+        public Shapes3D()
         {
             
         }
@@ -490,7 +492,7 @@ namespace _003_FosSimulator014
             SetTransforms(center, new Vector3D(1, 1, 1));
         }
     }
-    public class TextShapes : List<Text>
+    public class TextShapes3D : List<Text>
     {
         public Text Add(string caption, Point3D position, double size)
         {
@@ -534,7 +536,7 @@ namespace _003_FosSimulator014
         internal new GeometryModel3D GeoModel()
         {
             GeometryModel3D geo3D;
-            geo3D = DRAW.CreateTextLabel3D(caption, Brushes.Red, true, 1, position,
+            geo3D = Draw3D.CreateTextLabel3D(caption, Brushes.Red, true, 1, position,
                 new Vector3D(0, 0.2, 0), new Vector3D(0, 0, 0.5));
             return geo3D;
         }

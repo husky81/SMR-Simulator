@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Media3D;
 
-namespace _003_FosSimulator014
+namespace GeneralFunctions
 {
     static class GF
     {

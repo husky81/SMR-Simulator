@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Draw3D;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.NetworkInformation;
@@ -23,7 +24,7 @@ namespace _003_FosSimulator014
     {
         private readonly SMR smr;
         public readonly FEM fem;
-        public readonly DRAW draw;
+        public readonly Draw3D.Draw3D draw;
         public readonly CommandWindow cmd;
         internal RequestUserInput requestUserInput;
 
@@ -37,7 +38,7 @@ namespace _003_FosSimulator014
 
             smr = new SMR();
             fem = new FEM();
-            draw = new DRAW(grdMain);
+            draw = new Draw3D.Draw3D(grdMain);
             cmd = new CommandWindow(this,tbxCommand);
             requestUserInput = new RequestUserInput(this);
 
@@ -520,7 +521,7 @@ namespace _003_FosSimulator014
         {
             requestUserInput = new RequestUserInput(this);
             requestUserInput.RequestPoints("define fence");
-            requestUserInput.viewType = DRAW.SelectionWindow.ViewType.Line;
+            requestUserInput.viewType = SelectionWindow.ViewType.Line;
             requestUserInput.actionEveryLastTwoPointsWithPointPoint += SelectElemByFenceLine;
             requestUserInput.actionEnd += EraseSelected;
             requestUserInput.Start();
@@ -575,7 +576,7 @@ namespace _003_FosSimulator014
         internal void AddLine()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.viewType = DRAW.SelectionWindow.ViewType.Line;
+            requestUserInput.viewType = SelectionWindow.ViewType.Line;
             requestUserInput.RequestPoints(R.String7);
             requestUserInput.actionEveryLastTwoPointsWithPointPoint += AddLineFem3D;
             requestUserInput.actionEveryLastTwoPoints += RedrawFemModel;
@@ -603,7 +604,7 @@ namespace _003_FosSimulator014
         internal string message;
         internal bool hasAction;
         internal int numPointRequested = -1;
-        internal DRAW.SelectionWindow.ViewType viewType;
+        internal SelectionWindow.ViewType viewType;
     }
     public class RequestUserMouseWindowInput
 
@@ -615,7 +616,7 @@ namespace _003_FosSimulator014
         internal Action action;
         private bool hasFirstPoint = false;
         private Point firstPoint;
-        internal DRAW.SelectionWindow.ViewType viewType;
+        internal SelectionWindow.ViewType viewType;
 
         internal Point FirstPoint
         {
@@ -1132,7 +1133,7 @@ namespace _003_FosSimulator014
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
-                r.viewType = DRAW.SelectionWindow.ViewType.SelectionWindow;
+                r.viewType = SelectionWindow.ViewType.SelectionWindow;
                 r.FirstPoint = e.GetPosition(grdMain);
                 r.action = SelectFemByWindow;
                 r.Start();
@@ -1257,7 +1258,7 @@ namespace _003_FosSimulator014
         internal void ZoomWindow()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.viewType = DRAW.SelectionWindow.ViewType.Rectangle;
+            requestUserInput.viewType = SelectionWindow.ViewType.Rectangle;
             requestUserInput.RequestPoints(2);
             requestUserInput.actionEveryLastTwoPointsWithPointPoint += draw.ViewZoomWindow;
             requestUserInput.Start();

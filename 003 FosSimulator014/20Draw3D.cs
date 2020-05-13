@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GeneralFunctions;
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Windows;
@@ -8,275 +9,20 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-namespace _003_FosSimulator014
+namespace Draw3D
 {
-    public partial class DRAW // 기본
+    public partial class Draw3D // 기본
     {
         public readonly Grid grid;
-        public Shapes shapes;
-        public TextShapes texts = new TextShapes();
+        public Shapes3D shapes;
+        public TextShapes3D texts = new TextShapes3D();
 
         /// <summary>
         /// 노드 추가할 때 졸졸 따라다니는 sphere.
         /// </summary>
-        public class PointMarker
-        {
-            readonly DRAW instance;
+        public PointMarker3D pointMarker;
 
-            public ModelVisual3D modelVisual3D = new ModelVisual3D();
-
-            internal bool visibility = false;
-            double dia = 0.2;
-            int resolution = 12;
-            Shapes markerShapes = new Shapes();
-
-            internal void Hide()
-            {
-                visibility = false;
-                //markerShapes.Clear();
-                modelVisual3D.Children.Clear();
-            }
-            internal void Show()
-            {
-                visibility = true;
-            }
-
-            Point3D position = new Point3D(0, 0, 0);
-            Color color = Colors.Red;
-
-            internal Point3D Position(Point point)
-            {
-                position = instance.GetPoint3dOnBasePlane_FromPoint2D(point);
-
-                markerShapes.transform = new TranslateTransform3D(position.X, position.Y, position.Z);
-                modelVisual3D.Content = markerShapes.Model3DGroup();
-                return position;
-            }
-
-            public PointMarker(DRAW instance)
-            {
-                this.instance = instance;
-                markerShapes.AddSphere(position, dia, resolution);
-                markerShapes.RecentShape.Color(color);
-            }
-        } //
-        public PointMarker pointMarker;
-
-        public class SelectionWindow
-        {
-            private readonly Grid grid;
-            internal bool enable = false;
-            internal UiShapes shapes = new UiShapes();
-            internal Point wP0, wP1;
-            public ViewType viewType;
-            public enum ViewType
-            {
-                SelectionWindow,
-                Rectangle,
-                Line,
-                Arrow,
-                Circle
-            }
-            Rectangle rectangle;
-            Line line;
-            internal bool started = false;
-
-            public SelectionWindow(Grid grid)
-            {
-                this.grid = grid;
-                //shapes.AddRectangle(strPoint, endPoint);
-            }
-            internal void Start(Point strPoint)
-            {
-                started = true;
-                this.wP0 = strPoint;
-
-                switch (viewType)
-                {
-                    case ViewType.SelectionWindow:
-                        DrawSelectionWindow();
-                        break;
-                    case ViewType.Rectangle:
-                        DrawRectangle();
-                        break;
-                    case ViewType.Line:
-                        if (line != null) grid.Children.Remove(line);
-                        DrawLine();
-                        break;
-                    case ViewType.Arrow:
-                        break;
-                    case ViewType.Circle:
-                        break;
-                    default:
-                        break;
-                }
-            }
-            internal void Move(Point endPoint)
-            {
-                if (!started) return;
-                this.wP1 = endPoint;
-                switch (viewType)
-                {
-                    case ViewType.SelectionWindow:
-                        ChangeSelectionWindow();
-                        break;
-                    case ViewType.Rectangle:
-                        ChangeRectangle();
-                        break;
-                    case ViewType.Line:
-                        ChangeLine();
-                        break;
-                    case ViewType.Arrow:
-                        break;
-                    case ViewType.Circle:
-                        break;
-                    default:
-                        break;
-                }
-            }
-            internal void End()
-            {
-                started = false;
-                switch (viewType)
-                {
-                    case ViewType.SelectionWindow:
-                        grid.Children.Remove(rectangle);
-                        break;
-                    case ViewType.Rectangle:
-                        grid.Children.Remove(rectangle);
-                        break;
-                    case ViewType.Line:
-                        grid.Children.Remove(line);
-                        //grid.Children.Clear();
-                        break;
-                    case ViewType.Arrow:
-                        break;
-                    case ViewType.Circle:
-                        break;
-                    default:
-                        break;
-                }
-            }
-            private void DrawLine()
-            {
-                line = new Line
-                {
-                    Stroke = System.Windows.Media.Brushes.Black,
-                    X1 = wP0.X,
-                    X2 = wP1.X,
-                    Y1 = wP0.Y,
-                    Y2 = wP0.Y,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Top,
-                    StrokeThickness = 1
-                };
-                grid.Children.Add(line);
-            }
-            private void ChangeLine()
-            {
-                line.X2 = wP1.X;
-                line.Y2 = wP1.Y;
-            }
-            private void DrawSelectionWindow()
-            {
-                rectangle = new Rectangle();
-                rectangle.Width = 0;
-                rectangle.Height = 0;
-                rectangle.Fill = Brushes.Blue;
-                rectangle.Opacity = 0.2;
-                rectangle.Margin = new Thickness(wP0.X, wP0.Y, 0, 0);
-                rectangle.Stroke = Brushes.Black;
-                rectangle.HorizontalAlignment = HorizontalAlignment.Left;
-                rectangle.VerticalAlignment = VerticalAlignment.Top;
-                grid.Children.Add(rectangle);
-            }
-            private void DrawRectangle()
-            {
-                rectangle = new Rectangle();
-                rectangle.Width = 0;
-                rectangle.Height = 0;
-                rectangle.Fill = null;
-                rectangle.Opacity = 1;
-                rectangle.Margin = new Thickness(wP0.X, wP0.Y, 0, 0);
-                rectangle.Stroke = Brushes.Black;
-                rectangle.HorizontalAlignment = HorizontalAlignment.Left;
-                rectangle.VerticalAlignment = VerticalAlignment.Top;
-                grid.Children.Add(rectangle);
-            }
-            private void ChangeRectangle()
-            {
-                double top = wP0.Y;
-                double left = wP0.X;
-                double width = wP1.X - wP0.X;
-                double height = wP1.Y - wP0.Y;
-
-                if (height < 0)
-                {
-                    height = -height;
-                    top -= height;
-                }
-
-                if (width < 0)
-                {
-                    width = -width;
-                    left -= width;
-                }
-                rectangle.Margin = new Thickness(left, top, 0, 0);
-                rectangle.Width = width;
-                rectangle.Height = height;
-            }
-            private void ChangeSelectionWindow()
-            {
-                double top = wP0.Y;
-                double left = wP0.X;
-                double width = wP1.X - wP0.X;
-                double height = wP1.Y - wP0.Y;
-
-                if (height < 0)
-                {
-                    height = -height;
-                    top -= height;
-                }
-
-                if (width < 0)
-                {
-                    width = -width;
-                    left -= width;
-                    rectangle.Fill = Brushes.Green;
-                    rectangle.StrokeDashArray = new DoubleCollection() { 4, 4 };
-                }
-                else
-                {
-                    rectangle.Fill = Brushes.Blue;
-                    rectangle.StrokeDashArray = new DoubleCollection();
-                }
-                rectangle.Margin = new Thickness(left, top, 0, 0);
-                rectangle.Width = width;
-                rectangle.Height = height;
-            }
-        }
         public SelectionWindow selectionWindow;
-        public class UiShapes : List<UiShape>
-        {
-            internal List<Line> lines = new List<Line>();
-            internal List<Rectangle> rectangles = new List<Rectangle>();
-
-            internal void AddRectangle(Point strPoint, Point endPoint)
-            {
-                Rectangle r = new Rectangle();
-                //r.PointFromScreen(strPoint);
-                //r.PointToScreen(endPoint);
-                rectangles.Add(r);
-            }
-        }
-        public class UiShape
-        {
-
-        }
-        class UiLine : UiShape
-        {
-
-        }
         public void RedrawUiShapes()
         {
             grid.Children.Clear();
@@ -391,7 +137,7 @@ namespace _003_FosSimulator014
             //ss.recentShape.Color(Colors.Blue);
 
             //Cylinder
-            Shapes ss = new Shapes();
+            Shapes3D ss = new Shapes3D();
             double dia = 0.1;
             int resolution = 16;
             Cylinder xAxis = ss.AddCylinder(p0, pX - p0, dia, resolution);
@@ -429,16 +175,16 @@ namespace _003_FosSimulator014
             Direction = new Vector3D(3, 4, -5)
         };
 
-        public DRAW(Grid grid)
+        public Draw3D(Grid grid)
         {
             //생성자
             this.grid = grid;
-            shapes = new Shapes();
+            shapes = new Shapes3D();
             viewport.Camera = PCamera;
 
             SetCoordinateSystem();
             SetBasePlaneGrid();
-            pointMarker = new PointMarker(this);
+            pointMarker = new PointMarker3D(this);
             selectionWindow = new SelectionWindow(grid);
 
             RedrawShapes();
@@ -944,7 +690,263 @@ namespace _003_FosSimulator014
         }
 
     }
-    partial class DRAW // Orbit & View
+    public class PointMarker3D
+    {
+        readonly Draw3D instance;
+
+        public ModelVisual3D modelVisual3D = new ModelVisual3D();
+
+        internal bool visibility = false;
+        double dia = 0.2;
+        int resolution = 12;
+        Shapes3D markerShapes = new Shapes3D();
+
+        internal void Hide()
+        {
+            visibility = false;
+            //markerShapes.Clear();
+            modelVisual3D.Children.Clear();
+        }
+        internal void Show()
+        {
+            visibility = true;
+        }
+
+        Point3D position = new Point3D(0, 0, 0);
+        Color color = Colors.Red;
+
+        internal Point3D Position(Point point)
+        {
+            position = instance.GetPoint3dOnBasePlane_FromPoint2D(point);
+
+            markerShapes.transform = new TranslateTransform3D(position.X, position.Y, position.Z);
+            modelVisual3D.Content = markerShapes.Model3DGroup();
+            return position;
+        }
+
+        public PointMarker3D(Draw3D instance)
+        {
+            this.instance = instance;
+            markerShapes.AddSphere(position, dia, resolution);
+            markerShapes.RecentShape.Color(color);
+        }
+    } //
+    public class SelectionWindow
+    {
+        private readonly Grid grid;
+        internal bool enable = false;
+        internal UiShapes shapes = new UiShapes();
+        internal Point wP0, wP1;
+        public ViewType viewType;
+        public enum ViewType
+        {
+            SelectionWindow,
+            Rectangle,
+            Line,
+            Arrow,
+            Circle
+        }
+        Rectangle rectangle;
+        Line line;
+        internal bool started = false;
+
+        public SelectionWindow(Grid grid)
+        {
+            this.grid = grid;
+            //shapes.AddRectangle(strPoint, endPoint);
+        }
+        internal void Start(Point strPoint)
+        {
+            started = true;
+            this.wP0 = strPoint;
+
+            switch (viewType)
+            {
+                case ViewType.SelectionWindow:
+                    DrawSelectionWindow();
+                    break;
+                case ViewType.Rectangle:
+                    DrawRectangle();
+                    break;
+                case ViewType.Line:
+                    if (line != null) grid.Children.Remove(line);
+                    DrawLine();
+                    break;
+                case ViewType.Arrow:
+                    break;
+                case ViewType.Circle:
+                    break;
+                default:
+                    break;
+            }
+        }
+        internal void Move(Point endPoint)
+        {
+            if (!started) return;
+            this.wP1 = endPoint;
+            switch (viewType)
+            {
+                case ViewType.SelectionWindow:
+                    ChangeSelectionWindow();
+                    break;
+                case ViewType.Rectangle:
+                    ChangeRectangle();
+                    break;
+                case ViewType.Line:
+                    ChangeLine();
+                    break;
+                case ViewType.Arrow:
+                    break;
+                case ViewType.Circle:
+                    break;
+                default:
+                    break;
+            }
+        }
+        internal void End()
+        {
+            started = false;
+            switch (viewType)
+            {
+                case ViewType.SelectionWindow:
+                    grid.Children.Remove(rectangle);
+                    break;
+                case ViewType.Rectangle:
+                    grid.Children.Remove(rectangle);
+                    break;
+                case ViewType.Line:
+                    grid.Children.Remove(line);
+                    //grid.Children.Clear();
+                    break;
+                case ViewType.Arrow:
+                    break;
+                case ViewType.Circle:
+                    break;
+                default:
+                    break;
+            }
+        }
+        private void DrawLine()
+        {
+            line = new Line
+            {
+                Stroke = System.Windows.Media.Brushes.Black,
+                X1 = wP0.X,
+                X2 = wP1.X,
+                Y1 = wP0.Y,
+                Y2 = wP0.Y,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                StrokeThickness = 1
+            };
+            grid.Children.Add(line);
+        }
+        private void ChangeLine()
+        {
+            line.X2 = wP1.X;
+            line.Y2 = wP1.Y;
+        }
+        private void DrawSelectionWindow()
+        {
+            rectangle = new Rectangle();
+            rectangle.Width = 0;
+            rectangle.Height = 0;
+            rectangle.Fill = Brushes.Blue;
+            rectangle.Opacity = 0.2;
+            rectangle.Margin = new Thickness(wP0.X, wP0.Y, 0, 0);
+            rectangle.Stroke = Brushes.Black;
+            rectangle.HorizontalAlignment = HorizontalAlignment.Left;
+            rectangle.VerticalAlignment = VerticalAlignment.Top;
+            grid.Children.Add(rectangle);
+        }
+        private void DrawRectangle()
+        {
+            rectangle = new Rectangle();
+            rectangle.Width = 0;
+            rectangle.Height = 0;
+            rectangle.Fill = null;
+            rectangle.Opacity = 1;
+            rectangle.Margin = new Thickness(wP0.X, wP0.Y, 0, 0);
+            rectangle.Stroke = Brushes.Black;
+            rectangle.HorizontalAlignment = HorizontalAlignment.Left;
+            rectangle.VerticalAlignment = VerticalAlignment.Top;
+            grid.Children.Add(rectangle);
+        }
+        private void ChangeRectangle()
+        {
+            double top = wP0.Y;
+            double left = wP0.X;
+            double width = wP1.X - wP0.X;
+            double height = wP1.Y - wP0.Y;
+
+            if (height < 0)
+            {
+                height = -height;
+                top -= height;
+            }
+
+            if (width < 0)
+            {
+                width = -width;
+                left -= width;
+            }
+            rectangle.Margin = new Thickness(left, top, 0, 0);
+            rectangle.Width = width;
+            rectangle.Height = height;
+        }
+        private void ChangeSelectionWindow()
+        {
+            double top = wP0.Y;
+            double left = wP0.X;
+            double width = wP1.X - wP0.X;
+            double height = wP1.Y - wP0.Y;
+
+            if (height < 0)
+            {
+                height = -height;
+                top -= height;
+            }
+
+            if (width < 0)
+            {
+                width = -width;
+                left -= width;
+                rectangle.Fill = Brushes.Green;
+                rectangle.StrokeDashArray = new DoubleCollection() { 4, 4 };
+            }
+            else
+            {
+                rectangle.Fill = Brushes.Blue;
+                rectangle.StrokeDashArray = new DoubleCollection();
+            }
+            rectangle.Margin = new Thickness(left, top, 0, 0);
+            rectangle.Width = width;
+            rectangle.Height = height;
+        }
+    }
+    public class UiShapes : List<UiShape>
+    {
+        internal List<Line> lines = new List<Line>();
+        internal List<Rectangle> rectangles = new List<Rectangle>();
+
+        internal void AddRectangle(Point strPoint, Point endPoint)
+        {
+            Rectangle r = new Rectangle();
+            //r.PointFromScreen(strPoint);
+            //r.PointToScreen(endPoint);
+            rectangles.Add(r);
+        }
+    }
+    public class UiShape
+    {
+
+    }
+    class UiLine : UiShape
+    {
+
+    }
+
+    partial class Draw3D // Orbit & View
     {
         public PerspectiveCamera PCamera { get; set; } = new PerspectiveCamera
         {

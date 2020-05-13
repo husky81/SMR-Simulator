@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Draw3D;
+using GeneralFunctions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -732,12 +734,16 @@ namespace _003_FosSimulator014
             {
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
-                main.MouseDown -= GetPoints_Point;
                 main.cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
         internal void PutPoints_Point(Point3D userInputPoint3D)
         {
+            main.MouseDown -= GetPoints_Point;
+            main.MouseDown -= GetPoints_SecondAfterPoint;
+            main.MouseMove -= GetPoints_Moving;
+            main.draw.selectionWindow.End();
+
             userInputPoints.Add(userInputPoint3D);
             actionAfterPoint?.Invoke(userInputPoint3D);
 
@@ -747,7 +753,7 @@ namespace _003_FosSimulator014
                 return;
             }
 
-            main.draw.selectionWindow.viewType = DRAW.SelectionWindow.ViewType.Line;
+            main.draw.selectionWindow.viewType = SelectionWindow.ViewType.Line;
             Point p = GetPointFromPoint3D(userInputPoint3D);
             main.draw.selectionWindow.viewType = viewType;
             main.draw.selectionWindow.Start(p);
@@ -776,10 +782,6 @@ namespace _003_FosSimulator014
             {
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
-
-                main.MouseMove -= GetPoints_Moving;
-                main.MouseDown -= GetPoints_SecondAfterPoint;
-                main.draw.selectionWindow.End();
 
                 main.cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
@@ -819,7 +821,7 @@ namespace _003_FosSimulator014
             }
         }
         private Point3D directionFirstPoint;
-        internal DRAW.SelectionWindow.ViewType viewType;
+        internal SelectionWindow.ViewType viewType;
 
         internal void PutDirectionFirstPoint(Point3D userInputPoint3D)
         {
@@ -827,7 +829,7 @@ namespace _003_FosSimulator014
             Point p = GetPointFromPoint3D(userInputPoint3D);
 
             main.MouseMove += GetDirection_Moving;
-            main.draw.selectionWindow.viewType = DRAW.SelectionWindow.ViewType.Line;
+            main.draw.selectionWindow.viewType = SelectionWindow.ViewType.Line;
             main.draw.selectionWindow.Start(p);
 
             main.MouseDown += PutDirection_SecondPoint;
