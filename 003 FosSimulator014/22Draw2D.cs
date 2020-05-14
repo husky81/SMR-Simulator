@@ -13,7 +13,7 @@ namespace Draw2D
 
         public Draw2D()
         {
-
+            // 싱크로 하면 수정사항 다 반영되나 궁금하네. 회사에서 주석 써봄. 200514 17:30
         }
     }
     class Shapes2D : List<Shape2D>
