@@ -1,41 +1,40 @@
-﻿using _003_FosSimulator014;
-using GeneralFunctions;
+﻿using GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-namespace Draw3D
+namespace _Draw3D
 {
-    public class Shapes3D : List<Shape>
+    public class Shapes3D : List<Shape3D>
     {
         public Model3DGroup modelGroup = new Model3DGroup();
-        private Shape recentShape;
+        private Shape3D recentShape;
 
         public TranslateTransform3D transform;
 
-        internal Shape RecentShape { get => recentShape; set => recentShape = value; }
+        internal Shape3D RecentShape { get => recentShape; set => recentShape = value; }
 
         public Shapes3D()
         {
             
         }
 
-        private new Shape Add(Shape shape)
+        private new Shape3D Add(Shape3D shape)
         {
             base.Add(shape);
             RecentShape = shape;
             return shape;
         }
 
-        internal Triangle AddTriangle(Point3D p0, Point3D p1, Point3D p2)
+        internal Triangle3D AddTriangle(Point3D p0, Point3D p1, Point3D p2)
         {
-            Triangle t = new Triangle(p0, p1, p2);
+            Triangle3D t = new Triangle3D(p0, p1, p2);
             Add(t);
             return t;
         }
-        internal RectangleShape AddRectangle(Point3D p0, Point3D p1, Point3D p2, Point3D p3)
+        internal Rectangular3D AddRectangle(Point3D p0, Point3D p1, Point3D p2, Point3D p3)
         {
-            RectangleShape t = new RectangleShape(p0, p1, p3, p2);
+            Rectangular3D t = new Rectangular3D(p0, p1, p3, p2);
             Add(t);
             return t;
         }
@@ -63,9 +62,9 @@ namespace Draw3D
             Add(b);
             return b;
         }
-        internal Circle AddCircle(double radius, Vector3D normal, Point3D center, int resolution)
+        internal Circle3D AddCircle(double radius, Vector3D normal, Point3D center, int resolution)
         {
-            Circle c = new Circle(radius, normal, center, resolution);
+            Circle3D c = new Circle3D(radius, normal, center, resolution);
             Add(c);
             return c;
         }
@@ -88,17 +87,17 @@ namespace Draw3D
             Add(s);
             return s;
         }
-        internal Arrow AddArrow(Point3D str, Vector3D dir, double dia, int resolution)
+        internal Arrow3D AddArrow(Point3D str, Vector3D dir, double dia, int resolution)
         {
-            Arrow s = new Arrow(str, dir, dia, resolution);
+            Arrow3D s = new Arrow3D(str, dir, dia, resolution);
             Add(s);
             return s;
         }
-        internal Arrow AddForce(Point3D target, Vector3D force)
+        internal Arrow3D AddForce(Point3D target, Vector3D force)
         {
             double dia = force.Length / 10;
             int resolution = 12;
-            Arrow s = new Arrow(target - force, force, dia, resolution);
+            Arrow3D s = new Arrow3D(target - force, force, dia, resolution);
             Add(s);
             return s;
         }
@@ -120,7 +119,7 @@ namespace Draw3D
         internal Model3DGroup Model3DGroup()
         {
             Model3DGroup model3DGroup = new Model3DGroup();
-            foreach (Shape shape in this)
+            foreach (Shape3D shape in this)
             {
                 model3DGroup.Children.Add(shape.GeoModel());
             }
@@ -139,7 +138,7 @@ namespace Draw3D
         {
             Point3D cp = new Point3D(0, 0, 0);
             if (this.Count == 0) return cp;
-            foreach (Shape shape in this)
+            foreach (Shape3D shape in this)
             {
                 cp.X += shape.BasePoint.X;
                 cp.Y += shape.BasePoint.Y;
@@ -152,7 +151,7 @@ namespace Draw3D
         }
 
     }
-    public class Shape
+    public class Shape3D
     {
         internal MeshGeometry3D mesh;
         private Color color;
@@ -179,7 +178,7 @@ namespace Draw3D
             }
         }
         private Vector3D direction;
-        public Shape()
+        public Shape3D()
         {
             color = Colors.Blue;
             opacity = 1;
@@ -242,12 +241,12 @@ namespace Draw3D
             SetTransforms(basePoint, direction);
         }
     }
-    class Triangle : Shape
+    class Triangle3D : Shape3D
     {
         private Point3D p0;
         private Point3D p1;
         private Point3D p2;
-        public Triangle(Point3D p0, Point3D p1, Point3D p2)
+        public Triangle3D(Point3D p0, Point3D p1, Point3D p2)
         {
             this.p0 = p0;
             this.p1 = p1;
@@ -256,13 +255,13 @@ namespace Draw3D
             mesh = MeshGenerator.Triangle(p0, p1, p2);
         }
     }
-    class RectangleShape : Shape
+    class Rectangular3D : Shape3D
     {
         private Point3D p0;
         private Point3D p1;
         private Point3D p2;
         private Point3D p3;
-        public RectangleShape(Point3D p0, Point3D p1, Point3D p2, Point3D p3)
+        public Rectangular3D(Point3D p0, Point3D p1, Point3D p2, Point3D p3)
         {
             this.p0 = p0;
             this.p1 = p1;
@@ -272,7 +271,7 @@ namespace Draw3D
             mesh = MeshGenerator.Rectangle(p0, p1, p2, p3);
         }
     }
-    class Line3D : Shape
+    class Line3D : Shape3D
     {
         public Point3D p0;
         public Point3D p1;
@@ -288,7 +287,7 @@ namespace Draw3D
             SetTransforms(p0, dir);
         }
     }
-    class Hexahedron : Shape
+    class Hexahedron : Shape3D
     {
         Point3D p0;
         Point3D p1;
@@ -345,7 +344,7 @@ namespace Draw3D
             mesh = MeshGenerator.Hexahedron(p0, p1, p2, p3, p4, p5, p6, p7);
         }
     }
-    class Cone : Shape
+    class Cone : Shape3D
     {
         private double radius;
         private Vector3D heightVector;
@@ -366,14 +365,14 @@ namespace Draw3D
             SetTransforms(center, heightVector);
         }
     }
-    class Circle : Shape
+    class Circle3D : Shape3D
     {
         private double radius;
         private Vector3D normal;
         private Point3D center;
         private int resolution;
 
-        public Circle(double radius, Vector3D normal, Point3D center, int resolution)
+        public Circle3D(double radius, Vector3D normal, Point3D center, int resolution)
         {
             this.radius = radius;
             this.normal = normal;
@@ -385,7 +384,7 @@ namespace Draw3D
             SetTransforms(center, normal);
         }
     }
-    class Cylinder : Shape
+    class Cylinder : Shape3D
     {
         private Point3D str;
         private Vector3D dir;
@@ -433,7 +432,7 @@ namespace Draw3D
             }
         }
     }
-    class Polygon : Shape
+    class Polygon : Shape3D
     {
         private Point3D str;
         private Vector3D dir;
@@ -450,7 +449,7 @@ namespace Draw3D
             SetTransforms(str, dir);
         }
     }
-    class Arrow : Shape
+    class Arrow3D : Shape3D
     {
         private Point3D str;
         private Vector3D dir;
@@ -458,7 +457,7 @@ namespace Draw3D
         private int resolution;
         private bool closed;
 
-        public Arrow(Point3D str, Vector3D dir, double dia, int resolution)
+        public Arrow3D(Point3D str, Vector3D dir, double dia, int resolution)
         {
             this.str = str;
             this.dir = dir;
@@ -476,7 +475,7 @@ namespace Draw3D
             SetTransforms(str, dir);
         }
     }
-    class Sphere : Shape
+    class Sphere : Shape3D
     {
         private Point3D center;
         private double diameter;
@@ -492,18 +491,18 @@ namespace Draw3D
             SetTransforms(center, new Vector3D(1, 1, 1));
         }
     }
-    public class TextShapes3D : List<Text>
+    public class TextShapes3D : List<TextShape3D>
     {
-        public Text Add(string caption, Point3D position, double size)
+        public TextShape3D Add(string caption, Point3D position, double size)
         {
-            Text t = new Text(caption, position, size, Colors.Black);
+            TextShape3D t = new TextShape3D(caption, position, size, Colors.Black);
             base.Add(t);
             return t;
         }
         internal Model3DGroup Model3DGroup()
         {
             Model3DGroup model3DGroup = new Model3DGroup();
-            foreach (Text text in this)
+            foreach (TextShape3D text in this)
             {
                 model3DGroup.Children.Add(text.GeoModel());
             }
@@ -518,14 +517,14 @@ namespace Draw3D
             return modelVisual3D;
         }
     }
-    public class Text : Shape
+    public class TextShape3D : Shape3D
     {
         string caption;
         Point3D position;
         double size = 8;
         Color color;
 
-        public Text(string caption, Point3D position, double size, Color color)
+        public TextShape3D(string caption, Point3D position, double size, Color color)
         {
             this.caption = caption;
             this.position = position;

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace _003_FosSimulator014
+namespace _FosSimulator
 {
     /// <summary>
     /// App.xaml에 대한 상호 작용 논리

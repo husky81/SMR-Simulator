@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace _003_FosSimulator014
+namespace _FosSimulator
 {
     class SMR
     {

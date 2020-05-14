@@ -1,4 +1,5 @@
-﻿using Draw3D;
+﻿using _Draw2D;
+using _Draw3D;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 
-namespace _003_FosSimulator014
+namespace _FosSimulator
 {
     public class RequestUserInput
     {

@@ -1,9 +1,11 @@
-﻿using Draw3D;
+﻿using _Draw2D;
+using _Draw3D;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,13 +20,14 @@ using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace _003_FosSimulator014
+namespace _FosSimulator
 {
     public partial class MainWindow : Window
     {
         private readonly SMR smr;
         public readonly FEM fem;
-        public readonly Draw3D.Draw3D draw;
+        public readonly Draw3D draw;
+        internal readonly Draw2D draw2D;
         public readonly CommandWindow cmd;
         internal RequestUserInput requestUserInput;
 
@@ -38,7 +41,8 @@ namespace _003_FosSimulator014
 
             smr = new SMR();
             fem = new FEM();
-            draw = new Draw3D.Draw3D(grdMain);
+            draw = new Draw3D(grdMain);
+            draw2D = new Draw2D(grdMain);
             cmd = new CommandWindow(this,tbxCommand);
             requestUserInput = new RequestUserInput(this);
 
@@ -52,11 +56,20 @@ namespace _003_FosSimulator014
 
             //TestNodeGrid();
             //TestExtrude();
-            TwiceExtrudeTest();
+            //TwiceExtrudeTest();
+            Drawing2dTest();
 
             RedrawFemModel();
         }
+        public void Drawing2dTest()
+        {
+            Point p0 = new Point(0,0);
+            Point p1 = new Point(1, 1);
+            object p = draw2D.shapes.lines.AddLine(p0, p1);
 
+
+
+        }
         public bool TwiceExtrudeTest()
         {
             cmd.Call("Erase");

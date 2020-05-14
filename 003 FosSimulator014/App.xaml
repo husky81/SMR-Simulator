@@ -1,7 +1,7 @@
-﻿<Application x:Class="_003_FosSimulator014.App"
+﻿<Application x:Class="_FosSimulator.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:_003_FosSimulator014"
+             xmlns:local="clr-namespace:_FosSimulator"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
          

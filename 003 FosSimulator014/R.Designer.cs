@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace _003_FosSimulator014 {
+namespace _FosSimulator {
     using System;
     
     

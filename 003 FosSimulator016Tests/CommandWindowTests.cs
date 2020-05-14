@@ -1,12 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using _003_FosSimulator014;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace _003_FosSimulator014.Tests
+namespace _FosSimulator.Tests
 {
     [TestClass()]
     public class CommandWindowTests

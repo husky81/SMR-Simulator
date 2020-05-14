@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Media3D;
 
-namespace _003_FosSimulator014
+namespace _FosSimulator
 {
     public class FEM
     {
