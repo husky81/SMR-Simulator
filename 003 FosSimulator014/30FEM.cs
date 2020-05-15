@@ -816,7 +816,7 @@ namespace _FosSimulator
     public class Nodes : List<Node>
     {
         internal int maxNum = 1;
-        internal bool show = true;
+        internal bool visibility = true;
         internal bool showNumber = false;
 
         public Nodes()
@@ -1789,6 +1789,7 @@ namespace _FosSimulator
     
     public class Boundaries : List<Boundary>
     {
+        internal bool visibility = true;
         int maxNum = 1;
         public Boundary AddBoundary(Node node,int Dx, int Dy, int Dz, int Rx, int Ry, int Rz)
         {

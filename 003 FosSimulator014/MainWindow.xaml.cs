@@ -57,17 +57,55 @@ namespace _FosSimulator
             //TestNodeGrid();
             //TestExtrude();
             //TwiceExtrudeTest();
-            Drawing2dTest();
+            //Drawing2dTest();
+            BoundaryConditionDrawingTest();
 
             RedrawFemModel();
         }
+
+        private void BoundaryConditionDrawingTest()
+        {
+            cmd.Call("Erase");
+            cmd.Call("All");
+            cmd.Call("Line");
+            cmd.Call("0,0");
+            cmd.Call("10,0");
+            cmd.Call(" ");
+            cmd.Call("Select");
+            cmd.Call("Element");
+            cmd.Call("1");
+            cmd.Call("Divide");
+            cmd.Call("10");
+
+            cmd.Call("select");
+            cmd.Call("node");
+            cmd.Call("1");
+
+            cmd.Call("select");
+            cmd.Call("node");
+            cmd.Call("2");
+
+            cmd.Call("boundary");
+            cmd.Call("f");
+
+
+        }
+
         public void Drawing2dTest()
         {
-            Point p0 = new Point(0,0);
-            Point p1 = new Point(1, 1);
-            object p = draw2D.shapes.lines.AddLine(p0, p1);
+            Point p0 = new Point(100, 100);
+            Point p1 = new Point(200, 300);
+            draw2D.shapes.lines.Add(p0, p1);
+            //p1 = new Point(400, 400);
+            int[] boundaryCondition = new int[6];
+            boundaryCondition[0] = 1;
+            boundaryCondition[1] = 1;
+            boundaryCondition[2] = 0;
+            boundaryCondition[3] = 1;
+            boundaryCondition[4] = 1;
+            boundaryCondition[5] = 1;
 
-
+            draw2D.boundaryConditionMarks.Add(p0, boundaryCondition);
 
         }
         public bool TwiceExtrudeTest()
@@ -152,6 +190,8 @@ namespace _FosSimulator
             MouseMove += ShowPointMarker_MouseMove;
             MouseDown += AddNode_MouseLeftDown;
             KeyUp += EndAddNode_Esc;
+
+            draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
         private void ShowPointMarker_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -160,6 +200,7 @@ namespace _FosSimulator
             Point p = e.GetPosition(grdMain);
             Point3D p3d = draw.pointMarker.Position(p);
             stbLabel.Content = "Add Node at (" + p3d.X + ", " + p3d.Y + ", " + p3d.Z + ")";
+            draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
         private void AddNode_MouseLeftDown(object sender, MouseButtonEventArgs e)
@@ -179,6 +220,7 @@ namespace _FosSimulator
                 MouseMove -= ShowPointMarker_MouseMove;
                 MouseDown -= AddNode_MouseLeftDown;
                 KeyUp -= EndAddNode_Esc;
+                draw.GenerateShapes_ModelVisual3ds();
                 draw.RedrawShapes();
                 WindowSelectionOn(true);
             }
@@ -448,6 +490,7 @@ namespace _FosSimulator
             Vector3D heightVector = new Vector3D(10,0, 0);
             //bckD.DrawCone(center, radius, heightVector, resolution, Colors.AliceBlue);
             draw.shapes.AddCone(radius, heightVector, center, 6);
+            draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
         private void DrawCoordinationMark(object sender, RoutedEventArgs e)
@@ -473,6 +516,7 @@ namespace _FosSimulator
             draw.shapes.AddCylinderClosed(str, dir, dia, resolution);
             draw.shapes.RecentShape.Color(Colors.Black);
             //bckD.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(10, 10, 10));
+            draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
         private void DrawSphere(object sender, RoutedEventArgs e)
@@ -483,6 +527,7 @@ namespace _FosSimulator
 
             draw.shapes.AddSphere(point, diameter, resolution);
             draw.shapes.RecentShape.Color(Colors.Red);
+            draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
         private void DrawPerformanceTest(object sender, RoutedEventArgs e)
@@ -498,6 +543,7 @@ namespace _FosSimulator
                     }
                 }
             }
+            draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
 
@@ -777,6 +823,7 @@ namespace _FosSimulator
             smr.structure.length = Convert.ToDouble(tbxLength.Text);
             smr.structure.width = Convert.ToDouble(tbxWidth.Text);
             draw.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(smr.structure.length, smr.structure.width, smr.structure.height));
+            draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
 
@@ -851,15 +898,21 @@ namespace _FosSimulator
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
             draw.showCoordinateSystem = sd.IsChecked;
+            draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
         private void ViewBasePlaneGrid(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
             draw.showBasePlaneGrid = sd.IsChecked;
+            draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
 
+        private void RedrawFemModel(object sender, RoutedEventArgs e)
+        {
+            RedrawFemModel();
+        }
         public void RedrawFemModel()
         {
             RedrawFemWorksTreeView();
@@ -893,7 +946,7 @@ namespace _FosSimulator
             //Deformation
             if (fem.solved)
             {
-                if (fem.model.nodes.show)
+                if (fem.model.nodes.visibility)
                 {
                     foreach (Node node in fem.model.nodes)
                     {
@@ -991,7 +1044,7 @@ namespace _FosSimulator
 
                 if (!fem.solved)
                 {
-                    if (fem.model.nodes.show)
+                    if (fem.model.nodes.visibility)
                     {
                         foreach (Node node in fem.model.nodes)
                         {
@@ -1014,6 +1067,7 @@ namespace _FosSimulator
                             draw.texts.Add(node.num.ToString(), node.c0, 8);
                         }
                     }
+
                 }
                 if (fem.model.elems.show)
                 {
@@ -1080,21 +1134,37 @@ namespace _FosSimulator
                 }
             }
 
-            draw.RedrawShapes();
-        }
-        private void RedrawFemModel(object sender, RoutedEventArgs e)
-        {
-            RedrawFemModel();
+            RedrawShapes();
         }
         public void RedrawShapes(object sender, RoutedEventArgs e)
         {
-            draw.RedrawShapes();
+            RedrawShapes();
         }
         public void RedrawShapes()
         {
-            RedrawShapes(null,null);
+            draw.GenerateShapes_ModelVisual3ds();
+            draw.RedrawShapes();
+            RedrawShapes2D();
         }
-
+        private void RedrawShapes2D()
+        {
+            Redraw3dRelated2dShapes();
+            draw2D.RedrawShapes();
+        }
+        private void Redraw3dRelated2dShapes()
+        {
+            if (grdMain.ActualHeight == 0) return;
+            if (fem.model.boundaries.visibility)
+            {
+                draw2D.boundaryConditionMarks.Clear();
+                foreach (Boundary boundary in fem.model.boundaries)
+                {
+                    Point3D p0 = boundary.node.c0;
+                    Point p = draw.GetPoint2D_FromPoint3D(p0);
+                    draw2D.boundaryConditionMarks.Add(p, boundary.condition);
+                }
+            }
+        }
     } // 패널, 격자배경, 좌표계, Redraw 등
     public partial class MainWindow : Window
     {
@@ -1212,6 +1282,7 @@ namespace _FosSimulator
                     WindowState = System.Windows.WindowState.Normal;
                     break;
             }
+            draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
 
@@ -1411,6 +1482,9 @@ namespace _FosSimulator
             stbLabel.Content = "";
             draw.OrbitEnd();
             this.MouseMove -= new System.Windows.Input.MouseEventHandler(Orbit_MouseMove);
+            draw.RedrawShapes();
+            RedrawShapes2D();
+
         }
         private void TurnOffOrbit_Esc(object sender, System.Windows.Input.KeyEventArgs e)
         {
@@ -1427,12 +1501,13 @@ namespace _FosSimulator
             grdMain.MouseLeave -= new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
             KeyDown -= TurnOffOrbit_Esc;
             TurnOnDeselectAll_Esc(true);
+
         }
 
         private void ViewNode(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            fem.model.nodes.show = sd.IsChecked;
+            fem.model.nodes.visibility = sd.IsChecked;
             RedrawFemModel();
         }
         private void ViewNodeNumber(object sender, RoutedEventArgs e)

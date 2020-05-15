@@ -17,6 +17,8 @@ namespace _Draw3D
         public readonly Grid grid;
         public Shapes3D shapes;
         public TextShapes3D texts = new TextShapes3D();
+        private ModelVisual3D modelVisual3d_Shapes;
+        private ModelVisual3D modelVisual3d_Texts;
 
         /// <summary>
         /// 노드 추가할 때 졸졸 따라다니는 sphere.
@@ -188,6 +190,7 @@ namespace _Draw3D
             pointMarker = new PointMarker3D(this);
             selectionWindow = new SelectionWindow(grid);
 
+            GenerateShapes_ModelVisual3ds();
             RedrawShapes();
         }
         public void RedrawShapes()
@@ -199,14 +202,20 @@ namespace _Draw3D
 
             viewport.Children.Clear();
             viewport.Children.Add(modelVisual);
-            viewport.Children.Add(shapes.ModelVisual3D());
-            viewport.Children.Add(texts.ModelVisual3D());
+
+            viewport.Children.Add(modelVisual3d_Shapes);
+            viewport.Children.Add(modelVisual3d_Texts);
             if (showBasePlaneGrid) viewport.Children.Add(modelVisual_BasePlaneGrid);
             if (showCoordinateSystem) viewport.Children.Add(modelVisual_CoordinateSystem);
             if (pointMarker.visibility) viewport.Children.Add(pointMarker.modelVisual3D);
 
             grid.Children.Clear();
             grid.Children.Add(viewport);
+        }
+        internal void GenerateShapes_ModelVisual3ds()
+        {
+            modelVisual3d_Shapes = shapes.ModelVisual3D();
+            modelVisual3d_Texts = texts.ModelVisual3D();
         }
 
         /// <summary>
