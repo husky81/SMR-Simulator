@@ -760,11 +760,16 @@ namespace _FosSimulator
         private void OpenPannelCameraControl(object sender, RoutedEventArgs e)
         {
             dkpCameraControl.Visibility = Visibility.Visible;
-            GetCameraInfo();
+            AfterViewChanged();
         }
         private void ClosePannelCameraControl(object sender, RoutedEventArgs e)
         {
             dkpCameraControl.Visibility = Visibility.Collapsed;
+        }
+        private void AfterViewChanged()
+        {
+            GetCameraInfo();
+            RedrawShapes_woGeneration();
         }
         private void GetCameraInfo()
         {
@@ -890,8 +895,6 @@ namespace _FosSimulator
                 item.Items.Add(new TreeViewItem() { Header = boundary.node.num });
             }
             treeViewFemWorks.Items.Add(item);
-
-
         }
 
         private void ViewCoordinateSystem(object sender, RoutedEventArgs e)
@@ -1143,11 +1146,11 @@ namespace _FosSimulator
         public void RedrawShapes()
         {
             draw.GenerateShapes_ModelVisual3ds();
-            draw.RedrawShapes();
-            RedrawShapes2D();
+            RedrawShapes_woGeneration();
         }
-        private void RedrawShapes2D()
+        private void RedrawShapes_woGeneration()
         {
+            draw.RedrawShapes();
             Redraw3dRelated2dShapes();
             draw2D.RedrawShapes();
         }
@@ -1289,47 +1292,58 @@ namespace _FosSimulator
         private void ViewSW(object sender, RoutedEventArgs e)
         {
             draw.ViewSW();
+            AfterViewChanged();
         }
         private void ViewSE(object sender, RoutedEventArgs e)
         {
             draw.ViewSE();
+            AfterViewChanged();
         }
         private void ViewNW(object sender, RoutedEventArgs e)
         {
             draw.ViewNW();
+            AfterViewChanged();
         }
         private void ViewNE(object sender, RoutedEventArgs e)
         {
             draw.ViewNE();
+            AfterViewChanged();
         }
         private void ViewTop(object sender, RoutedEventArgs e)
         {
             draw.ViewTop();
+            AfterViewChanged();
         }
         private void ViewFront(object sender, RoutedEventArgs e)
         {
             draw.ViewFront();
+            AfterViewChanged();
         }
         private void ViewBottom(object sender, RoutedEventArgs e)
         {
             draw.ViewBottom();
+            AfterViewChanged();
         }
         private void ViewLeft(object sender, RoutedEventArgs e)
         {
             draw.ViewLeft();
+            AfterViewChanged();
         }
         private void ViewRight(object sender, RoutedEventArgs e)
         {
             draw.ViewRight();
+            AfterViewChanged();
         }
         private void ViewBack(object sender, RoutedEventArgs e)
         {
             draw.ViewBack();
+            AfterViewChanged();
         }
 
         public void ZoomExtents(object sender, RoutedEventArgs e)
         {
             draw.ViewZoomExtend();
+            AfterViewChanged();
         }
         public void ZoomExtents()
         {
@@ -1345,6 +1359,7 @@ namespace _FosSimulator
             requestUserInput.viewType = SelectionWindow.ViewType.Rectangle;
             requestUserInput.RequestPoints(2);
             requestUserInput.actionEveryLastTwoPointsWithPointPoint += draw.ViewZoomWindow;
+            requestUserInput.actionEnd += AfterViewChanged;
             requestUserInput.Start();
         }
 
@@ -1357,7 +1372,7 @@ namespace _FosSimulator
         private void Zoom_MouseWheelScroll(object sender, MouseWheelEventArgs e)
         {
             draw.ZoomForward(e.Delta);
-            GetCameraInfo();
+            AfterViewChanged();
         }
         private void PanOn_MouseWheelDown(object sender, MouseButtonEventArgs e)
         {
@@ -1386,7 +1401,7 @@ namespace _FosSimulator
                 {
                     //requestUserInput.PanMove(mov);
                 }
-                GetCameraInfo();
+                AfterViewChanged();
             }
         }
         private void PanOff_MouseWheelUp(object sender, MouseButtonEventArgs e)
@@ -1436,7 +1451,7 @@ namespace _FosSimulator
                 stbLabel.Content = mov.X + ", " + mov.Y;
 
                 draw.OrbitRotate(mov);
-                GetCameraInfo();
+                AfterViewChanged();
             }
             else
             {
@@ -1469,7 +1484,7 @@ namespace _FosSimulator
 
                 stbLabel.Content = "d = " + dist + ", rad = " + rad;
                 draw.OrbitTwist(rad, dist);
-                GetCameraInfo();
+                AfterViewChanged();
             }
         }
         private void Orbit_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
@@ -1483,7 +1498,7 @@ namespace _FosSimulator
             draw.OrbitEnd();
             this.MouseMove -= new System.Windows.Input.MouseEventHandler(Orbit_MouseMove);
             draw.RedrawShapes();
-            RedrawShapes2D();
+            RedrawShapes_woGeneration();
 
         }
         private void TurnOffOrbit_Esc(object sender, System.Windows.Input.KeyEventArgs e)
