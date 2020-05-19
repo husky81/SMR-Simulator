@@ -22,7 +22,7 @@ using System.Windows.Shapes;
 
 namespace _FosSimulator
 {
-    public partial class MainWindow : Window
+    partial class MainWindow : Window
     {
         private readonly SMR smr;
         public readonly FEM fem;
@@ -47,9 +47,10 @@ namespace _FosSimulator
             requestUserInput = new RequestUserInput(this);
 
             TurnOnWheelPanZoom();
-            WindowSelectionOn(true);
+            TurnOnWindowSelection(true);
             TurnOnDeselectAll_Esc(true);
             TurnOnErase_Del(true);
+            TurnOnFemAnalysis_F5(true);
 
             draw.ViewTop();
             draw.ViewZoomExtend();
@@ -88,9 +89,11 @@ namespace _FosSimulator
             cmd.Call("boundary");
             cmd.Call("f");
 
+            cmd.Call("re");
 
+            FemMaterial matl1 = fem.model.materials.AddConcrete("C30");
+            FemSection sect1 = fem.model.sections.AddRectangle(1, 0.2);
         }
-
         public void Drawing2dTest()
         {
             Point p0 = new Point(100, 100);
@@ -145,30 +148,30 @@ namespace _FosSimulator
         private void TestExtrude()
         {
             fem.Initialize();
-            MaterialFem matl1 = fem.model.materials.AddConcrete("C30");
-            Section sect1 = fem.model.sections.AddRectangle(1, 0.2);
+            FemMaterial matl1 = fem.model.materials.AddConcrete("C30");
+            FemSection sect1 = fem.model.sections.AddRectangle(1, 0.2);
 
-            Node n1 = fem.model.nodes.Add(0, 0, 0);
-            Node n2 = fem.model.nodes.Add(10, 0, 0);
-            Frame f = fem.model.elems.AddFrame(n1, n2);
+            FemNode n1 = fem.model.nodes.Add(0, 0, 0);
+            FemNode n2 = fem.model.nodes.Add(10, 0, 0);
+            FemFrame f = fem.model.elems.AddFrame(n1, n2);
             f.material = matl1;
-            f.Section(sect1);
+            f.Section = sect1;
             fem.Select(f);
-            fem.Divide(2);
+            fem.DivideSelectedElems(2);
 
             fem.SelectElemAll();
-            fem.Divide(2);
+            fem.DivideSelectedElems(2);
 
             fem.SelectElemAll();
-            fem.Divide(2);
+            fem.DivideSelectedElems(2);
 
             fem.SelectElemAll();
             Vector3D dir = new Vector3D(0, 1, 0);
-            fem.Extrude(dir, 5);
+            fem.ExtrudeSelectedElems(dir, 5);
 
             fem.SelectElemAll();
             dir = new Vector3D(0, 0, 1);
-            fem.Extrude(dir, 5);
+            fem.ExtrudeSelectedElems(dir, 5);
 
         }
         private void TestNodeGrid()
@@ -184,196 +187,23 @@ namespace _FosSimulator
             }
         }
 
-        private void StartAddNode(object sender, RoutedEventArgs e)
-        {
-            WindowSelectionOn(false);
-            MouseMove += ShowPointMarker_MouseMove;
-            MouseDown += AddNode_MouseLeftDown;
-            KeyUp += EndAddNode_Esc;
-
-            draw.GenerateShapes_ModelVisual3ds();
-            draw.RedrawShapes();
-        }
-        private void ShowPointMarker_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            draw.pointMarker.visibility = true;
-            Point p = e.GetPosition(grdMain);
-            Point3D p3d = draw.pointMarker.Position(p);
-            stbLabel.Content = "Add Node at (" + p3d.X + ", " + p3d.Y + ", " + p3d.Z + ")";
-            draw.GenerateShapes_ModelVisual3ds();
-            draw.RedrawShapes();
-        }
-        private void AddNode_MouseLeftDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.LeftButton==MouseButtonState.Pressed)
-            {
-                Point3D p3d = draw.GetPoint3dOnBasePlane_FromPoint2D(e.GetPosition(grdMain));
-                fem.model.nodes.Add(p3d);
-                RedrawFemModel();
-            }
-        }
-        private void EndAddNode_Esc(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == Key.Escape)
-            {
-                draw.pointMarker.Hide();
-                MouseMove -= ShowPointMarker_MouseMove;
-                MouseDown -= AddNode_MouseLeftDown;
-                KeyUp -= EndAddNode_Esc;
-                draw.GenerateShapes_ModelVisual3ds();
-                draw.RedrawShapes();
-                WindowSelectionOn(true);
-            }
-        }
-
-        internal void BoundaryFixRx()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
-            boundaryFixFreeCondition = new int[] { 0, 0, 0, 1, 0, 0 };
-            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-
-        internal void BoundaryFixRy()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
-            boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 1, 0 };
-            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-
-        internal void BoundaryRemove()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
-            requestUserInput.actionEnd += BoundaryRemoveAll;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-
-        private void BoundaryRemoveAll()
-        {
-        }
-
-        internal void BoundaryFixRz()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
-            boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 0, 1 };
-            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-
-        internal void BoundaryFixDz()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
-            boundaryFixFreeCondition = new int[] { 0, 0, 1, 0, 0, 0 };
-            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-
-        internal void BoundaryFixDy()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
-            boundaryFixFreeCondition = new int[] { 0, 1, 0, 0, 0, 0 };
-            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-
-        internal void BoundaryFixDx()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
-            boundaryFixFreeCondition = new int[] { 1, 0, 0, 0, 0, 0 };
-            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-
-        internal void BoundaryFixDXYZ()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
-            boundaryFixFreeCondition = new int[] { 1, 1, 1, 0, 0, 0 };
-            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-
-        internal void BoundaryFixAll()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
-            boundaryFixFreeCondition = new int[] { 1, 1, 1, 1, 1, 1};
-            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-        private int[] boundaryFixFreeCondition;
-        private void BoundaryAdd_SelectedNode()
-        {
-            int dx = boundaryFixFreeCondition[0];
-            int dy = boundaryFixFreeCondition[1];
-            int dz = boundaryFixFreeCondition[2];
-            int rx = boundaryFixFreeCondition[3];
-            int ry = boundaryFixFreeCondition[4];
-            int rz = boundaryFixFreeCondition[5];
-            foreach (Node node in fem.selection.nodes)
-            {
-                fem.model.boundaries.AddBoundary(node, dx, dy, dz, rx, ry, rz);
-            }
-        }
-
-        internal void SelectElem()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestInts(R.SelectElementNumber);
-            requestUserInput.actionAfterIntsWithInts += fem.SelectElem;
-            requestUserInput.Start();
-        }
-        internal void SelectNode()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestInts(R.String2);
-            requestUserInput.actionAfterIntsWithInts += fem.SelectNode;
-            requestUserInput.Start();
-        }
-
         private void FemTest_Solid003(object sender, RoutedEventArgs e)
         {
             fem.Initialize();
-            MaterialFem matl1 = fem.model.materials.AddConcrete("C30");
-            Section sect1 = fem.model.sections.AddRectangle(1, 0.2);
+            FemMaterial matl1 = fem.model.materials.AddConcrete("C30");
+            FemSection sect1 = fem.model.sections.AddRectangle(1, 0.2);
 
-            Node n1 = fem.model.nodes.Add(0, 0, 0);
-            Node n2 = fem.model.nodes.Add(2, 0, 0);
-            Frame f = fem.model.elems.AddFrame(n1, n2);
+            FemNode n1 = fem.model.nodes.Add(0, 0, 0);
+            FemNode n2 = fem.model.nodes.Add(2, 0, 0);
+            FemFrame f = fem.model.elems.AddFrame(n1, n2);
             f.material = matl1;
-            f.Section(sect1);
+            f.Section = sect1;
             fem.Select(f);
-            fem.Divide(2);
+            fem.DivideSelectedElems(2);
 
             fem.SelectElemAll();
             Vector3D dir = new Vector3D(0, 1, 0);
-            Elements ee = fem.Extrude(dir, 2);
+            FemElements ee = fem.ExtrudeSelectedElems(dir, 2);
             
             dir = new Vector3D(0, 0, 0.5);
             fem.Extrude(ee, dir, 20);
@@ -391,7 +221,7 @@ namespace _FosSimulator
             Vector3D force = new Vector3D(1000, 0, 0);
             Vector3D moment = new Vector3D(0, 0, 0);
             
-            Node np = fem.model.nodes.GetNode(188);
+            FemNode np = fem.model.nodes.GetNode(188);
             if (np != null)
             {
                 fem.loads.AddNodal(np, force, moment);
@@ -414,20 +244,20 @@ namespace _FosSimulator
         private void FemTest_SimpleBeamLoadZ(object sender, RoutedEventArgs e)
         {
             fem.Initialize();
-            MaterialFem matl1 = fem.model.materials.AddConcrete("C30");
+            FemMaterial matl1 = fem.model.materials.AddConcrete("C30");
 
             double width = 1;
             double height = 0.2;
-            Section sect1 = fem.model.sections.AddRectangle(width, height);
+            FemSection sect1 = fem.model.sections.AddRectangle(width, height);
 
-            Node n1 = fem.model.nodes.Add(0, 0, 0);
-            Node n2 = fem.model.nodes.Add(10, 0, 0);
-            Frame f = fem.model.elems.AddFrame(n1, n2);
+            FemNode n1 = fem.model.nodes.Add(0, 0, 0);
+            FemNode n2 = fem.model.nodes.Add(10, 0, 0);
+            FemFrame f = fem.model.elems.AddFrame(n1, n2);
             f.material = matl1;
-            f.Section(sect1);
+            f.Section = sect1;
             
             fem.Select(f);
-            fem.Divide(10);
+            fem.DivideSelectedElems(10);
 
             fem.model.boundaries.AddBoundary(n1, 1, 1, 1, 1, 0, 0);
             fem.model.boundaries.AddBoundary(n2, 0, 1, 1, 0, 0, 0);
@@ -435,7 +265,7 @@ namespace _FosSimulator
             Vector3D force = new Vector3D(0, 0, -50);
             Vector3D moment = new Vector3D(0, 0, 0);
 
-            Node np = fem.model.nodes.GetNode(4);
+            FemNode np = fem.model.nodes.GetNode(4);
             fem.loads.AddNodal(np, force, moment);
 
             fem.Solve();
@@ -445,20 +275,20 @@ namespace _FosSimulator
         private void FemTest_SimpleBeamLoadY(object sender, RoutedEventArgs e)
         {
             fem.Initialize();
-            MaterialFem matl1 = fem.model.materials.AddConcrete("C30");
+            FemMaterial matl1 = fem.model.materials.AddConcrete("C30");
 
             double width = 1;
             double height = 0.2;
-            Section sect1 = fem.model.sections.AddRectangle(width, height);
+            FemSection sect1 = fem.model.sections.AddRectangle(width, height);
 
-            Node n1 = fem.model.nodes.Add(0, 0, 0);
-            Node n2 = fem.model.nodes.Add(10, 0, 0);
-            Frame f = fem.model.elems.AddFrame(n1, n2);
+            FemNode n1 = fem.model.nodes.Add(0, 0, 0);
+            FemNode n2 = fem.model.nodes.Add(10, 0, 0);
+            FemFrame f = fem.model.elems.AddFrame(n1, n2);
             f.material = matl1;
-            f.Section(sect1);
+            f.Section = sect1;
 
             fem.Select(f);
-            fem.Divide(10);
+            fem.DivideSelectedElems(10);
 
             fem.model.boundaries.AddBoundary(n1, 1, 1, 1, 1, 0, 0);
             fem.model.boundaries.AddBoundary(n2, 0, 1, 1, 0, 0, 0);
@@ -466,7 +296,7 @@ namespace _FosSimulator
             Vector3D force = new Vector3D(0, 600, 0);
             Vector3D moment = new Vector3D(0, 0, 0);
 
-            Node np = fem.model.nodes.GetNode(7);
+            FemNode np = fem.model.nodes.GetNode(7);
             fem.loads.AddNodal(np, force, moment);
 
             fem.Solve();
@@ -556,91 +386,15 @@ namespace _FosSimulator
             
         }
 
-        internal void AddLineFem(Point wP0, Point wP1)
+        private void AddMaterial(object sender, RoutedEventArgs e)
         {
-            Point3D p0 = draw.GetPoint3dOnBasePlane_FromPoint2D(wP0);
-            Point3D p1 = draw.GetPoint3dOnBasePlane_FromPoint2D(wP1);
-            Node n1 = fem.model.nodes.Add(p0);
-            Node n2 = fem.model.nodes.Add(p1);
-            fem.model.elems.AddFrame(n1, n2);
+
+        }
+        private void AddSection(object sender, RoutedEventArgs e)
+        {
+
         }
 
-
-        public void EraseAll()
-        {
-            fem.Initialize();
-            RedrawFemModel();
-        }
-        internal void EraseSelected()
-        {
-            fem.DeleteSelection();
-            RedrawFemModel();
-        }
-        internal void EraseFence()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestPoints("define fence");
-            requestUserInput.viewType = SelectionWindow.ViewType.Line;
-            requestUserInput.actionEveryLastTwoPointsWithPointPoint += SelectElemByFenceLine;
-            requestUserInput.actionEnd += EraseSelected;
-            requestUserInput.Start();
-        }
-        private void SelectElemByFenceLine(Point3D p0, Point3D p1)
-        {
-            Point3D pos = draw.PCamera.Position;
-            Vector3D v0 = p0 - pos;
-            Vector3D v1 = p1 - pos;
-
-            //draw.GetInfiniteTriangleBySelectionFence(p0, p1, ref pos, ref v0, ref v1);
-            fem.SelectByInfiniteTriangle(pos, v0, v1);
-
-            RedrawFemModel();
-        }
-
-        private void FemDivide(object sender, RoutedEventArgs e)
-        {
-            cmd.Call("Divide");
-        }
-        internal void DivideElem()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestElemSelection(R.String1);
-            requestUserInput.RequestInt(R.String3);
-            requestUserInput.actionAfterIntWithInt += fem.Divide;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-        private void FemExtrude(object sender, RoutedEventArgs e)
-        {
-            cmd.Call("Extrude");
-        }
-        internal void ExtrudeElem()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestElemSelection(R.String4);
-            requestUserInput.RequestDirection(R.String5);
-            requestUserInput.RequestInt(R.String6);
-            requestUserInput.actionAfterIntWithDirInt += fem.ExtrudeWoRetern;
-            requestUserInput.actionEnd += fem.selection.Clear;
-            requestUserInput.actionEnd += RedrawFemModel;
-            requestUserInput.Start();
-        }
-        internal void AddLineFem3D(Point3D p0, Point3D p1)
-        {
-            Node n1 = fem.model.nodes.Add(p0);
-            Node n2 = fem.model.nodes.Add(p1);
-            fem.model.elems.AddFrame(n1, n2);
-        }
-        internal void AddLine()
-        {
-            requestUserInput = new RequestUserInput(this);
-            requestUserInput.viewType = SelectionWindow.ViewType.Line;
-            requestUserInput.RequestPoints(R.String7);
-            requestUserInput.actionEveryLastTwoPointsWithPointPoint += AddLineFem3D;
-            requestUserInput.actionEveryLastTwoPoints += RedrawFemModel;
-            requestUserInput.Start();
-        }
     }
 
     internal class UserInputAction
@@ -657,7 +411,11 @@ namespace _FosSimulator
             Ints,
             Double,
             Distance,
-            Direction,
+            /// <summary>
+            /// Vector3D 형식의 입력값. Vector로 요청했는데 사용자가 Point를 입력(마우스 클릭, 커멘트 창에 절대좌표로 입력)한 경우, 0,0,0을 기준으로한 벡터로 볼 수 있을지 검토 필요.
+            /// </summary>
+            Vector,
+            VectorValue,
         }
         internal RequestInputType requestInputType;
         internal string message;
@@ -696,7 +454,7 @@ namespace _FosSimulator
         }
         internal void Start()
         {
-            main.WindowSelectionOn(false);
+            main.TurnOnWindowSelection(false);
             main.draw.selectionWindow.viewType = viewType;
 
             if (hasFirstPoint)
@@ -751,10 +509,275 @@ namespace _FosSimulator
             main.MouseLeave -= WindowSelectionEnd;
             main.MouseDown -= WindowSelection_MouseLeftDown;
 
-            main.WindowSelectionOn(true);
+            main.TurnOnWindowSelection(true);
         }
-    } //개체 선택 사용자 입력
+    } // 개체 선택 사용자 입력
 
+    public partial class MainWindow : Window
+    {
+        internal void SelectNode()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestInts(R.String2);
+            requestUserInput.actionAfterIntsWithInts += fem.SelectNode;
+            requestUserInput.Start();
+        }
+        internal void SelectElem()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestInts(R.SelectElementNumber);
+            requestUserInput.actionAfterIntsWithInts += fem.SelectElem;
+            requestUserInput.Start();
+        }
+        private void SelectElemByFenceLine(Point3D p0, Point3D p1)
+        {
+            Point3D pos = draw.PCamera.Position;
+            Vector3D v0 = p0 - pos;
+            Vector3D v1 = p1 - pos;
+
+            //draw.GetInfiniteTriangleBySelectionFence(p0, p1, ref pos, ref v0, ref v1);
+            fem.SelectByInfiniteTriangle(pos, v0, v1);
+
+            RedrawFemModel();
+        }
+        public void SelectFemByWindow(Point wP0, Point wP1)
+        {
+            if (wP0.Equals(wP1)) return; //사각형 크기가 0인 경우 pass~
+
+            Point3D p0 = new Point3D();
+            Vector3D v0 = new Vector3D();
+            Vector3D v1 = new Vector3D();
+            Vector3D v2 = new Vector3D();
+            Vector3D v3 = new Vector3D();
+
+            //pespective view에서 사각형을 그리는 방법으로 개체를 선택하려면 카메라의 위치 p0에서 각 모서리의 벡터 v0~v3을 얻어야 함.
+            //draw에 사용자가 그린 사각형 정보 wP0, wP1을 전달해서 피라미드 정보를 얻어와서. fem에서 요소와 절점을 선택하도록 지시함.
+            draw.GetInfinitePyramidBySelectionWindow(wP0, wP1, ref p0, ref v0, ref v1, ref v2, ref v3);
+            if (wP0.X > wP1.X)
+            {
+                //사각형을 반대방향으로 그린 경우 경계선에 겹친 모든 요소를 선택함.
+                fem.SelectByInfinitePyramid_Cross(p0, v0, v1, v2, v3);
+            }
+            else
+            {
+                fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+            }
+        }
+
+        private void AddNode(object sender, RoutedEventArgs e)
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.viewType = SelectionWindow.ViewType.Cross;
+            requestUserInput.RequestPoints(-1);
+            requestUserInput.actionAfterEveryLastPointWithPoint += fem.model.nodes.Add_NoReturn;
+            requestUserInput.actionAfterEveryPoint += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        private void AddFemLine(object sender, RoutedEventArgs e)
+        {
+            cmd.Call("Line");
+        }
+        internal void AddFemLine()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.viewType = SelectionWindow.ViewType.Line;
+            requestUserInput.RequestPoints(R.String7);
+            requestUserInput.actionEveryLastTwoPointsWithPointPoint += AddFemLine;
+            requestUserInput.actionEveryLastTwoPoints += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        internal void AddFemLine(Point3D p0, Point3D p1)
+        {
+            FemNode n1 = fem.model.nodes.Add(p0);
+            FemNode n2 = fem.model.nodes.Add(p1);
+            fem.model.elems.AddFrame(n1, n2);
+        }
+
+        private void FemDivide(object sender, RoutedEventArgs e)
+        {
+            cmd.Call("Divide");
+        }
+        internal void DivideElem()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestElemSelection(R.String1);
+            requestUserInput.RequestInt(R.String3);
+            requestUserInput.actionAfterIntWithInt += fem.DivideSelectedElems;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        private void FemExtrude(object sender, RoutedEventArgs e)
+        {
+            cmd.Call("Extrude");
+        }
+        internal void ExtrudeElem()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestElemSelection(R.String4);
+            requestUserInput.RequestVector(R.String5);
+            requestUserInput.RequestInt(R.String6);
+            requestUserInput.actionAfterIntWithVecInt += fem.ExtrudeWoReturn;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        internal void BoundaryFixRx()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 0, 0, 0, 1, 0, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        internal void BoundaryFixRy()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 1, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        internal void BoundaryRemove()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.actionEnd += BoundaryRemoveAll;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        private void BoundaryRemoveAll()
+        {
+        }
+        internal void BoundaryFixRz()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 0, 1 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        internal void BoundaryFixDz()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 0, 0, 1, 0, 0, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        internal void BoundaryFixDy()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 0, 1, 0, 0, 0, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        internal void BoundaryFixDx()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 1, 0, 0, 0, 0, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        internal void BoundaryFixDXYZ()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 1, 1, 1, 0, 0, 0 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        internal void BoundaryFixAll()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection(R.String10);
+            boundaryFixFreeCondition = new int[] { 1, 1, 1, 1, 1, 1 };
+            requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+        private int[] boundaryFixFreeCondition;
+        private void BoundaryAdd_SelectedNode()
+        {
+            int dx = boundaryFixFreeCondition[0];
+            int dy = boundaryFixFreeCondition[1];
+            int dz = boundaryFixFreeCondition[2];
+            int rx = boundaryFixFreeCondition[3];
+            int ry = boundaryFixFreeCondition[4];
+            int rz = boundaryFixFreeCondition[5];
+            foreach (FemNode node in fem.selection.nodes)
+            {
+                fem.model.boundaries.AddBoundary(node, dx, dy, dz, rx, ry, rz);
+            }
+        }
+
+        private void FemAddLoadSelected(object sender, RoutedEventArgs e)
+        {
+            cmd.Call("Force");
+        }
+        internal void FemAddLoadSelected()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection("하중을 재하할 노드를 선택하세요.");
+            requestUserInput.RequestVectorValue("하중의 크기를 지정하세요. (ex. 10,0,0)");
+            requestUserInput.actionAfterVecWithVec += fem.AddForceSelectedNodes;
+            requestUserInput.actionEnd += fem.selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        public void EraseAll()
+        {
+            fem.DeleteAllNode();
+            RedrawFemModel();
+        }
+        internal void EraseSelected()
+        {
+            fem.DeleteSelection();
+            RedrawFemModel();
+        }
+        internal void EraseFence()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestPoints("define fence");
+            requestUserInput.viewType = SelectionWindow.ViewType.Line;
+            requestUserInput.actionEveryLastTwoPointsWithPointPoint += SelectElemByFenceLine;
+            requestUserInput.actionEnd += EraseSelected;
+            requestUserInput.Start();
+        }
+
+        private void FemAnalysis(object sender, RoutedEventArgs e)
+        {
+            FemAnalysis();
+        }
+        private void FemAnalysis()
+        {
+            fem.Check(cmd);
+            fem.Solve();
+            RedrawFemModel();
+        }
+
+    } // FEM
     public partial class MainWindow : Window
     {
         private void OpenPannelCameraControl(object sender, RoutedEventArgs e)
@@ -849,7 +872,7 @@ namespace _FosSimulator
             TreeViewItem item = new TreeViewItem();
             item.Header = "Materials(" + fem.model.materials.Count + ")";
             item.IsExpanded = false;
-            foreach (MaterialFem material in fem.model.materials)
+            foreach (FemMaterial material in fem.model.materials)
             {
                 item.Items.Add(new TreeViewItem() { Header = material.name });
             }
@@ -858,7 +881,7 @@ namespace _FosSimulator
             item = new TreeViewItem();
             item.Header = "Sections(" + fem.model.sections.Count + ")";
             item.IsExpanded = false;
-            foreach (Section section in fem.model.sections)
+            foreach (FemSection section in fem.model.sections)
             {
                 item.Items.Add(new TreeViewItem() { Header = section.num });
             }
@@ -870,7 +893,7 @@ namespace _FosSimulator
             treeViewFemWorks.Items.Add(item);
 
             item = new TreeViewItem();
-            Elements elems = fem.model.elems;
+            FemElements elems = fem.model.elems;
             item.Header = "Elements(" + elems.Count + ")";
             item.IsExpanded = true;
             if (elems.frames.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Frame(" + elems.frames.Count + ")" });
@@ -881,7 +904,7 @@ namespace _FosSimulator
             item = new TreeViewItem();
             item.Header = "Boundaries(" + fem.model.boundaries.Count + ")";
             item.IsExpanded = false;
-            foreach (Boundary boundary in fem.model.boundaries)
+            foreach (FemBoundary boundary in fem.model.boundaries)
             {
                 item.Items.Add(new TreeViewItem() { Header = boundary.node.num });
             }
@@ -890,7 +913,7 @@ namespace _FosSimulator
             item = new TreeViewItem();
             item.Header = "Loads(" + fem.loads.Count + ")";
             item.IsExpanded = false;
-            foreach (Boundary boundary in fem.model.boundaries)
+            foreach (FemBoundary boundary in fem.model.boundaries)
             {
                 item.Items.Add(new TreeViewItem() { Header = boundary.node.num });
             }
@@ -951,7 +974,7 @@ namespace _FosSimulator
             {
                 if (fem.model.nodes.visibility)
                 {
-                    foreach (Node node in fem.model.nodes)
+                    foreach (FemNode node in fem.model.nodes)
                     {
                         draw.shapes.AddSphere(node.c1, diaNode, rlsNode);
                         draw.shapes.RecentShape.Color(colorNode);
@@ -959,25 +982,25 @@ namespace _FosSimulator
                 }
                 if (fem.model.nodes.showNumber)
                 {
-                    foreach (Node node in fem.model.nodes)
+                    foreach (FemNode node in fem.model.nodes)
                     {
                         draw.texts.Add(node.num.ToString(), node.c1, 8);
                     }
                 }
                 if (fem.model.elems.show)
                 {
-                    foreach (Element e in fem.model.elems)
+                    foreach (FemElement e in fem.model.elems)
                     {
                         switch (e.type)
                         {
                             case 21:
-                                Frame frame = (Frame)e;
+                                FemFrame frame = (FemFrame)e;
                                 Point3D str = frame.nodes[0].c1;
                                 Point3D end = frame.nodes[1].c1;
                                 Vector3D dir = end - str;
                                 if (showSection)
                                 {
-                                    draw.shapes.AddPolygon(str, dir, frame.section.poly);
+                                    draw.shapes.AddPolygon(str, dir, frame.Section.poly);
                                 }
                                 else
                                 {
@@ -985,12 +1008,12 @@ namespace _FosSimulator
                                 }
                                 break;
                             case 40:
-                                Plate p = (Plate)e;
+                                FemPlate p = (FemPlate)e;
                                 draw.shapes.AddBox(p.nodes[0].c1, p.nodes[2].c1 - p.nodes[0].c1);
 
                                 break;
                             case 80:
-                                Solid s = (Solid)e;
+                                FemSolid s = (FemSolid)e;
                                 draw.shapes.AddHexahedron(s.nodes[0].c1, s.nodes[1].c1, s.nodes[2].c1, s.nodes[3].c1, s.nodes[4].c1, s.nodes[5].c1, s.nodes[6].c1, s.nodes[7].c1);
                                 break;
                             default:
@@ -1001,7 +1024,7 @@ namespace _FosSimulator
                 }
                 if (fem.model.elems.showNumber)
                 {
-                    foreach (Element elem in fem.model.elems)
+                    foreach (FemElement elem in fem.model.elems)
                     {
                         draw.texts.Add(elem.num.ToString(), elem.Center, 8);
                     }
@@ -1009,7 +1032,7 @@ namespace _FosSimulator
 
                 foreach (FemLoad load in fem.loads)
                 {
-                    foreach (NodalLoad nodalLoad in load.nodalLoads)
+                    foreach (FemNodalLoad nodalLoad in load.nodalLoads)
                     {
                         draw.shapes.AddForce(nodalLoad.node.c1, nodalLoad.force * loadViewScale);
                         draw.shapes.RecentShape.Color(colorLoad);
@@ -1017,7 +1040,7 @@ namespace _FosSimulator
                 }
 
                 //Reaction Force
-                foreach (Node node in fem.model.nodes)
+                foreach (FemNode node in fem.model.nodes)
                 {
                     Vector3D dir = new Vector3D(node.reactionForce[0], node.reactionForce[1], node.reactionForce[2]);
                     draw.shapes.AddForce(node.c1, dir * loadViewScale);
@@ -1049,7 +1072,7 @@ namespace _FosSimulator
                 {
                     if (fem.model.nodes.visibility)
                     {
-                        foreach (Node node in fem.model.nodes)
+                        foreach (FemNode node in fem.model.nodes)
                         {
                             draw.shapes.AddSphere(node.c0, diaNode, rlsNode);
                             if (node.selected)
@@ -1065,7 +1088,7 @@ namespace _FosSimulator
                     }
                     if (fem.model.nodes.showNumber)
                     {
-                        foreach (Node node in fem.model.nodes)
+                        foreach (FemNode node in fem.model.nodes)
                         {
                             draw.texts.Add(node.num.ToString(), node.c0, 8);
                         }
@@ -1074,25 +1097,25 @@ namespace _FosSimulator
                 }
                 if (fem.model.elems.show)
                 {
-                    foreach (Element e in fem.model.elems)
+                    foreach (FemElement e in fem.model.elems)
                     {
                         switch (e.type)
                         {
                             case 21:
-                                Frame frame = (Frame)e;
+                                FemFrame frame = (FemFrame)e;
                                 Point3D str = frame.nodes[0].c0;
                                 Point3D end = frame.nodes[1].c0;
                                 Vector3D dir = end - str;
 
-                                if(frame.section == null)
+                                if(frame.Section == null)
                                 {
                                     draw.shapes.AddCylinder(str, dir, diaElem, rlsElem);
                                 }
                                 else
                                 {
-                                    if(showSection & frame.section.hasSectionPoly)
+                                    if(showSection & frame.Section.hasSectionPoly)
                                     {
-                                        draw.shapes.AddPolygon(str, dir, frame.section.poly);
+                                        draw.shapes.AddPolygon(str, dir, frame.Section.poly);
                                     }
                                     else
                                     {
@@ -1101,12 +1124,12 @@ namespace _FosSimulator
                                 }
                                 break;
                             case 40:
-                                Plate p = (Plate)e;
+                                FemPlate p = (FemPlate)e;
                                 //draw.shapes.AddBox(p.nodes[0].c0, p.nodes[2].c0 - p.nodes[0].c0);
                                 draw.shapes.AddRectangle(p.nodes[0].c0, p.nodes[1].c0, p.nodes[2].c0, p.nodes[3].c0);
                                 break;
                             case 80:
-                                Solid s = (Solid)e;
+                                FemSolid s = (FemSolid)e;
                                 draw.shapes.AddHexahedron(s.nodes[0].c0, s.nodes[1].c0, s.nodes[2].c0, s.nodes[3].c0, s.nodes[4].c0, s.nodes[5].c0, s.nodes[6].c0, s.nodes[7].c0);
                                 break;
                             default:
@@ -1127,7 +1150,7 @@ namespace _FosSimulator
                 {
                     foreach (FemLoad load in fem.loads)
                     {
-                        foreach (NodalLoad nodalLoad in load.nodalLoads)
+                        foreach (FemNodalLoad nodalLoad in load.nodalLoads)
                         {
                             draw.shapes.AddForce(load.nodalLoads[0].node.c0, nodalLoad.force * loadViewScale);
                             draw.shapes.RecentShape.Color(colorLoad);
@@ -1160,7 +1183,7 @@ namespace _FosSimulator
             if (fem.model.boundaries.visibility)
             {
                 draw2D.boundaryConditionMarks.Clear();
-                foreach (Boundary boundary in fem.model.boundaries)
+                foreach (FemBoundary boundary in fem.model.boundaries)
                 {
                     Point3D p0 = boundary.node.c0;
                     Point p = draw.GetPoint2D_FromPoint3D(p0);
@@ -1174,32 +1197,32 @@ namespace _FosSimulator
         private Point pointMouseDown;
         internal bool orbiting = false;
 
-        private bool windowSelectionOn = false;
-        internal void WindowSelectionOn(bool on)
+        private bool isOnwindowSelection = false;
+        internal void TurnOnWindowSelection(bool on)
         {
             if (orbiting) return;
-            if (on)
+            if (on & !isOnwindowSelection) //이벤트 중복생성 방지
             {
-                if (!windowSelectionOn) //이벤트 중복생성 방지
-                {
-                    MouseDown += WindowSelection_MouseLeftDown;
-                }
+                MouseDown += WindowSelection_MouseLeftDown;
             }
             else
             {
                 MouseDown -= WindowSelection_MouseLeftDown;
             }
-            windowSelectionOn = on;
+            isOnwindowSelection = on;
         }
+        private bool isOnDeselectAll_Esc = false;
         internal void TurnOnDeselectAll_Esc(bool on)
         {
-            if (on)
+            if(on & !isOnDeselectAll_Esc) //이벤트 중복생성 방지
             {
                 KeyDown += UnselectAll_Esc;
+                isOnDeselectAll_Esc = true;
             }
             else
             {
                 KeyDown -= UnselectAll_Esc;
+                isOnDeselectAll_Esc = false;
             }
         }
         private void TurnOnErase_Del(bool on)
@@ -1211,6 +1234,17 @@ namespace _FosSimulator
             else
             {
                 PreviewKeyDown -= Erase_Del;
+            }
+        }
+        private void TurnOnFemAnalysis_F5(bool on)
+        {
+            if (on)
+            {
+                PreviewKeyDown += FemAnalysis_F5;
+            }
+            else
+            {
+                PreviewKeyDown -= FemAnalysis_F5;
             }
         }
         private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
@@ -1241,33 +1275,17 @@ namespace _FosSimulator
         }
         private void Erase_Del(object sender, System.Windows.Input.KeyEventArgs e)
         {
-             if (e.Key == Key.Delete)
+            if (e.Key == Key.Delete)
             {
                 fem.selection.Delete();
                 RedrawFemModel();
             }
         }
-        public void SelectFemByWindow(Point wP0, Point wP1)
+        private void FemAnalysis_F5(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (wP0.Equals(wP1)) return; //사각형 크기가 0인 경우 pass~
-
-            Point3D p0 = new Point3D();
-            Vector3D v0 = new Vector3D();
-            Vector3D v1 = new Vector3D();
-            Vector3D v2 = new Vector3D();
-            Vector3D v3 = new Vector3D();
-
-            //pespective view에서 사각형을 그리는 방법으로 개체를 선택하려면 카메라의 위치 p0에서 각 모서리의 벡터 v0~v3을 얻어야 함.
-            //draw에 사용자가 그린 사각형 정보 wP0, wP1을 전달해서 피라미드 정보를 얻어와서. fem에서 요소와 절점을 선택하도록 지시함.
-            draw.GetInfinitePyramidBySelectionWindow(wP0, wP1, ref p0, ref v0, ref v1, ref v2, ref v3);
-            if (wP0.X > wP1.X)
+            if (e.Key == Key.F5)
             {
-                //사각형을 반대방향으로 그린 경우 경계선에 겹친 모든 요소를 선택함.
-                fem.SelectByInfinitePyramid_Cross(p0, v0, v1, v2, v3);
-            }
-            else
-            {
-                fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+                FemAnalysis();
             }
         }
     } // 마우스 이벤트 관련
@@ -1470,20 +1488,16 @@ namespace _FosSimulator
                 Vector center2mouseDownPoint;
                 center2mouseDownPoint = pointMouseDown - center_gridMain;
                 //bckD.DrawLine(center_gridMain, pointMouseDown);
-                double iniDist = center2mouseDownPoint.Length;
 
                 Vector center2point = p - center_gridMain;
-                double newDist = center2point.Length;
-
-                double dist = newDist - iniDist;
 
                 double iniAngle = -Math.Atan2(center2mouseDownPoint.Y, center2mouseDownPoint.X);
                 double newAngle = -Math.Atan2(center2point.Y, center2point.X);
 
                 double rad = newAngle - iniAngle;
 
-                stbLabel.Content = "d = " + dist + ", rad = " + rad;
-                draw.OrbitTwist(rad, dist);
+                stbLabel.Content = "rad = " + rad;
+                draw.OrbitTwist(rad);
                 AfterViewChanged();
             }
         }
@@ -1516,7 +1530,6 @@ namespace _FosSimulator
             grdMain.MouseLeave -= new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
             KeyDown -= TurnOffOrbit_Esc;
             TurnOnDeselectAll_Esc(true);
-
         }
 
         private void ViewNode(object sender, RoutedEventArgs e)

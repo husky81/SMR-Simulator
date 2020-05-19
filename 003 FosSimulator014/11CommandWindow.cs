@@ -3,6 +3,7 @@ using _Draw3D;
 using GeneralFunctions;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,6 +26,7 @@ namespace _FosSimulator
         private Command lastCommand;
         private readonly string initialCmdMark = "Command";
         private readonly string cmdMark = ": ";
+        private bool isMouseInput = false;
 
         public CommandWindow(MainWindow mainWindow, System.Windows.Controls.TextBox textBox)
         {
@@ -47,7 +49,10 @@ namespace _FosSimulator
             internal static MainWindow main;
             internal Run run; //하위 Command가 있든 없든 무조건 실행
             internal delegate void Run();
-            internal Run runSelected; //이미 선택된 개체가 있는 경우 실행
+            /// <summary>
+            /// 이미 선택된 개체가 있는 경우 실행
+            /// </summary>
+            internal Run runSelected;
             internal RunMouse runMouseDown; //하위명령 커리 중 마우스를 클릭하는 경우 실행
             internal delegate void RunMouse(Point p0);
             internal string name; //ex. _zoom , _line
@@ -117,7 +122,7 @@ namespace _FosSimulator
             subCmd = cmd.Add("All", "a"); subCmd.run += main.EraseAll;
             subCmd = cmd.Add("Fence", "f"); subCmd.run += main.EraseFence;
 
-            cmd = rootCommand.Add("Line", "l"); cmd.run += main.AddLine;
+            cmd = rootCommand.Add("Line", "l"); cmd.run += main.AddFemLine;
 
             cmd = rootCommand.Add("Divide", "d"); cmd.run += main.DivideElem;
 
@@ -137,6 +142,10 @@ namespace _FosSimulator
             subCmd = cmd.Add("RY", "ry"); subCmd.run += main.BoundaryFixRy;
             subCmd = cmd.Add("RZ", "rz"); subCmd.run += main.BoundaryFixRz;
             subCmd = cmd.Add("Remove", "r"); subCmd.run += main.BoundaryRemove;
+
+            cmd = rootCommand.Add("Force", "f"); cmd.runSelected += main.FemAddLoadSelected;
+
+
 
         } //명령어 구성!!!
 
@@ -236,31 +245,33 @@ namespace _FosSimulator
                     break;
                 case InputTypes.Point:
                     break;
-                case InputTypes.Direction:
-                    if (userInputType == InputTypes.Direction)
+                case InputTypes.Vector:
+                case InputTypes.VectorValue: //VectorValue는 키보드로 절대좌표를 입력한 경우 입력값을 그대로 벡터로 반환함.
+                    switch (userInputType)
                     {
-                        if (actionAfterDirWithDir != null)
-                        {
-                            actionAfterDirWithDir(userInputVector3D);
-                            actionAfterDirWithDir = null;
+                        case InputTypes.Point: //상대좌표를 요청했는데 절대좌표가 입력된 경우.
+                            if (requestedInputType == InputTypes.VectorValue & !isMouseInput)
+                            {
+                                //VectorValue는 키보드로 절대좌표를 입력한 경우 입력값을 그대로 벡터로 반환함.
+                                userInputVector3D = userInputPoint3D - new Point3D(0, 0, 0);
+                                ActionAfterVecWithVec();
+                            }
+                            else
+                            {
+                                PutVectorFirstPoint(userInputPoint3D);
+                            }
                             return;
-                        }
+                        case InputTypes.Vector:
+                            ActionAfterVecWithVec();
+                            return;
+                        default:
+                            break;
                     }
-                    if (userInputType == InputTypes.Point)
-                    {
-                        //상대좌표를 요청했는데 절대좌표가 입력된 경우.
-                        PutDirectionFirstPoint(userInputPoint3D);
-                        return;
-                    }
-                    else
-                    {
-                        //상대좌표를 요청했는데 입력되지 않은 경우.
-                        WriteText(" (상대좌표값이 아닙니다. 상대좌표를 입력하세요. ex: @0,1 or @0,1,0)");
-                        Enter();
-                        main.requestUserInput.DoAction();
-                        return;
-                    }
-                    break;
+                    //상대좌표를 요청했는데 입력되지 않은 경우.
+                    WriteText(" (상대좌표값이 아닙니다. 상대좌표를 입력하세요. ex: @0,1 or @0,1,0)");
+                    Enter();
+                    main.requestUserInput.DoAction();
+                    return;
                 case InputTypes.Dist:
                     break;
                 case InputTypes.Points:
@@ -269,7 +280,7 @@ namespace _FosSimulator
                         case InputTypes.Point:
                             PutPoints_Point(userInputPoint3D);
                             return;
-                        case InputTypes.Direction:
+                        case InputTypes.Vector:
                             PutPoints_Direction(userInputVector3D);
                             return;
                         default:
@@ -297,6 +308,17 @@ namespace _FosSimulator
 
 
         } // 사용자가 입력한 명령 실행. 커멘드 창에서 space, enter를 누르면 실행됨.
+
+        private void ActionAfterVecWithVec()
+        {
+            if (actionAfterVecWithVec != null)
+            {
+                actionAfterVecWithVec(userInputVector3D);
+                actionAfterVecWithVec = null;
+                EndCommand();
+            }
+        }
+
         private InputTypes GetTypeOfUserInput(string uInp)
         {
             //입력값이 상대좌표인 경우. @로 시작하는 경우 상대좌표로 인식.
@@ -307,9 +329,9 @@ namespace _FosSimulator
                 switch (isRelativeCoordinateInput)
                 {
                     case 2:
-                        return InputTypes.Direction;
+                        return InputTypes.Vector;
                     case 3:
-                        return InputTypes.Direction;
+                        return InputTypes.Vector;
                     default:
                         break;
                 }
@@ -552,9 +574,11 @@ namespace _FosSimulator
             switch (e.Key)
             {
                 case Key.Space:
+                    isMouseInput = false;
                     GetCommand();
                     break;
                 case Key.Enter:
+                    isMouseInput = false;
                     GetCommand();
                     //if (userInput.Equals("")) WriteText("> ");
                     //WriteText(userInput);
@@ -685,9 +709,9 @@ namespace _FosSimulator
         internal delegate void inputDirInt(Vector3D dir, int n);
         internal inputDirInt actionAfterIntWithDirInt;
         internal delegate void inputDir(Vector3D dir);
-        internal inputDir actionAfterDirWithDir;
+        internal inputDir actionAfterVecWithVec;
         internal delegate void inputPoint(Point3D p0);
-        internal inputPoint actionAfterPoint;
+        internal inputPoint actionAfterPointWithPoint;
         internal delegate void inputPoints(List<Point3D> pointList);
         internal inputPoints actionAfterPoints;
 
@@ -717,15 +741,18 @@ namespace _FosSimulator
             SetCursorLast();
             requestedInputType = InputTypes.Points;
             userInputPoints = new List<Point3D>();
+
             main.MouseDown += GetPoints_Point;
+            main.MouseMove += GetPoints_Moving;
+
         }
 
         private void ClearActions()
         {
             actionAfterIntWithInt = null;
             actionAfterIntWithDirInt = null;
-            actionAfterDirWithDir = null;
-            actionAfterPoint = null;
+            actionAfterVecWithVec = null;
+            actionAfterPointWithPoint = null;
             actionAfterPoints = null;
         }
 
@@ -746,7 +773,7 @@ namespace _FosSimulator
             main.draw.selectionWindow.End();
 
             userInputPoints.Add(userInputPoint3D);
-            actionAfterPoint?.Invoke(userInputPoint3D);
+            actionAfterPointWithPoint?.Invoke(userInputPoint3D);
 
             if(numPointRequested == userInputPoints.Count)
             {
@@ -766,7 +793,6 @@ namespace _FosSimulator
             main.MouseDown += GetPoints_SecondAfterPoint;
         }
 
-
         private void PutPoints_Direction(Vector3D userInputPoint3D)
         {
             Point3D nextPoint = userInputPoints[userInputPoints.Count - 1] + userInputPoint3D;
@@ -775,6 +801,14 @@ namespace _FosSimulator
         private void GetPoints_Moving(object sender, MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
+
+            //Cross인 경우 첫번째 점을 입력하기 전부터 시작되어야 함.
+            if (viewType == SelectionWindow.ViewType.Cross & !main.draw.selectionWindow.started)
+            {
+                main.draw.selectionWindow.viewType = viewType;
+                main.draw.selectionWindow.Start(p0);
+            }
+
             main.draw.selectionWindow.Move(p0);
         }
         private void GetPoints_SecondAfterPoint(object sender, MouseButtonEventArgs e)
@@ -804,67 +838,83 @@ namespace _FosSimulator
         /// 사용자에게 Vector3D 값을 입력하도록 요청. 마우스 혹은 키보드 입력 가능함.
         /// </summary>
         /// <param name="message"></param>
-        internal void RequestInput_Direction(string message)
+        internal void RequestInputVector(string message)
         {
             WriteText(message + cmdMark);
             SetCursorLast();
-            requestedInputType = InputTypes.Direction;
-            main.MouseDown += GetDirection;
+            requestedInputType = InputTypes.Vector;
+            main.MouseDown += GetVector;
         }
-        private void GetDirection(object sender, MouseButtonEventArgs e)
+        /// <summary>
+        /// 사용자에게 Vector3D 값을 입력하도록 요청. 키보드로 입력한 경우 값을 벡터로 반환. 마우스로 입력하는 경우 두번째 점을 요청하여 벡터 반환.
+        /// </summary>
+        /// <param name="message"></param>
+        internal void RequestInputVectorValue(string message)
+        {
+            WriteText(message + cmdMark);
+            SetCursorLast();
+            requestedInputType = InputTypes.VectorValue;
+            main.MouseDown += GetVector;
+        }
+        private void GetVector(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
-                main.MouseDown -= GetDirection;
+                main.MouseDown -= GetVector;
+                isMouseInput = true;
                 main.cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
-        private Point3D directionFirstPoint;
+        private Point3D vectorFirstPoint;
         internal SelectionWindow.ViewType viewType;
 
-        internal void PutDirectionFirstPoint(Point3D userInputPoint3D)
+        internal void PutVectorFirstPoint(Point3D userInputPoint3D)
         {
-            directionFirstPoint = userInputPoint3D;
+            vectorFirstPoint = userInputPoint3D;
             Point p = GetPointFromPoint3D(userInputPoint3D);
 
-            main.MouseMove += GetDirection_Moving;
+            main.MouseMove += GetVector_Moving;
             main.draw.selectionWindow.viewType = SelectionWindow.ViewType.Line;
             main.draw.selectionWindow.Start(p);
 
-            main.MouseDown += PutDirection_SecondPoint;
+            WriteText("벡터의 방향을 입력하세요." + cmdMark);
+            SetCursorLast();
+            main.MouseDown += PutVectorSecondPoint;
         }
-        private void GetDirection_Moving(object sender, System.Windows.Input.MouseEventArgs e)
+        private void GetVector_Moving(object sender, System.Windows.Input.MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
             main.draw.selectionWindow.Move(p0);
         }
-        private void PutDirection_SecondPoint(object sender, MouseButtonEventArgs e)
+        private void PutVectorSecondPoint(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
 
-                RemoveEvents_GetDirection();
+                RemoveEvents_GetVector();
                 main.draw.selectionWindow.End();
 
-                Vector3D inputDirection = p3 - directionFirstPoint;
+                Vector3D inputDirection = p3 - vectorFirstPoint;
                 main.requestUserInput.Put(inputDirection);
+                Enter();
+                EndCommand();
             }
         }
-        private void RemoveEvents_GetDirection()
+        private void RemoveEvents_GetVector()
         {
-            main.MouseDown -= GetDirection;
-            main.MouseDown -= PutDirection_SecondPoint;
-            main.MouseMove -= GetDirection_Moving;
+            main.MouseDown -= GetVector;
+            main.MouseDown -= PutVectorSecondPoint;
+            main.MouseMove -= GetVector_Moving;
         }
 
         private void RemoveEvents_All()
         {
             RemoveEvents_GetPoints();
-            RemoveEvents_GetDirection();
+            RemoveEvents_GetVector();
         }
 
         private Point3D GetPoint3dFromPoint2D(Point p0)
@@ -882,9 +932,10 @@ namespace _FosSimulator
             Ints,
             Double,
             Point,
-            Direction,
+            Vector,
             Dist,
-            Points
+            Points,
+            VectorValue
         }
     } //명령창 명령어 관리
 

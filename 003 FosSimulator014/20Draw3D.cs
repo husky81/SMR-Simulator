@@ -889,7 +889,16 @@ namespace _Draw3D
             Vector3D newUp = Vector3D.CrossProduct(ncv * Math.Abs(mov.Y) + cv * Math.Abs(mov.X), localXVector);
             PCamera.UpDirection = newUp;
         }
-        internal void OrbitTwist(double rad, double dist)
+        internal void OrbitTwist(double rad)
+        {
+            Vector3D u = pCamera_init.UpDirection;
+            Vector3D d = pCamera_init.LookDirection + new Vector3D(0, 0, 0);
+            d.Normalize();
+            Vector3D nu = GF.RotateVector3D(u, new Point3D(0, 0, 0), d, rad);
+
+            PCamera.UpDirection = nu;
+        }
+        internal void OrbitTwist_Old(double rad, double dist)
         {
             Point3D p = pCamera_init.Position + new Vector3D(0, 0, 0);
             Vector3D pv = new Vector3D(p.X, p.Y, p.Z);  //카메라 위치

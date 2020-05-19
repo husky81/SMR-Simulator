@@ -7,13 +7,15 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Media.Media3D;
 
 namespace _FosSimulator
 {
     public class FEM
     {
-        public readonly ModelFem model = new ModelFem();
+        public readonly FemModel model = new FemModel();
         public readonly FemLoads loads = new FemLoads();
         internal bool solved = false;
 
@@ -25,34 +27,21 @@ namespace _FosSimulator
         }
         internal void Initialize()
         {
-            selection.Clear();
+            DeleteAllNode();
 
             model.materials.Clear();
             model.materials.maxNum = 1;
             model.sections.Clear();
             model.sections.maxNum = 1;
-            model.nodes.Clear();
-            model.nodes.maxNum = 1;
-            model.elems.Clear();
-            model.elems.maxNum = 1;
-            model.elems.frames.Clear();
-            model.elems.plates.Clear();
-            model.elems.solids.Clear();
-            model.boundaries.Clear();
-
-            loads.Clear();
-            loads.maxNum = 1;
-
-            solved = false;
         }
 
-        internal void Select(Node node)
+        internal void Select(FemNode node)
         {
             selection.AddNode(node);
         }
         internal void SelectNode(int n)
         {
-            foreach (Node node in model.nodes)
+            foreach (FemNode node in model.nodes)
             {
                 if (node.num == n)
                 {
@@ -69,7 +58,7 @@ namespace _FosSimulator
         }
         internal void SelectElem(int elemNumber)
         {
-            foreach (Element elem in model.elems)
+            foreach (FemElement elem in model.elems)
             {
                 if (elem.num == elemNumber)
                 {
@@ -85,13 +74,13 @@ namespace _FosSimulator
                 SelectElem(i);
             }
         }
-        internal void Select(Element element)
+        internal void Select(FemElement element)
         {
             selection.AddElement(element);
         }
         internal void SelectElems(int strElemNum, int endElemNum)
         {
-            foreach (Element elem in model.elems)
+            foreach (FemElement elem in model.elems)
             {
                 if (strElemNum <= elem.num & elem.num <= endElemNum)
                 {
@@ -104,15 +93,152 @@ namespace _FosSimulator
             selection.Clear();
             selection.AddElement(model.elems);
         }
+        /// <summary>
+        /// 꼭지점과 4개의 벡터로 표현되는 무한 피라미드의 내부에 있는 모든 요소를 선택합니다.
+        /// </summary>
+        internal void SelectByInfinitePyramid(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
+        {
+            FemNodes selectedNodes = new FemNodes();
+
+            Vector3D plane0 = Vector3D.CrossProduct(v0, v1);
+            Vector3D plane1 = Vector3D.CrossProduct(v1, v2);
+            Vector3D plane2 = Vector3D.CrossProduct(v2, v3);
+            Vector3D plane3 = Vector3D.CrossProduct(v3, v0);
+
+            Point3D p;
+            bool isOn0;
+            bool isOn1;
+            bool isOn2;
+            bool isOn3;
+            foreach (FemNode node in model.nodes)
+            {
+                node.selectedAtThisTime = false;
+            }
+            foreach (FemNode node in model.nodes)
+            {
+                if (IsNodeOn(node))
+                {
+                    selection.AddNode(node);
+                    node.selectedAtThisTime = true;
+                }
+
+                selectedNodes.Add(node);
+            }
+            bool flag;
+            foreach (FemElement element in model.elems)
+            {
+                flag = true;
+                foreach (FemNode node in element.nodes)
+                {
+                    if (node.selectedAtThisTime == false) flag = false;
+                }
+                if (flag)
+                {
+                    selection.AddElement(element);
+                }
+            }
+
+            //중복제거
+            selection.nodes.Distinct();
+            selection.elems.Distinct();
+
+            return;
+
+            bool IsNodeOn(FemNode node)
+            {
+                p = node.c0;
+                isOn0 = GF.IsPointUpperPlane(p, p0, plane0);
+                isOn1 = GF.IsPointUpperPlane(p, p0, plane1);
+                isOn2 = GF.IsPointUpperPlane(p, p0, plane2);
+                isOn3 = GF.IsPointUpperPlane(p, p0, plane3);
+                if (isOn0 & isOn1 & isOn2 & isOn3)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+        /// <summary>
+        /// 꼭지점과 4개의 벡터로 표현되는 무한 피라미드의 내부에 있는 모든 요소를 선택합니다.
+        /// 라인에 걸리는거 다 선택.
+        /// </summary>
+        internal void SelectByInfinitePyramid_Cross(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
+        {
+            SelectByInfinitePyramid(p0, v0, v1, v2, v3);
+            SelectByInfiniteTriangle(p0, v0, v1);
+            SelectByInfiniteTriangle(p0, v1, v2);
+            SelectByInfiniteTriangle(p0, v2, v3);
+            SelectByInfiniteTriangle(p0, v3, v0);
+        }
+        /// <summary>
+        /// 꼭지점과 2개의 벡터로 표현되는 부채꼴 면에 걸리는 모든 요소를 선택.
+        /// </summary>
+        internal void SelectByInfiniteTriangle(Point3D p0, Vector3D v0, Vector3D v1)
+        {
+            FemElements selected1 = new FemElements();
+            Vector3D plane = Vector3D.CrossProduct(v0, v1);
+
+            //절점 하나라도 평면에 걸리면 선택
+            foreach (FemElement element in model.elems)
+            {
+                bool firstFlag = GF.IsPointUpperPlane(element.nodes[0].c0, p0, plane);
+                bool flag;
+                for (int i = 1; i < element.nodes.Count; i++)
+                {
+                    flag = GF.IsPointUpperPlane(element.nodes[i].c0, p0, plane);
+                    if (flag != firstFlag)
+                    {
+                        selected1.Add(element);
+                        break;
+                    }
+                }
+            }
+
+            FemElements selected2 = new FemElements();
+            Point3D n0;
+            Point3D n1;
+            Point3D crossPoint;
+            Vector3D downPlaneAxis;
+            Vector3D upPlaneAxis;
+            bool dFlag;
+            bool uFlag;
+            foreach (FemElement elem in selected1)
+            {
+                for (int i = 0; i < elem.nodes.Count - 1; i++)
+                {
+                    n0 = elem.nodes[i].c0;
+                    n1 = elem.nodes[i + 1].c0;
+                    crossPoint = GF.CrossPointBetweenPlaneAndLine(plane, p0, n0, n1);
+                    if (crossPoint.X == 0 & crossPoint.Y == 0 & crossPoint.Z == 0)
+                    {
+                        continue;
+                    }
+
+                    downPlaneAxis = Vector3D.CrossProduct(plane, v0);
+                    upPlaneAxis = Vector3D.CrossProduct(v1, plane);
+                    dFlag = GF.IsPointUpperPlane(crossPoint, p0, downPlaneAxis);
+                    uFlag = GF.IsPointUpperPlane(crossPoint, p0, upPlaneAxis);
+                    if (dFlag & uFlag)
+                    {
+                        selected2.Add(elem);
+                    }
+                }
+            }
+
+            selection.AddElement(selected2);
+            selected1.Clear();
+            selected2.Clear();
+        }
         internal void DeselectAll()
         {
             selection.DeselectAll();
         }
+
         internal void DeleteSelectedNodes()
         {
-            foreach (Node node in selection.nodes)
+            foreach (FemNode node in selection.nodes)
             {
-                foreach (Element elem in node.connectedElements)
+                foreach (FemElement elem in node.connectedElements)
                 {
                     model.elems.Remove(elem);
                     selection.elems.Remove(elem);
@@ -123,7 +249,7 @@ namespace _FosSimulator
         }
         internal void DeleteSelectedElems()
         {
-            foreach (Element e in selection.elems)
+            foreach (FemElement e in selection.elems)
             {
                 model.elems.Remove(e);
             }
@@ -134,6 +260,22 @@ namespace _FosSimulator
         {
             DeleteSelectedElems();
             DeleteSelectedNodes();
+        }
+        internal void DeleteAllNode()
+        {
+            model.nodes.Clear();
+            model.nodes.maxNum = 1;
+            model.elems.Clear();
+            model.elems.maxNum = 1;
+            model.elems.frames.Clear();
+            model.elems.plates.Clear();
+            model.elems.solids.Clear();
+            model.boundaries.Clear();
+
+            loads.Clear();
+            loads.maxNum = 1;
+
+            solved = false;
         }
 
         internal void Solve()
@@ -152,14 +294,38 @@ namespace _FosSimulator
 
             solved = true;
         }
+
+        internal void Check(CommandWindow cmd)
+        {
+            //Material이 하나뿐인 경우 그냥 다 1번으로 지정
+            if (model.materials.Count == 1)
+            {
+                FemMaterial material = model.materials[0];
+                foreach (FemElement element in model.elems)
+                {
+                    element.material = material;
+                }
+            }
+
+            //Section이 하나뿐인 경우 그냥 다 1번으로 지정
+            if (model.sections.Count == 1)
+            {
+                FemSection section = model.sections[0];
+                foreach (FemElement element in model.elems)
+                {
+                    element.Section = section;
+                }
+            }
+        }
+
         internal double[] GloF()
         {
             double[] gloF = new double[model.dof];
             foreach (FemLoad load in loads)
             {
-                foreach (NodalLoad nodalLoad in load.nodalLoads)
+                foreach (FemNodalLoad nodalLoad in load.nodalLoads)
                 {
-                    Node node = nodalLoad.node;
+                    FemNode node = nodalLoad.node;
                     gloF[node.id[0]] += nodalLoad.force.X;
                     gloF[node.id[1]] += nodalLoad.force.Y;
                     gloF[node.id[2]] += nodalLoad.force.Z;
@@ -171,18 +337,36 @@ namespace _FosSimulator
             return gloF;
         }
 
-        internal void Divide(int numDivide)
+        internal void AddForceSelectedNodes(Vector3D force)
+        {
+            Vector3D moment = new Vector3D(0, 0, 0);
+            AddNodalLoadSelectedNodes(force, moment);
+        }
+        internal void AddMomentSelectedNodes(Vector3D moment)
+        {
+            Vector3D force = new Vector3D(0, 0, 0);
+            AddNodalLoadSelectedNodes(force, moment);
+        }
+        internal void AddNodalLoadSelectedNodes(Vector3D force, Vector3D moment)
+        {
+            foreach (FemNode node in selection.nodes)
+            {
+                loads.AddNodal(node, force, moment);
+            }
+        }
+
+        internal void DivideSelectedElems(int numDivide)
         {
             selection.Deduplicate();
-            foreach (Element elem in selection.elems)
+            foreach (FemElement elem in selection.elems)
             {
                 switch (elem.type)
                 {
                     case 21:
-                        Frame f = (Frame)elem;
+                        FemFrame f = (FemFrame)elem;
                         Vector3D dir = f.nodes[1].c0 - f.nodes[0].c0;
                         Vector3D ndir = dir / numDivide;
-                        Node[] n = new Node[numDivide + 1];
+                        FemNode[] n = new FemNode[numDivide + 1];
                         n[0] = f.nodes[0];
                         n[numDivide] = f.nodes[1];
                         for (int i = 1; i < numDivide; i++)
@@ -191,16 +375,13 @@ namespace _FosSimulator
                             n[i] = model.nodes.Add(nP);
                         }
 
-                        Frame[] fs = new Frame[numDivide];
+                        FemFrame[] fs = new FemFrame[numDivide];
                         for (int i = 0; i < numDivide; i++)
                         {
                             fs[i] = model.elems.AddFrame(n[i], n[i + 1]);
                             fs[i].type = f.type;
                             fs[i].material = f.material;
-                            fs[i].Section(f.Section());
-                            fs[i].Section2(f.Section2());
-
-
+                            fs[i].Section = f.Section;
                         }
                         model.elems.Remove(f);
 
@@ -212,65 +393,65 @@ namespace _FosSimulator
             selection.elems.Clear();
         }
 
-        internal Elements Extrude(Elements elems, Vector3D dir, int iter)
+        internal FemElements Extrude(FemElements elems, Vector3D dir, int iter)
         {
-            Elements extrudedElems = new Elements();
+            FemElements extrudedElems = new FemElements();
 
-            Frames frames = elems.frames;
+            FemFrames frames = elems.frames;
             if (frames.Count > 0)
             {
-                Elements extrudedFrames = Extrude_Frame(frames, dir, iter);
+                FemElements extrudedFrames = Extrude_Frame(frames, dir, iter);
                 extrudedElems.Add(extrudedFrames);
             }
 
-            Plates plates = elems.plates;
+            FemPlates plates = elems.plates;
             if (plates.Count > 0)
             {
-                Elements extrudedPlates = Extrude_Plate(plates, dir, iter);
+                FemElements extrudedPlates = Extrude_Plate(plates, dir, iter);
                 extrudedElems.Add(extrudedPlates);
             }
 
-            foreach (Element e in elems)
+            foreach (FemElement e in elems)
             {
                 model.elems.Remove(e);
             }
             return extrudedElems;
         }
-        internal Elements Extrude(Vector3D dir, int iter)
+        internal FemElements ExtrudeSelectedElems(Vector3D dir, int iter)
         {
             return Extrude(selection.elems, dir, iter);
         }
-        internal void ExtrudeWoRetern(Vector3D dir, int iter)
+        internal void ExtrudeWoReturn(Vector3D dir, int iter)
         {
             Extrude(selection.elems, dir, iter);
         }
-        private Elements Extrude_Frame(Frames frames, Vector3D dir, int iter)
+        private FemElements Extrude_Frame(FemFrames frames, Vector3D dir, int iter)
         {
-            Elements extrudedElems = new Elements();
+            FemElements extrudedElems = new FemElements();
 
-            Nodes nodes = frames.ConnectedNodes();
-            Nodes nodesDdp = nodes.Copy(); //de-duplicated
+            FemNodes nodes = frames.ConnectedNodes();
+            FemNodes nodesDdp = nodes.Copy(); //de-duplicated
             List<int> nodesNumber = new List<int>();
             List<int> nodesNumberDdp = new List<int>();
             ExtrudedNodeList(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
 
-            Node[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
+            FemNode[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
 
             for (int i = 0; i < iter; i++)
             {
                 for (int j = 0; j < frames.Count * 2; j += 2)
                 {
-                    Plate p = model.elems.AddPlate(nodeMatrix[i, nodesNumber[j]], nodeMatrix[i, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j]]);
+                    FemPlate p = model.elems.AddPlate(nodeMatrix[i, nodesNumber[j]], nodeMatrix[i, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j]]);
                     p.material = frames[j / 2].material;
                     extrudedElems.Add(p);
                 }
             }
             return extrudedElems;
         }
-        private Elements Extrude_Plate(Plates plates, Vector3D dir, int iter)
+        private FemElements Extrude_Plate(FemPlates plates, Vector3D dir, int iter)
         {
-            Nodes nodes = plates.ConnectedNodes();
-            Nodes nodesDdp = nodes.Copy(); //de-duplicated
+            FemNodes nodes = plates.ConnectedNodes();
+            FemNodes nodesDdp = nodes.Copy(); //de-duplicated
             List<int> nodesNumber = new List<int>();
             List<int> nodesNumberDdp = new List<int>();
 
@@ -278,29 +459,29 @@ namespace _FosSimulator
             ExtrudedNodeList(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
 
             //중복을 제거한 노드리스트를 dir 방향으로 iter번 반복해서 절점 생성.
-            Node[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
+            FemNode[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
 
-            Elements extrudedElems = new Elements();
+            FemElements extrudedElems = new FemElements();
             for (int i = 0; i < iter; i++)
             {
                 for (int j = 0; j < plates.Count * 4; j += 4)
                 {
-                    Node n0 = nodeMatrix[i, nodesNumber[j]];
-                    Node n1 = nodeMatrix[i, nodesNumber[j + 1]];
-                    Node n2 = nodeMatrix[i, nodesNumber[j + 2]];
-                    Node n3 = nodeMatrix[i, nodesNumber[j + 3]];
-                    Node n4 = nodeMatrix[i + 1, nodesNumber[j]];
-                    Node n5 = nodeMatrix[i + 1, nodesNumber[j + 1]];
-                    Node n6 = nodeMatrix[i + 1, nodesNumber[j + 2]];
-                    Node n7 = nodeMatrix[i + 1, nodesNumber[j + 3]];
-                    Solid s = model.elems.AddSolid(n0,n1,n2,n3,n4,n5,n6,n7);
+                    FemNode n0 = nodeMatrix[i, nodesNumber[j]];
+                    FemNode n1 = nodeMatrix[i, nodesNumber[j + 1]];
+                    FemNode n2 = nodeMatrix[i, nodesNumber[j + 2]];
+                    FemNode n3 = nodeMatrix[i, nodesNumber[j + 3]];
+                    FemNode n4 = nodeMatrix[i + 1, nodesNumber[j]];
+                    FemNode n5 = nodeMatrix[i + 1, nodesNumber[j + 1]];
+                    FemNode n6 = nodeMatrix[i + 1, nodesNumber[j + 2]];
+                    FemNode n7 = nodeMatrix[i + 1, nodesNumber[j + 3]];
+                    FemSolid s = model.elems.AddSolid(n0,n1,n2,n3,n4,n5,n6,n7);
                     s.material = plates[j / 4].material;
                     extrudedElems.Add(s);
                 }
             }
             return extrudedElems;
         }
-        private void ExtrudedNodeList(Nodes nodes, Nodes nodesDdp, List<int> nodesNumber, List<int> nodesNumberDdp)
+        private void ExtrudedNodeList(FemNodes nodes, FemNodes nodesDdp, List<int> nodesNumber, List<int> nodesNumberDdp)
         {
             //nodes : extrude에 참여하는 모든 요소의 절점을 순서대로 중복해서 저장한 배열임.
             //nodesDdp(Out) : 중복되는 노드를 제거한 배열.
@@ -359,12 +540,10 @@ namespace _FosSimulator
                 }
             }
         }
-
-
-        private Node[,] ExtrudedNodeMatrix_AddNode(Nodes nodesDdp, int iter, Vector3D dir)
+        private FemNode[,] ExtrudedNodeMatrix_AddNode(FemNodes nodesDdp, int iter, Vector3D dir)
         {
             //중복을 제거한 노드리스트를 dir 방향으로 iter번 반복해서 절점 생성.
-            Node[,] nodeMatrix = new Node[iter + 1, nodesDdp.Count];
+            FemNode[,] nodeMatrix = new FemNode[iter + 1, nodesDdp.Count];
             for (int n = 0; n < nodesDdp.Count; n++)
             {
                 nodeMatrix[0, n] = nodesDdp[n];
@@ -373,155 +552,19 @@ namespace _FosSimulator
             {
                 for (int n = 0; n < nodesDdp.Count; n++)
                 {
-                    Node newNode = model.nodes.Add(nodesDdp[n].c0 + dir * i);
+                    FemNode newNode = model.nodes.Add(nodesDdp[n].c0 + dir * i);
                     nodeMatrix[i, n] = newNode;
                 }
             }
             return nodeMatrix;
         }
 
-        /// <summary>
-        /// 꼭지점과 4개의 벡터로 표현되는 무한 피라미드의 내부에 있는 모든 요소를 선택합니다.
-        /// </summary>
-        internal void SelectByInfinitePyramid(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
-        {
-            Nodes selectedNodes = new Nodes();
-
-            Vector3D plane0 = Vector3D.CrossProduct(v0, v1);
-            Vector3D plane1 = Vector3D.CrossProduct(v1, v2);
-            Vector3D plane2 = Vector3D.CrossProduct(v2, v3);
-            Vector3D plane3 = Vector3D.CrossProduct(v3, v0);
-
-            Point3D p;
-            bool isOn0;
-            bool isOn1;
-            bool isOn2;
-            bool isOn3;
-            foreach (Node node in model.nodes)
-            {
-                node.selectedAtThisTime = false;
-            }
-            foreach (Node node in model.nodes)
-            {
-                if (IsNodeOn(node))
-                {
-                    selection.AddNode(node);
-                    node.selectedAtThisTime = true;
-                }
-
-                selectedNodes.Add(node);
-            }
-            bool flag;
-            foreach (Element element in model.elems)
-            {
-                flag = true;
-                foreach (Node node in element.nodes)
-                {
-                    if (node.selectedAtThisTime == false) flag = false;
-                }
-                if (flag)
-                {
-                    selection.AddElement(element);
-                }
-            }
-
-            //중복제거
-            selection.nodes.Distinct();
-            selection.elems.Distinct();
-
-            return;
-
-            bool IsNodeOn(Node node)
-            {
-                p = node.c0;
-                isOn0 = GF.IsPointUpperPlane(p, p0, plane0);
-                isOn1 = GF.IsPointUpperPlane(p, p0, plane1);
-                isOn2 = GF.IsPointUpperPlane(p, p0, plane2);
-                isOn3 = GF.IsPointUpperPlane(p, p0, plane3);
-                if (isOn0 & isOn1 & isOn2 & isOn3)
-                {
-                    return true;
-                }
-                return false;
-            }
-        }
-        /// <summary>
-        /// 꼭지점과 4개의 벡터로 표현되는 무한 피라미드의 내부에 있는 모든 요소를 선택합니다.
-        /// 라인에 걸리는거 다 선택.
-        /// </summary>
-        internal void SelectByInfinitePyramid_Cross(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
-        {
-            SelectByInfinitePyramid(p0, v0, v1, v2, v3);
-            SelectByInfiniteTriangle(p0, v0, v1);
-            SelectByInfiniteTriangle(p0, v1, v2);
-            SelectByInfiniteTriangle(p0, v2, v3);
-            SelectByInfiniteTriangle(p0, v3, v0);
-        }
-        /// <summary>
-        /// 꼭지점과 2개의 벡터로 표현되는 부채꼴 면에 걸리는 모든 요소를 선택.
-        /// </summary>
-        internal void SelectByInfiniteTriangle(Point3D p0, Vector3D v0, Vector3D v1)
-        {
-            Elements selected1 = new Elements();
-            Vector3D plane = Vector3D.CrossProduct(v0, v1);
-
-            //절점 하나라도 평면에 걸리면 선택
-            foreach (Element element in model.elems)
-            {
-                bool firstFlag = GF.IsPointUpperPlane(element.nodes[0].c0, p0, plane);
-                bool flag;
-                for (int i = 1; i < element.nodes.Count; i++)
-                {
-                    flag = GF.IsPointUpperPlane(element.nodes[i].c0, p0, plane);
-                    if (flag != firstFlag)
-                    {
-                        selected1.Add(element);
-                        break;
-                    }
-                }
-            }
-
-            Elements selected2 = new Elements();
-            Point3D n0;
-            Point3D n1;
-            Point3D crossPoint;
-            Vector3D downPlaneAxis;
-            Vector3D upPlaneAxis;
-            bool dFlag;
-            bool uFlag;
-            foreach (Element elem in selected1)
-            {
-                for (int i = 0; i < elem.nodes.Count-1; i++)
-                {
-                    n0 = elem.nodes[i].c0;
-                    n1 = elem.nodes[i+1].c0;
-                    crossPoint = GF.CrossPointBetweenPlaneAndLine(plane, p0, n0, n1);
-                    if (crossPoint.X == 0 & crossPoint.Y == 0 & crossPoint.Z == 0)
-                    {
-                        continue;
-                    }
-
-                    downPlaneAxis = Vector3D.CrossProduct(plane, v0);
-                    upPlaneAxis = Vector3D.CrossProduct(v1, plane);
-                    dFlag = GF.IsPointUpperPlane(crossPoint, p0, downPlaneAxis);
-                    uFlag = GF.IsPointUpperPlane(crossPoint, p0, upPlaneAxis);
-                    if (dFlag & uFlag)
-                    {
-                        selected2.Add(elem);
-                    }
-                }
-            }
-
-            selection.AddElement(selected2);
-            selected1.Clear();
-            selected2.Clear();
-        }
     }
     public class FemSelection
     {
         private readonly FEM fem;
-        internal Nodes nodes = new Nodes();
-        internal Elements elems = new Elements();
+        internal FemNodes nodes = new FemNodes();
+        internal FemElements elems = new FemElements();
         public int Count
         {
             get
@@ -535,31 +578,31 @@ namespace _FosSimulator
             this.fem = fem;
         }
 
-        internal void AddNode(Node node)
+        internal void AddNode(FemNode node)
         {
             node.selected = true;
             nodes.Add(node);
         }
-        internal void AddElement(Element element)
+        internal void AddElement(FemElement element)
         {
             element.selected = true;
             elems.Add(element);
         }
-        internal void AddElement(Elements elements)
+        internal void AddElement(FemElements elements)
         {
-            foreach (Element element in elements)
+            foreach (FemElement element in elements)
             {
                 AddElement(element);
             }
         }
         internal void DeselectAll()
         {
-            foreach (Node node in nodes)
+            foreach (FemNode node in nodes)
             {
                 node.selected = false;
             }
             nodes.Clear();
-            foreach (Element element in elems)
+            foreach (FemElement element in elems)
             {
                 element.selected = false;
             }
@@ -580,102 +623,18 @@ namespace _FosSimulator
             elems.Deduplicate();
         }
     }
-    public class FemLoads : List<FemLoad>
+
+    public class FemModel
     {
-        public int maxNum = 1;
-
-        internal double maxForce = 1;
-        private double maxMoment = 1;
-        internal double viewScale = 1; // 1.0 / 최대하중
-
-        internal NodalLoad AddNodal(Node node, Vector3D force, Vector3D moment)
-        {
-            NodalLoad n = new NodalLoad(node, force, moment);
-            n.num = maxNum;
-            maxNum++;
-
-            double norm;
-            norm = force.Length;
-            if (maxForce < norm) maxForce = norm;
-
-            base.Add(n);
-            return n;
-        }
-
-        internal double GetMaxLoadLength()
-        {
-            double maxLoadLength = 1;
-            foreach (FemLoad load in this)
-            {
-                foreach (NodalLoad nodalLoad in load.nodalLoads)
-                {
-                    if (maxLoadLength < nodalLoad.force.Length)
-                    {
-                        maxLoadLength = nodalLoad.force.Length;
-                    }
-                }
-            }
-            return maxLoadLength;
-        }
-    }
-    public class FemLoad
-    {
-        internal int numNodalLoad = 0;
-        internal List<NodalLoad> nodalLoads = new List<NodalLoad>();
-        public NodalLoad Add(NodalLoad nodalLoad)
-        {
-            nodalLoads.Add(nodalLoad);
-            numNodalLoad = nodalLoads.Count;
-            return nodalLoad;
-       }
-
-    }
-    public class NodalLoad : FemLoad
-    {
-        internal int num;
-        internal Node node;
-        internal Vector3D force;
-        internal Vector3D moment;
-        double[] gloF = new double[6];
-
-        public NodalLoad(Node node, double[] locF)
-        {
-            this.node = node;
-            this.gloF = locF;
-            force.X = locF[0];
-            force.Y = locF[1];
-            force.Z = locF[2];
-            moment.X = locF[3];
-            moment.Y = locF[4];
-            moment.Z = locF[5];
-            nodalLoads.Add(this);
-        }
-        public NodalLoad(Node node, Vector3D vec,Vector3D tor)
-        {
-            this.node = node;
-            force = vec;
-            moment = tor;
-            gloF[0] = vec.X;
-            gloF[1] = vec.Y;
-            gloF[2] = vec.Z;
-            gloF[3] = tor.X;
-            gloF[4] = tor.Y;
-            gloF[5] = tor.Z;
-            nodalLoads.Add(this);
-        }
-    }
-
-    public class ModelFem
-    {
-        public readonly Nodes nodes = new Nodes();
-        public readonly Elements elems = new Elements();
-        public readonly Sections sections = new Sections();
-        public readonly MaterialsFem materials = new MaterialsFem();
-        public readonly Boundaries boundaries = new Boundaries();
+        public readonly FemNodes nodes = new FemNodes();
+        public readonly FemElements elems = new FemElements();
+        public readonly FemSections sections = new FemSections();
+        public readonly FemMaterials materials = new FemMaterials();
+        public readonly FemBoundaries boundaries = new FemBoundaries();
 
         internal int dof;
 
-        public ModelFem()
+        public FemModel()
         {
 
         }
@@ -693,14 +652,14 @@ namespace _FosSimulator
 
             double[,] glok = new double[dof, dof];
 
-            foreach (Element e in elems)
+            foreach (FemElement e in elems)
             {
                 double[,] elemGloK = e.GloK();
-                for(int i = 0; i < e.dof; i++)
+                for (int i = 0; i < e.dof; i++)
                 {
                     for (int j = 0; j < e.dof; j++)
                     {
-                        if(e.id[i] >= 0 & e.id[j] >= 0)
+                        if (e.id[i] >= 0 & e.id[j] >= 0)
                         {
                             glok[e.id[i], e.id[j]] += elemGloK[i, j];
                         }
@@ -716,22 +675,22 @@ namespace _FosSimulator
 
         private void SetNodeElemID()
         {
-            foreach (Node node in nodes)
+            foreach (FemNode node in nodes)
             {
                 node.id = new int[6] { -1, -1, -1, -1, -1, -1 };
             } // 모든 노드에 -1을 배정
-            foreach(Element elem in elems)
+            foreach (FemElement elem in elems)
             {
                 switch (elem.type)
                 {
                     case 21: //Frame
-                        foreach (Node node in elem.nodes)
+                        foreach (FemNode node in elem.nodes)
                         {
-                            node.id = new int[6] {1,1,1,1,1,1};
+                            node.id = new int[6] { 1, 1, 1, 1, 1, 1 };
                         }
                         break;
                     case 40: //Plate
-                        foreach (Node node in elem.nodes)
+                        foreach (FemNode node in elem.nodes)
                         {
                             for (int i = 0; i < 3; i++)
                             {
@@ -740,7 +699,7 @@ namespace _FosSimulator
                         }
                         break;
                     case 80: //Solid
-                        foreach (Node node in elem.nodes)
+                        foreach (FemNode node in elem.nodes)
                         {
                             for (int i = 0; i < 3; i++)
                             {
@@ -752,9 +711,9 @@ namespace _FosSimulator
                         break;
                 }
             } // 요소에 포함되는 절점만 1을 배정.
-            foreach (Boundary boundary in boundaries)
+            foreach (FemBoundary boundary in boundaries)
             {
-                Node node = boundary.node;
+                FemNode node = boundary.node;
                 for (int i = 0; i < 6; i++)
                 {
                     if (boundary.condition[i] == 1)
@@ -764,7 +723,7 @@ namespace _FosSimulator
                 }
             } // 경계조건은 다시 -1로 배정
             int id = 0;
-            foreach (Node n in nodes)
+            foreach (FemNode n in nodes)
             {
                 for (int i = 0; i < 6; i++)
                 {
@@ -776,18 +735,18 @@ namespace _FosSimulator
                 }
             } // 1로 배정된 모든 노드의 ID를 0부터 순차적으로 ID 배급
             dof = id; // 전체 fem의 자유도 설정
-            foreach (Element elem in elems)
+            foreach (FemElement elem in elems)
             {
                 elem.SetID();
             }
         }
         internal void UpdateReactionForce()
         {
-            foreach (Node node in nodes)
+            foreach (FemNode node in nodes)
             {
                 node.reactionForce = new double[6];
             }
-            foreach (Element elem in this.elems)
+            foreach (FemElement elem in this.elems)
             {
                 for (int n = 0; n < elem.numNode; n++)
                 {
@@ -813,19 +772,112 @@ namespace _FosSimulator
             }
         }
     }
-    public class Nodes : List<Node>
+    public class FemMaterials : List<FemMaterial>
+    {
+        public int maxNum = 1;
+        FemMaterial activeMaterial;
+        internal FemMaterial AddConcrete(string materialName)
+        {
+            FemMaterial m;
+
+            if (materialName.Equals("C30"))
+            {
+                m = new FemMaterial(2e5, 1.5e5);
+                m.name = "C30";
+                m.num = maxNum;
+                maxNum++;
+
+            }
+            else
+            {
+                m = null;
+            }
+
+            activeMaterial = m;
+            base.Add(m);
+            return m;
+        }
+    }
+    public class FemMaterial
+    {
+        internal int num;
+        public double E, G;
+        internal string name;
+
+        public FemMaterial()
+        {
+        }
+        public FemMaterial(double E, double G)
+        {
+            this.E = E;
+            this.G = G;
+        }
+    }
+    public class FemSections : List<FemSection>
+    {
+        public int maxNum = 1;
+        FemSection activeSection;
+        internal FemSection AddRectangle(double width, double height)
+        {
+            FemSection s = new FemRectangleSection(width, height);
+            s.num = maxNum;
+            maxNum++;
+
+            activeSection = s;
+
+            base.Add(s);
+            return s;
+        }
+    }
+    public class FemSection
+    {
+        internal int num;
+        public double Iy, Iz, J, A, Asy, Asz;
+        public SectionPoly poly = new SectionPoly();
+        internal bool hasSectionPoly = false;
+
+        public FemSection()
+        {
+
+        }
+    }
+    public class FemRectangleSection : FemSection
+    {
+        double b;
+        double h;
+
+        public FemRectangleSection(double b, double h)
+        {
+            this.b = b;
+            this.h = h;
+            A = b * h;
+            Iy = b * Math.Pow(h, 3) / 12;
+            Iz = h * Math.Pow(b, 3) / 12;
+            J = Iy + Iz;
+            Asy = A; //Todo : 전단면적 고칠 것.
+            Asz = A;
+
+            hasSectionPoly = true;
+            poly.Add(-b / 2, -h / 2);
+            poly.Add(b / 2, -h / 2);
+            poly.Add(b / 2, h / 2);
+            poly.Add(-b / 2, h / 2);
+        }
+    }
+
+    public class FemNodes : List<FemNode>
     {
         internal int maxNum = 1;
         internal bool visibility = true;
         internal bool showNumber = false;
 
-        public Nodes()
+        public FemNodes()
         {
         }
 
-        internal Node Add(double x, double y, double z)
+        internal FemNode Add(double x, double y, double z)
         {
-            Node node = new Node(x, y, z)
+            FemNode node = new FemNode(x, y, z)
             {
                 num = maxNum
             };
@@ -833,15 +885,17 @@ namespace _FosSimulator
             base.Add(node);
             return node;
         }
-
-        internal Node Add(Point3D p0)
+        internal FemNode Add(Point3D p0)
         {
-            return Add(p0.X,p0.Y,p0.Z);
+            return Add(p0.X, p0.Y, p0.Z);
         }
-
-        internal Node GetNode(int nodeNumber)
+        internal void Add_NoReturn(Point3D p0)
         {
-            foreach (Node node in this)
+            Add(p0.X, p0.Y, p0.Z);
+        }
+        internal FemNode GetNode(int nodeNumber)
+        {
+            foreach (FemNode node in this)
             {
                 if (node.num == nodeNumber)
                 {
@@ -853,7 +907,7 @@ namespace _FosSimulator
 
         internal void InitializeGloF()
         {
-            foreach (Node n in this)
+            foreach (FemNode n in this)
             {
                 n.gloF = new double[6] { 0, 0, 0, 0, 0, 0 };
             }
@@ -861,7 +915,7 @@ namespace _FosSimulator
 
         internal void UpdateGloD(double[] gloD)
         {
-            foreach (Node node in this)
+            foreach (FemNode node in this)
             {
                 node.gloD = new double[6];
                 for (int i = 0; i < 6; i++)
@@ -876,11 +930,11 @@ namespace _FosSimulator
         }
         internal void Deduplicate()
         {
-            Nodes list = this;
+            FemNodes list = this;
             int count = list.Count;
             for (int i = 0; i < count - 1; i++)
             {
-                for(int j = i + 1; j < count; j++)
+                for (int j = i + 1; j < count; j++)
                 {
                     if (list[i] == list[j])
                     {
@@ -892,13 +946,13 @@ namespace _FosSimulator
             }
         }
 
-        internal Nodes Copy()
+        internal FemNodes Copy()
         {
-            Nodes newNodes = new Nodes();
+            FemNodes newNodes = new FemNodes();
 
             for (int i = 0; i < this.Count; i++)
             {
-                Node nn = new Node(0, 0, 0);
+                FemNode nn = new FemNode(0, 0, 0);
                 newNodes.Add(nn);
                 newNodes[i] = this[i];
 
@@ -906,7 +960,7 @@ namespace _FosSimulator
             return newNodes;
         }
     }
-    public class Node
+    public class FemNode
     {
         public int num;
         /// <summary>
@@ -922,14 +976,14 @@ namespace _FosSimulator
         internal double[] gloD;
         internal double[] reactionForce = { 0, 0, 0, 0, 0, 0 };
         internal bool selected = false;
-        internal Elements connectedElements = new Elements();
+        internal FemElements connectedElements = new FemElements();
         internal bool selectedAtThisTime;
 
-        public Node(Point3D point)
+        public FemNode(Point3D point)
         {
             c0 = point;
         }
-        public Node(double x, double y, double z)
+        public FemNode(double x, double y, double z)
         {
             c0 = new Point3D(x, y, z);
         }
@@ -942,7 +996,8 @@ namespace _FosSimulator
         }
 
     }
-    public class Elements : List<Element>
+
+    public class FemElements : List<FemElement>
     {
         public int maxNum = 1;
         //internal int countTruss = 0;
@@ -951,26 +1006,26 @@ namespace _FosSimulator
         //internal int countPlate = 0;
         //internal int countSolid = 0;
         //internal List<Frame> frames = new List<Frame>();
-        public Frames frames = new Frames();
-        public Plates plates = new Plates();
-        public List<Solid> solids = new List<Solid>();
+        public FemFrames frames = new FemFrames();
+        public FemPlates plates = new FemPlates();
+        public List<FemSolid> solids = new List<FemSolid>();
         internal bool show = true;
         internal bool showNumber = false;
 
-        internal new void Add(Element elem)
+        internal new void Add(FemElement elem)
         {
             switch (elem.type)
             {
                 case 21:
-                    Frame f = (Frame)elem;
+                    FemFrame f = (FemFrame)elem;
                     frames.Add(f);
                     break;
                 case 40:
-                    Plate p = (Plate)elem;
+                    FemPlate p = (FemPlate)elem;
                     plates.Add(p);
                     break;
                 case 80:
-                    Solid s = (Solid)elem;
+                    FemSolid s = (FemSolid)elem;
                     solids.Add(s);
                     break;
                 default:
@@ -978,9 +1033,9 @@ namespace _FosSimulator
             }
             base.Add(elem);
         }
-        internal void Add(Elements elems)
+        internal void Add(FemElements elems)
         {
-            foreach (Element element in elems)
+            foreach (FemElement element in elems)
             {
                 Add(element);
             }
@@ -992,9 +1047,9 @@ namespace _FosSimulator
             plates.Clear();
             solids.Clear();
         }
-        internal Frame AddFrame(Node n1, Node n2)
+        internal FemFrame AddFrame(FemNode n1, FemNode n2)
         {
-            Frame f = new Frame(n1, n2);
+            FemFrame f = new FemFrame(n1, n2);
             f.num = maxNum;
             maxNum++;
 
@@ -1002,9 +1057,9 @@ namespace _FosSimulator
             base.Add(f);
             return f;
         }
-        internal Plate AddPlate(Node n1, Node n2, Node n3, Node n4)
+        internal FemPlate AddPlate(FemNode n1, FemNode n2, FemNode n3, FemNode n4)
         {
-            Plate p = new Plate(n1, n2, n3, n4);
+            FemPlate p = new FemPlate(n1, n2, n3, n4);
             p.num = maxNum;
             maxNum += 1;
 
@@ -1012,9 +1067,9 @@ namespace _FosSimulator
             base.Add(p);
             return p;
         }
-        internal Solid AddSolid(Node n1, Node n2, Node n3, Node n4, Node n5, Node n6, Node n7, Node n8)
+        internal FemSolid AddSolid(FemNode n1, FemNode n2, FemNode n3, FemNode n4, FemNode n5, FemNode n6, FemNode n7, FemNode n8)
         {
-            Solid s = new Solid(n1, n2, n3, n4, n5, n6, n7, n8);
+            FemSolid s = new FemSolid(n1, n2, n3, n4, n5, n6, n7, n8);
             s.num = maxNum;
             maxNum += 1;
 
@@ -1022,20 +1077,20 @@ namespace _FosSimulator
             base.Add(s);
             return s;
         }
-        internal new bool Remove(Element elem)
+        internal new bool Remove(FemElement elem)
         {
             switch (elem.type) //20:Truss, 21:Frame, 25:Cable, 40:Plate, 80:Solid
             {
                 case 21:
-                    Frame e = (Frame)elem;
+                    FemFrame e = (FemFrame)elem;
                     frames.Remove(e);
                     break;
                 case 40:
-                    Plate p = (Plate)elem;
+                    FemPlate p = (FemPlate)elem;
                     plates.Remove(p);
                     break;
                 case 80:
-                    Solid s = (Solid)elem;
+                    FemSolid s = (FemSolid)elem;
                     solids.Remove(s);
                     break;
                 default:
@@ -1046,25 +1101,25 @@ namespace _FosSimulator
 
         internal void UpdateGloD()
         {
-            foreach (Element element in this)
+            foreach (FemElement element in this)
             {
                 element.UpdateMemberForce001();
             }
         }
-        internal Nodes ConnectedNodes()
+        internal FemNodes ConnectedNodes()
         {
-            Nodes connectedNodes = new Nodes();
-            foreach (Element element in this)
+            FemNodes connectedNodes = new FemNodes();
+            foreach (FemElement element in this)
             {
                 connectedNodes.AddRange(element.nodes);
             }
             connectedNodes.Deduplicate();
             return connectedNodes;
         } // Elements와 연결된 모든 노드 찾기
-        internal static Nodes ConnectedNodes(Elements elems)
+        internal static FemNodes ConnectedNodes(FemElements elems)
         {
-            Nodes connectedNodes = new Nodes();
-            foreach (Element element in elems)
+            FemNodes connectedNodes = new FemNodes();
+            foreach (FemElement element in elems)
             {
                 connectedNodes.AddRange(element.nodes);
             }
@@ -1074,7 +1129,7 @@ namespace _FosSimulator
 
         internal void Deduplicate()
         {
-            Elements list = this;
+            FemElements list = this;
             int count = list.Count;
             for (int i = 0; i < count - 1; i++)
             {
@@ -1090,13 +1145,36 @@ namespace _FosSimulator
             }
         }
     }
-    public class Element
+    public class FemElement
     {
         public int num;
         public int numNode;
-        public MaterialFem material;
-        public Section section;
-        internal List<Node> nodes = new List<Node>();
+        public FemMaterial material;
+        protected FemSection section1, section2;
+        public FemSection Section
+        {
+            get
+            {
+                return section1;
+            }
+            set
+            {
+                section1 = value;
+                section2 = value;
+            }
+        }
+        public FemSection Section2
+        {
+            get
+            {
+                return section2;
+            }
+            set
+            {
+                section2 = value;
+            }
+        }
+        internal List<FemNode> nodes = new List<FemNode>();
 
         internal int type; //20:Truss, 21:Frame, 25:Cable, 40:Plate, 80:Solid
         public int dof;
@@ -1117,7 +1195,7 @@ namespace _FosSimulator
             get
             {
                 Point3D center = new Point3D();
-                foreach (Node node in nodes)
+                foreach (FemNode node in nodes)
                 {
                     center.X += node.c1.X;
                     center.Y += node.c1.Y;
@@ -1134,14 +1212,14 @@ namespace _FosSimulator
             switch (type)
             {
                 case 21:
-                    Frame frame = (Frame)this;
+                    FemFrame frame = (FemFrame)this;
                     frame.SetLocK();
                     frame.SetTrans();
                     //LElem(i) % GloK = MATMUL(TRANSPOSE(LElem(i) % Trans), MATMUL(LElem(i) % TanLocK, LElem(i) % Trans))
-                    gloK = GF.Multiply(GF.Transpose(trans), GF.Multiply(locK,trans));
+                    gloK = GF.Multiply(GF.Transpose(trans), GF.Multiply(locK, trans));
                     break;
                 case 80:
-                    Solid solid = (Solid)this;
+                    FemSolid solid = (FemSolid)this;
                     solid.SetLocK();
                     solid.SetTrans();
                     gloK = locK;
@@ -1157,18 +1235,18 @@ namespace _FosSimulator
             switch (type)
             {
                 case 21:
-                    Frame f = (Frame)this;
+                    FemFrame f = (FemFrame)this;
                     f.id = new int[12];
                     for (int i = 0; i < 6; i++)
                     {
                         f.id[i] = f.nodes[0].id[i];
-                        f.id[i+6] = f.nodes[1].id[i];
+                        f.id[i + 6] = f.nodes[1].id[i];
                     }
                     break;
                 case 40:
-                    Plate p = (Plate)this;
+                    FemPlate p = (FemPlate)this;
                     p.id = new int[12];
-                    for(int i = 0; i < 3; i++)
+                    for (int i = 0; i < 3; i++)
                     {
                         p.id[i] = p.nodes[0].id[i];
                         p.id[i + 3] = p.nodes[1].id[i];
@@ -1177,18 +1255,18 @@ namespace _FosSimulator
                     }
                     break;
                 case 80:
-                    Solid s = (Solid)this;
+                    FemSolid s = (FemSolid)this;
                     s.id = new int[24];
                     for (int i = 0; i < 3; i++)
                     {
                         s.id[i] = s.nodes[0].id[i];
-                        s.id[i+3] = s.nodes[1].id[i];
-                        s.id[i+6] = s.nodes[2].id[i];
-                        s.id[i+9] = s.nodes[3].id[i];
-                        s.id[i+12] = s.nodes[4].id[i];
-                        s.id[i+15] = s.nodes[5].id[i];
-                        s.id[i+18] = s.nodes[6].id[i];
-                        s.id[i+21] = s.nodes[7].id[i];
+                        s.id[i + 3] = s.nodes[1].id[i];
+                        s.id[i + 6] = s.nodes[2].id[i];
+                        s.id[i + 9] = s.nodes[3].id[i];
+                        s.id[i + 12] = s.nodes[4].id[i];
+                        s.id[i + 15] = s.nodes[5].id[i];
+                        s.id[i + 18] = s.nodes[6].id[i];
+                        s.id[i + 21] = s.nodes[7].id[i];
                     }
                     break;
                 default:
@@ -1239,20 +1317,20 @@ namespace _FosSimulator
             locF = GF.Multiply(trans, gloF);
 
         }
-        protected void AddConnectedElementAtNodes(Element elem)
+        protected void AddConnectedElementAtNodes(FemElement elem)
         {
-            foreach (Node node in nodes)
+            foreach (FemNode node in nodes)
             {
                 node.connectedElements.Add(elem);
             }
         }
     }
-    public class Frames : List<Frame>
+    public class FemFrames : List<FemFrame>
     {
-        internal Nodes ConnectedNodes()
+        internal FemNodes ConnectedNodes()
         {
-            Nodes connectedNodes = new Nodes();
-            foreach (Element element in this)
+            FemNodes connectedNodes = new FemNodes();
+            foreach (FemElement element in this)
             {
                 connectedNodes.AddRange(element.nodes);
             }
@@ -1260,33 +1338,14 @@ namespace _FosSimulator
             return connectedNodes;
         } // Elements와 연결된 모든 노드 찾기
     }
-    public class Frame : Element
+    public class FemFrame : FemElement
     {
         //internal Node node1, node2;
-        private Section section2;
         double E, G, Iy, Iz, J, A, Asy, Asz, L, Piy, Piz, Eq, w, Fx;
         double L1, L2, L3, EIz, EIy, EAoL, GJoL, EqAoL, Lox;
         double AxialDirectionAngle;
 
-        internal void Section(Section sect1)
-        {
-            section = sect1;
-            section2 = sect1;
-        }
-        internal Section Section()
-        {
-            return section;
-        }
-        internal void Section2(Section sect2)
-        {
-            section2 = sect2;
-        }
-        internal Section Section2()
-        {
-            return section2;
-        }
-
-        public Frame(Node n1, Node n2)
+        public FemFrame(FemNode n1, FemNode n2)
         {
             type = 21;
             numNode = 2;
@@ -1321,7 +1380,7 @@ namespace _FosSimulator
             }
             for (int k = 0; k < 10; k += 3)
             {
-                for(int i = 0; i < 3; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     for (int j = 0; j < 3; j++)
                     {
@@ -1338,12 +1397,12 @@ namespace _FosSimulator
             //Get Properities
             E = material.E;
             G = material.G;
-            Iy = (section.Iy + section2.Iy) / 2.0d;
-            Iz = (section.Iz + section2.Iz) / 2.0d;
-            J = (section.J + section2.J) / 2.0d;
-            A = (section.A + section2.A) / 2.0d;
-            Asy = (section.Asy + section2.Asy) / 2.0d;
-            Asz = (section.Asz + section2.Asz) / 2.0d;
+            Iy = (section1.Iy + section2.Iy) / 2.0d;
+            Iz = (section1.Iz + section2.Iz) / 2.0d;
+            J = (section1.J + section2.J) / 2.0d;
+            A = (section1.A + section2.A) / 2.0d;
+            Asy = (section1.Asy + section2.Asy) / 2.0d;
+            Asz = (section1.Asz + section2.Asz) / 2.0d;
 
             //Variable set
             L1 = L; L2 = L * L; L3 = L2 * L;
@@ -1403,12 +1462,12 @@ namespace _FosSimulator
             //Get Properities
             E = material.E;
             G = material.G;
-            Iy = (section.Iy + section2.Iy) / 2.0d;
-            Iz = (section.Iz + section2.Iz) / 2.0d;
-            J = (section.J + section2.J) / 2.0d;
-            A = (section.A + section2.A) / 2.0d;
-            Asy = (section.Asy + section2.Asy) / 2.0d;
-            Asz = (section.Asz + section2.Asz) / 2.0d;
+            Iy = (section1.Iy + section2.Iy) / 2.0d;
+            Iz = (section1.Iz + section2.Iz) / 2.0d;
+            J = (section1.J + section2.J) / 2.0d;
+            A = (section1.A + section2.A) / 2.0d;
+            Asy = (section1.Asy + section2.Asy) / 2.0d;
+            Asz = (section1.Asz + section2.Asz) / 2.0d;
 
             //Variable set
             L1 = L; L2 = L * L; L3 = L2 * L;
@@ -1464,22 +1523,22 @@ namespace _FosSimulator
         }
 
     }
-    class Truss : Element
+    public class FemTruss : FemElement
     {
-        Node n1, n2;
-        public Truss()
+        FemNode n1, n2;
+        public FemTruss()
         {
             type = 20;
             AddConnectedElementAtNodes(this);
         }
 
     }
-    public class Plates : List<Plate>
+    public class FemPlates : List<FemPlate>
     {
-        internal Nodes ConnectedNodes()
+        internal FemNodes ConnectedNodes()
         {
-            Nodes connectedNodes = new Nodes();
-            foreach (Element element in this)
+            FemNodes connectedNodes = new FemNodes();
+            foreach (FemElement element in this)
             {
                 connectedNodes.AddRange(element.nodes);
             }
@@ -1487,9 +1546,9 @@ namespace _FosSimulator
             return connectedNodes;
         } // Elements와 연결된 모든 노드 찾기
     }
-    public class Plate : Element
+    public class FemPlate : FemElement
     {
-        public Plate(Node n1, Node n2, Node n3, Node n4)
+        public FemPlate(FemNode n1, FemNode n2, FemNode n3, FemNode n4)
         {
             type = 40;
             numNode = 4;
@@ -1501,7 +1560,7 @@ namespace _FosSimulator
             AddConnectedElementAtNodes(this);
         }
     }
-    public class Solid : Element
+    public class FemSolid : FemElement
     {
         //internal Node node1, node2, node3, node4, node5, node6, node7, node8;
 
@@ -1511,7 +1570,7 @@ namespace _FosSimulator
         private double[] xyz1to8;
         double[,] jacobianMatrix_rst;
 
-        public Solid(Node n1, Node n2, Node n3, Node n4, Node n5, Node n6, Node n7, Node n8)
+        public FemSolid(FemNode n1, FemNode n2, FemNode n3, FemNode n4, FemNode n5, FemNode n6, FemNode n7, FemNode n8)
         {
             type = 80;
             numNode = 8;
@@ -1583,7 +1642,7 @@ namespace _FosSimulator
                 double[,] matb = new double[6, 3 * 8];
                 double[,] dnixyz8 = dNixyz8(r, s, t);
 
-                for(int i=1; i <= 8; i++)
+                for (int i = 1; i <= 8; i++)
                 {
                     matb[0, (i - 1) * 3 + 0] = dnixyz8[0, i]; //dNidx
                     matb[1, (i - 1) * 3 + 1] = dnixyz8[1, i]; //dNidy
@@ -1600,12 +1659,12 @@ namespace _FosSimulator
 
             double[,] dNixyz8(double r, double s, double t)
             {
-                double[,] dnixyz8 = new double[3,8+1];
-                
+                double[,] dnixyz8 = new double[3, 8 + 1];
+
                 double[,] invJacobi = GF.InverseMatrix_GaussSolver(jacobianMatrix_rst);
                 //double[,] iii = GF.Multiply(jacobianMatrix, invJacobi); //jacobianMatrix 검산
 
-                for(int i = 1; i <= 8; i++)
+                for (int i = 1; i <= 8; i++)
                 {
                     double[] dnixyz = GF.Multiply(invJacobi, dNidrst(i, r, s, t));
                     dnixyz8[0, i] = dnixyz[0];
@@ -1693,119 +1752,25 @@ namespace _FosSimulator
         }
     }
 
-    public class MaterialsFem : List<MaterialFem>
-    {
-        public int maxNum = 1;
-        MaterialFem activeMaterial;
-        internal MaterialFem AddConcrete(string materialName)
-        {
-            MaterialFem m;
-
-            if (materialName.Equals("C30"))
-            {
-                m = new MaterialFem(2e5, 1.5e5);
-                m.name = "C30";
-                m.num = maxNum;
-                maxNum++;
-
-            }
-            else
-            {
-                m = null;
-            }
-
-            activeMaterial = m;
-            base.Add(m);
-            return m;
-        }
-    }
-    public class MaterialFem
-    {
-        internal int num;
-        public double E, G;
-        internal string name;
-
-        public MaterialFem()
-        {
-        }
-        public MaterialFem(double E, double G)
-        {
-            this.E = E;
-            this.G = G;
-        }
-    }
-
-    public class Sections : List<Section>
-    {
-        public int maxNum=1;
-        Section activeSection;
-        internal Section AddRectangle(double width, double height)
-        {
-            Section s = new RectangleSection(width,height);
-            s.num = maxNum;
-            maxNum++;
-
-            activeSection = s;
-
-            base.Add(s);
-            return s;
-        }
-    }
-    public class Section
-    {
-        internal int num;
-        public double Iy, Iz, J, A, Asy, Asz;
-        public SectionPoly poly = new SectionPoly();
-        internal bool hasSectionPoly = false;
-
-        public Section()
-        {
-
-        }
-    }
-    class RectangleSection : Section
-    {
-        double b;
-        double h;
-
-        public RectangleSection(double b, double h)
-        {
-            this.b = b;
-            this.h = h;
-            A = b * h;
-            Iy = b * Math.Pow(h, 3) / 12;
-            Iz = h * Math.Pow(b, 3) / 12;
-            J = Iy + Iz;
-            Asy = A; //Todo : 전단면적 고칠 것.
-            Asz = A;
-
-            hasSectionPoly = true;
-            poly.Add(-b / 2, -h / 2);
-            poly.Add(b / 2, -h / 2);
-            poly.Add(b / 2, h / 2);
-            poly.Add(-b / 2, h / 2);
-        }
-    }
-    
-    public class Boundaries : List<Boundary>
+    public class FemBoundaries : List<FemBoundary>
     {
         internal bool visibility = true;
         int maxNum = 1;
-        public Boundary AddBoundary(Node node,int Dx, int Dy, int Dz, int Rx, int Ry, int Rz)
+        public FemBoundary AddBoundary(FemNode node,int Dx, int Dy, int Dz, int Rx, int Ry, int Rz)
         {
-            Boundary b = new Boundary(node, Dx, Dy, Dz, Rx, Ry, Rz);
+            FemBoundary b = new FemBoundary(node, Dx, Dy, Dz, Rx, Ry, Rz);
             b.num = maxNum;
             maxNum++;
             base.Add(b);
             return b;
         }
     }
-    public class Boundary
+    public class FemBoundary
     {
         internal int num;
-        internal Node node;
+        internal FemNode node;
         internal int[] condition = new int[6]; //1은 고정, 0은 자유
-        public Boundary(Node node, int Dx, int Dy, int Dz, int Rx, int Ry, int Rz)
+        public FemBoundary(FemNode node, int Dx, int Dy, int Dz, int Rx, int Ry, int Rz)
         {
             this.node = node;
             condition[0] = Dx;
@@ -1817,4 +1782,87 @@ namespace _FosSimulator
         }
     }
 
+    public class FemLoads : List<FemLoad>
+    {
+        public int maxNum = 1;
+
+        internal double maxForce = 1;
+        private double maxMoment = 1;
+        internal double viewScale = 1; // 1.0 / 최대하중
+
+        internal FemNodalLoad AddNodal(FemNode node, Vector3D force, Vector3D moment)
+        {
+            FemNodalLoad n = new FemNodalLoad(node, force, moment);
+            n.num = maxNum;
+            maxNum++;
+
+            double norm;
+            norm = force.Length;
+            if (maxForce < norm) maxForce = norm;
+
+            base.Add(n);
+            return n;
+        }
+        internal double GetMaxLoadLength()
+        {
+            double maxLoadLength = 1;
+            foreach (FemLoad load in this)
+            {
+                foreach (FemNodalLoad nodalLoad in load.nodalLoads)
+                {
+                    if (maxLoadLength < nodalLoad.force.Length)
+                    {
+                        maxLoadLength = nodalLoad.force.Length;
+                    }
+                }
+            }
+            return maxLoadLength;
+        }
+    }
+    public class FemLoad
+    {
+        internal int numNodalLoad = 0;
+        internal List<FemNodalLoad> nodalLoads = new List<FemNodalLoad>();
+        public FemNodalLoad Add(FemNodalLoad nodalLoad)
+        {
+            nodalLoads.Add(nodalLoad);
+            numNodalLoad = nodalLoads.Count;
+            return nodalLoad;
+        }
+
+    }
+    public class FemNodalLoad : FemLoad
+    {
+        internal int num;
+        internal FemNode node;
+        internal Vector3D force;
+        internal Vector3D moment;
+        double[] gloF = new double[6];
+
+        public FemNodalLoad(FemNode node, double[] locF)
+        {
+            this.node = node;
+            this.gloF = locF;
+            force.X = locF[0];
+            force.Y = locF[1];
+            force.Z = locF[2];
+            moment.X = locF[3];
+            moment.Y = locF[4];
+            moment.Z = locF[5];
+            nodalLoads.Add(this);
+        }
+        public FemNodalLoad(FemNode node, Vector3D vec, Vector3D tor)
+        {
+            this.node = node;
+            force = vec;
+            moment = tor;
+            gloF[0] = vec.X;
+            gloF[1] = vec.Y;
+            gloF[2] = vec.Z;
+            gloF[3] = tor.X;
+            gloF[4] = tor.Y;
+            gloF[5] = tor.Z;
+            nodalLoads.Add(this);
+        }
+    }
 }

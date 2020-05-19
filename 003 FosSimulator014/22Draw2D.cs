@@ -243,6 +243,8 @@ namespace _Draw2D
     {
         private readonly Grid grid;
         internal bool enable = false;
+        internal bool started = false;
+
         internal Shapes2D shapes = new Shapes2D();
         internal Point wP0, wP1;
         public ViewType viewType;
@@ -252,11 +254,19 @@ namespace _Draw2D
             Rectangle,
             Line,
             Arrow,
-            Circle
+            Circle,
+            Cross
         }
         Rectangle rectangle;
         Line line;
-        internal bool started = false;
+        Line crossLine0, crossLine1;
+
+        /// <summary>
+        /// 커서로 사용할 십자가모양의 반지름 길이 설정.
+        /// </summary>
+        private double crossRadius = 10;
+        double crossLineStrokeThickness = 1;
+
 
         public SelectionWindow(Grid grid)
         {
@@ -284,6 +294,9 @@ namespace _Draw2D
                     break;
                 case ViewType.Circle:
                     break;
+                case ViewType.Cross:
+                    DrawCross();
+                    break;
                 default:
                     break;
             }
@@ -306,6 +319,9 @@ namespace _Draw2D
                 case ViewType.Arrow:
                     break;
                 case ViewType.Circle:
+                    break;
+                case ViewType.Cross:
+                    ChangeCross();
                     break;
                 default:
                     break;
@@ -330,6 +346,10 @@ namespace _Draw2D
                     break;
                 case ViewType.Circle:
                     break;
+                case ViewType.Cross:
+                    grid.Children.Remove(crossLine0);
+                    grid.Children.Remove(crossLine1);
+                    break;
                 default:
                     break;
             }
@@ -342,17 +362,75 @@ namespace _Draw2D
                 X1 = wP0.X,
                 X2 = wP1.X,
                 Y1 = wP0.Y,
-                Y2 = wP0.Y,
+                Y2 = wP1.Y,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top,
                 StrokeThickness = 1
             };
             grid.Children.Add(line);
         }
+        private void DrawCross()
+        {
+            Point center = wP0;
+            Point[] points = GetCrossPoints(center);
+            crossLine0 = new Line
+            {
+                Stroke = System.Windows.Media.Brushes.Black,
+                X1 = points[0].X,
+                X2 = points[2].X,
+                Y1 = points[0].Y,
+                Y2 = points[2].Y,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                StrokeThickness = crossLineStrokeThickness
+            };
+            crossLine1 = new Line
+            {
+                Stroke = System.Windows.Media.Brushes.Black,
+                X1 = points[1].X,
+                X2 = points[3].X,
+                Y1 = points[1].Y,
+                Y2 = points[3].Y,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                StrokeThickness = crossLineStrokeThickness
+            };
+            grid.Children.Add(crossLine0);
+            grid.Children.Add(crossLine1);
+        }
+        /// <summary>
+        /// <param name="center"/>를 중심으로 십자가를 표현하는 시계방향순서의 4개 절점 반환.
+        /// </summary>
+        /// <param name="center"></param>
+        /// <returns></returns>
+        private Point[] GetCrossPoints(Point center)
+        {
+            Point[] points = new Point[4];
+            points[0] = center + new Vector(0, -crossRadius);
+            points[1] = center + new Vector(crossRadius, 0);
+            points[2] = center + new Vector(0, crossRadius);
+            points[3] = center + new Vector(-crossRadius, 0);
+            return points;
+        }
+
         private void ChangeLine()
         {
             line.X2 = wP1.X;
             line.Y2 = wP1.Y;
+        }
+        private void ChangeCross()
+        {
+            Point center = wP1;
+            Point[] points = GetCrossPoints(center);
+
+            crossLine0.X1 = points[0].X;
+            crossLine0.Y1 = points[0].Y;
+            crossLine0.X2 = points[2].X;
+            crossLine0.Y2 = points[2].Y;
+            crossLine1.X1 = points[1].X;
+            crossLine1.Y1 = points[1].Y;
+            crossLine1.X2 = points[3].X;
+            crossLine1.Y2 = points[3].Y;
         }
         private void DrawSelectionWindow()
         {

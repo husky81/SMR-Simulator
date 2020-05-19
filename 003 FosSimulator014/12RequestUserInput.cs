@@ -42,7 +42,7 @@ namespace _FosSimulator
         internal void End_Cancle()
         {
             On = false;
-            ClearDelegateActions();
+            ClearActions();
             TurnOffAllEvents();
             
         }
@@ -58,25 +58,55 @@ namespace _FosSimulator
             }
         }
 
-        internal UserInputAction.RequestInputType doingActionType;
+        /// <summary>
+        /// 본 RequestUserInput에서 처리하도록 지정된 Action에서 사용자에게 입력을 요구하는 InputType입니다. (int, real, 좌표 등)
+        /// </summary>
+        private UserInputAction.RequestInputType doingActionInputType;
 
         private void TurnOnMainWindowEvents(bool on)
         {
-            main.WindowSelectionOn(on);
+            main.TurnOnWindowSelection(on);
             main.TurnOnDeselectAll_Esc(on);
         }
+
+        /// <summary>
+        /// 지정된 모든 action들을 null로 초기화합니다. 이전 명령에서 지정한 액션들이 모두 초기화 됩니다.
+        /// </summary>
+        internal void ClearActions()
+        {
+            actionAfterIntWithInt = null;
+            actionAfterIntsWithInts = null;
+            actionAfterIntWithVecInt = null;
+            actionAfterVecWithVec = null;
+            actionAfterEveryLastPointWithPoint = null;
+            actionEveryLastTwoPointsWithPointPoint = null;
+            actionAfterPoints = null;
+            actionEnd = null;
+            actionEveryLastTwoPoints = null;
+            actionAfterEveryPoint = null;
+        }  // delegate를 추가할 때 꼭 여기도 추가할 것.
+
 
         internal delegate void inputInt(int n);
         internal inputInt actionAfterIntWithInt;
         internal delegate void inputInts(List<int> n);
         internal inputInts actionAfterIntsWithInts;
-        internal delegate void inputDirInt(Vector3D dir, int n);
-        internal inputDirInt actionAfterIntWithDirInt;
+        internal delegate void inputVecInt(Vector3D vec, int n);
+        internal inputVecInt actionAfterIntWithVecInt;
+        internal delegate void inputVec(Vector3D vec);
+        internal inputVec actionAfterVecWithVec;
+
+        internal delegate void inputP3d(Point3D p0);
+        /// <summary>
+        /// 사용자가 Point를 입력할 때 마다 실행한 Action을 지정합니다.
+        /// Point3D를 넘겨줍니다.
+        /// </summary>
+        internal inputP3d actionAfterEveryLastPointWithPoint;
         internal delegate void inputP3dP3d(Point3D p0, Point3D p1);
         internal inputP3dP3d actionEveryLastTwoPointsWithPointPoint;
         internal delegate void inputP2dP2d(Point p0, Point p1);
         /// <summary>
-        /// 사용자가 Command창에서 스페이스마로 Points의 입력을 끝냈을 때 실행할 Action을 지정합니다.
+        /// 사용자가 Command창에서 스페이스바로 Points의 입력을 끝냈을 때 실행할 Action을 지정합니다.
         /// List<Point>를 넘겨줍니다.
         /// </summary>
         internal inputPoints actionAfterPoints;
@@ -88,25 +118,16 @@ namespace _FosSimulator
         /// </summary>
         internal Action actionEnd;
         internal Action actionEveryLastTwoPoints;
-        private void ClearDelegateActions()
-        {
-            actionAfterIntWithInt = null;
-            actionAfterIntsWithInts = null;
-            actionAfterIntWithDirInt = null;
-            actionEveryLastTwoPointsWithPointPoint = null;
-            actionAfterPoints = null;
-            actionEnd = null;
-            actionEveryLastTwoPoints = null;
-        }  // delegate를 추가할 때 꼭 여기도 추가할 것.
+        internal Action actionAfterEveryPoint;
 
         private UserInputAction LastAction
         {
             get
             {
-                return userInputActions[userInputActions.Count - 1];
+                return userInputTypes[userInputTypes.Count - 1];
             }
         }
-        private readonly List<UserInputAction> userInputActions = new List<UserInputAction>();
+        private readonly List<UserInputAction> userInputTypes = new List<UserInputAction>();
         private int actionStep = 0;
         internal SelectionWindow.ViewType viewType;
 
@@ -122,7 +143,7 @@ namespace _FosSimulator
                 requestInputType = UserInputAction.RequestInputType.Int,
                 message = message
             };
-            userInputActions.Add(userInputAction);
+            userInputTypes.Add(userInputAction);
         }
         internal void RequestInts(string message)
         {
@@ -131,34 +152,31 @@ namespace _FosSimulator
                 requestInputType = UserInputAction.RequestInputType.Ints,
                 message = message
             };
-            userInputActions.Add(userInputAction);
+            userInputTypes.Add(userInputAction);
         }
-        internal void RequestDirection(string message)
+        /// <summary>
+        /// 사용자에게 벡터를 입력하도록 요청. 사용자가 절대좌표를 입력하는 경우 두번째 절점을 입력하도록 다시 요청하여 벡터 반환.
+        /// </summary>
+        internal void RequestVector(string message)
         {
             UserInputAction userInputAction = new UserInputAction
             {
-                requestInputType = UserInputAction.RequestInputType.Direction,
+                requestInputType = UserInputAction.RequestInputType.Vector,
                 message = message
             };
-            userInputActions.Add(userInputAction);
+            userInputTypes.Add(userInputAction);
         }
-        internal void RequestNodeSelection(string message)
+        /// <summary>
+        /// 사용자에게 벡터를 입력하도록 요청. 사용자가 키보드로 절대좌표를 입력한 경우는 입력값을 벡터로 반환. 마우스로 첫번째 점을 입력한 경우는 두번째 점을 요청하여 벡터 반환.
+        /// </summary>
+        internal void RequestVectorValue(string message)
         {
             UserInputAction userInputAction = new UserInputAction
             {
-                requestInputType = UserInputAction.RequestInputType.NodeSelection,
+                requestInputType = UserInputAction.RequestInputType.VectorValue,
                 message = message
             };
-            userInputActions.Add(userInputAction);
-        }
-        internal void RequestElemSelection(string message)
-        {
-            UserInputAction userInputAction = new UserInputAction
-            {
-                requestInputType = UserInputAction.RequestInputType.ElemSelection,
-                message = message
-            };
-            userInputActions.Add(userInputAction);
+            userInputTypes.Add(userInputAction);
         }
         internal void RequestPoints(string message)
         {
@@ -167,7 +185,7 @@ namespace _FosSimulator
                 requestInputType = UserInputAction.RequestInputType.Points,
                 message = message
             };
-            userInputActions.Add(userInputAction);
+            userInputTypes.Add(userInputAction);
         }
         internal void RequestPoints(int numPoint)
         {
@@ -178,7 +196,25 @@ namespace _FosSimulator
                 numPointRequested = numPoint,
                 viewType = viewType
             };
-            userInputActions.Add(userInputAction);
+            userInputTypes.Add(userInputAction);
+        }
+        internal void RequestNodeSelection(string message)
+        {
+            UserInputAction userInputAction = new UserInputAction
+            {
+                requestInputType = UserInputAction.RequestInputType.NodeSelection,
+                message = message
+            };
+            userInputTypes.Add(userInputAction);
+        }
+        internal void RequestElemSelection(string message)
+        {
+            UserInputAction userInputAction = new UserInputAction
+            {
+                requestInputType = UserInputAction.RequestInputType.ElemSelection,
+                message = message
+            };
+            userInputTypes.Add(userInputAction);
         }
 
         internal void Start()
@@ -194,14 +230,14 @@ namespace _FosSimulator
         }
         internal void DoAction()
         {
-            if (actionStep >= userInputActions.Count)
+            if (actionStep >= userInputTypes.Count)
             {
                 End();
                 return;
             }
-            UserInputAction userInputAction = userInputActions[actionStep];
-            doingActionType = userInputAction.requestInputType;
-            switch (userInputAction.requestInputType)
+            UserInputAction userInputType = userInputTypes[actionStep];
+            doingActionInputType = userInputType.requestInputType;
+            switch (userInputType.requestInputType)
             {
                 case UserInputAction.RequestInputType.Point:
                     break;
@@ -209,15 +245,15 @@ namespace _FosSimulator
                     break;
                 case UserInputAction.RequestInputType.Points:
                     main.cmd.viewType = viewType;
-                    main.cmd.RequestInput_Points(userInputAction.message, userInputAction.numPointRequested);
+                    main.cmd.RequestInput_Points(userInputType.message, userInputType.numPointRequested);
                     numContinuousPoint = 0;
-                    main.cmd.actionAfterPoint += Put_ContinuousPoint;
+                    main.cmd.actionAfterPointWithPoint += Put_ContinuousPoint;
                     main.cmd.actionAfterPoints += Put;
                     return;
                 case UserInputAction.RequestInputType.ElemSelection:
                     if (main.fem.selection.elems.Count == 0)
                     {
-                        main.cmd.SendRequestMessage(userInputAction.message);
+                        main.cmd.SendRequestMessage(userInputType.message);
                         End();
                     }
                     else
@@ -228,7 +264,7 @@ namespace _FosSimulator
                 case UserInputAction.RequestInputType.NodeSelection:
                     if (main.fem.selection.nodes.Count == 0)
                     {
-                        main.cmd.SendRequestMessage(userInputAction.message);
+                        main.cmd.SendRequestMessage(userInputType.message);
                         End();
                     }
                     else
@@ -239,7 +275,7 @@ namespace _FosSimulator
                 case UserInputAction.RequestInputType.Selection:
                     if (main.fem.selection.nodes.Count + main.fem.selection.elems.Count == 0)
                     {
-                        main.cmd.SendRequestMessage(userInputAction.message);
+                        main.cmd.SendRequestMessage(userInputType.message);
                         End();
                     }
                     else
@@ -248,22 +284,26 @@ namespace _FosSimulator
                     }
                     return;
                 case UserInputAction.RequestInputType.Int:
-                    main.cmd.RequestInput_Int(userInputAction.message);
+                    main.cmd.RequestInput_Int(userInputType.message);
                     main.cmd.actionAfterIntWithInt += Put;
                     return;
                 case UserInputAction.RequestInputType.Ints:
-                    main.cmd.RequestInput_Ints(userInputAction.message);
+                    main.cmd.RequestInput_Ints(userInputType.message);
                     main.cmd.actionAfterIntsWithInts += Put;
                     return;
                 case UserInputAction.RequestInputType.Double:
                     break;
                 case UserInputAction.RequestInputType.Distance:
                     break;
-                case UserInputAction.RequestInputType.Direction:
+                case UserInputAction.RequestInputType.Vector:
                     //main.cmd.SendRequestMessage(userInputAction.message);
                     //main.MouseDown += GetDirection;
-                    main.cmd.RequestInput_Direction(userInputAction.message);
-                    main.cmd.actionAfterDirWithDir += Put;
+                    main.cmd.RequestInputVector(userInputType.message);
+                    main.cmd.actionAfterVecWithVec += Put;
+                    return;
+                case UserInputAction.RequestInputType.VectorValue:
+                    main.cmd.RequestInputVectorValue(userInputType.message);
+                    main.cmd.actionAfterVecWithVec += Put;
                     return;
                 default:
                     break;
@@ -276,7 +316,7 @@ namespace _FosSimulator
         internal void Put(int userInputInt)
         {
             actionAfterIntWithInt?.Invoke(userInputInt);
-            actionAfterIntWithDirInt?.Invoke(userInputVector, userInputInt);
+            actionAfterIntWithVecInt?.Invoke(userInputVector, userInputInt);
             NextAction();
         }
         internal void Put(List<int> userInputInts)
@@ -291,6 +331,7 @@ namespace _FosSimulator
         }
         internal void Put(Vector3D userInputVector)
         {
+            actionAfterVecWithVec?.Invoke(userInputVector);
             this.userInputVector = userInputVector;
             NextAction();
         }
@@ -308,6 +349,9 @@ namespace _FosSimulator
                 actionEveryLastTwoPointsWithPointPoint?.Invoke(this.userInputPoint, userInputPoint);
                 actionEveryLastTwoPoints?.Invoke();
             }
+
+            actionAfterEveryLastPointWithPoint?.Invoke(userInputPoint);
+            actionAfterEveryPoint?.Invoke();
 
             this.userInputPoint = userInputPoint;
             numContinuousPoint += 1;
@@ -386,7 +430,7 @@ namespace _FosSimulator
         internal void Start()
         {
             on = true;
-            main.WindowSelectionOn(false);
+            main.TurnOnWindowSelection(false);
             main.TurnOnDeselectAll_Esc(false);
             main.draw.selectionWindow.viewType = viewType;
 
@@ -495,7 +539,7 @@ namespace _FosSimulator
             //main.cmd.Enter();
             main.cmd.NewLine();
 
-            main.WindowSelectionOn(true);
+            main.TurnOnWindowSelection(true);
             main.TurnOnDeselectAll_Esc(true);
         }
 

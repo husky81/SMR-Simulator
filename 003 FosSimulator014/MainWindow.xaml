@@ -60,13 +60,21 @@
                     <MenuItem Header="_Element" Click="ViewElement" IsCheckable="True" IsChecked="True"/>
                     <MenuItem Header="E_lement Number" Click="ViewElementNumber" IsCheckable="True" IsChecked="False"/>
                 </MenuItem>
+                <MenuItem Header="M_odel">
+                    <MenuItem Header="Add _Material" Click="AddMaterial"/>
+                    <MenuItem Header="Add _Section" Click="AddSection"/>
+                    <MenuItem Header="Add _Node" Click="AddNode"/>
+                    <MenuItem Header="Draw _Line Element" Click="AddFemLine"/>
+                </MenuItem>
                 <MenuItem Header="_Modify">
                     <MenuItem Header="E_xtrude" Click="FemExtrude"/>
                     <MenuItem Header="_Divide" Click="FemDivide"/>
                 </MenuItem>
-                <MenuItem Header="Add _Node" Click="StartAddNode"/>
-                <MenuItem Header="T_esting" />
-                <MenuItem Header="_Test">
+                <MenuItem Header="_Load">
+                    <MenuItem Header="Add _Load" Click="FemAddLoadSelected"/>
+                </MenuItem>
+                <MenuItem Header="Analysis(F5)" Click="FemAnalysis"/>
+                <MenuItem Header="_Example">
                     <MenuItem Header="0_1 SimpleBeamLoadZ" Click="FemTest_SimpleBeamLoadZ" HorizontalAlignment="Left"/>
                     <MenuItem Header="0_2 SimpleBeamLoadY" Click="FemTest_SimpleBeamLoadY" HorizontalAlignment="Left"/>
                     <MenuItem Header="0_3 SolidExample" Click="FemTest_Solid003" HorizontalAlignment="Left"/>
