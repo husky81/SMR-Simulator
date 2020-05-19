@@ -20,7 +20,7 @@
                 <Separator/>
                 <MenuItem Header="_Full Screen" Click="FullScreenWindow" IsCheckable="True"/>
                 <Separator/>
-                <MenuItem Header="_Zoom">    
+                <MenuItem Header="_Zoom">
                     <MenuItem Header="_In"/>
                     <MenuItem Header="_Out"/>
                     <MenuItem Header="_Extend" Click="ZoomExtents"/>
@@ -94,6 +94,16 @@
             </MenuItem>
             <MenuItem Header="Ab_out" />
         </Menu>
+
+
+        <TabControl Margin="0,0,0,0">
+            <TabItem Header="TabItem">
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+            <TabItem Header="TabItem">
+                
+            </TabItem>
+        </TabControl>
 
         <StackPanel x:Name="dkpFemWorks" DockPanel.Dock="Left" Width="156" MinWidth="143" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
             <StackPanel.Effect>
@@ -233,10 +243,9 @@
             <TextBox x:Name="tbxCommand" TextWrapping="Wrap" Text="&gt; " RenderTransformOrigin="0.5,0.5" ForceCursor="True" AcceptsReturn="True" VerticalScrollBarVisibility="Visible"/>
         </Grid>
 
-        <Grid x:Name="grdMain" Margin="0" DockPanel.Dock="Top"/>
+        <Grid x:Name="grdMain" Margin="0" DockPanel.Dock="Top">
+        </Grid>
 
-        
-        
     </DockPanel>
 
 </Window>
