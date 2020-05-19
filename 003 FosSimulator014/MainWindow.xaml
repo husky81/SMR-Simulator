@@ -109,7 +109,7 @@
                 <Button Content="X" Click="ClosePannelFemWorks" Grid.Column="2" Background="{x:Null}" BorderBrush="{x:Null}" />
 
             </Grid>
-            <TreeView x:Name="treeViewFemWorks" Height="405" />
+            <TreeView x:Name="treeViewFemWorks" Height="465" />
         </StackPanel>
 
         <StackPanel x:Name="dkpStructureConcrete" DockPanel.Dock="Left" Width="156" MinWidth="143" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
@@ -235,6 +235,8 @@
 
         <Grid x:Name="grdMain" Margin="0" DockPanel.Dock="Top"/>
 
+        
+        
     </DockPanel>
 
 </Window>
