@@ -853,7 +853,10 @@ namespace _FosSimulator
             draw.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(smr.structure.length, smr.structure.width, smr.structure.height));
             draw.GenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
+
+    
         }
+
 
         private void OpenPannelFemWorks(object sender, RoutedEventArgs e)
         {

@@ -97,10 +97,13 @@
 
 
         <TabControl Margin="0,0,0,0">
-            <TabItem Header="TabItem">
-                <Grid Background="#FFE5E5E5"/>
+            <TabItem Header="FEM Works">
+                <Grid Background="#FFE5E5E5">
+                    <TreeView x:Name="treeViewFemWorks"/>
+
+                </Grid>
             </TabItem>
-            <TabItem Header="TabItem">
+            <TabItem Header="Concrete Structure">
                 
             </TabItem>
         </TabControl>
@@ -119,7 +122,6 @@
                 <Button Content="X" Click="ClosePannelFemWorks" Grid.Column="2" Background="{x:Null}" BorderBrush="{x:Null}" />
 
             </Grid>
-            <TreeView x:Name="treeViewFemWorks" Height="465" />
         </StackPanel>
 
         <StackPanel x:Name="dkpStructureConcrete" DockPanel.Dock="Left" Width="156" MinWidth="143" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
