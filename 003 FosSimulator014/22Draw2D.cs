@@ -1,6 +1,4 @@
-﻿using _Draw3D;
-using _FosSimulator;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
@@ -12,7 +10,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using Polygon = System.Windows.Shapes.Polygon;
 
-namespace _Draw2D
+namespace bck.SMR_simulator.draw2d
 {
     class Draw2D
     {

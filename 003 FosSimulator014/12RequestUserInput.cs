@@ -1,5 +1,4 @@
-﻿using _Draw2D;
-using _Draw3D;
+﻿using bck.SMR_simulator.draw2d;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +6,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 
-namespace _FosSimulator
+namespace bck.SMR_simulator.main
 {
     public class RequestUserInput
     {

@@ -1,5 +1,4 @@
-﻿using _Draw2D;
-using GeneralFunctions;
+﻿using bck.SMR_simulator.draw2d;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -10,7 +9,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-namespace _Draw3D
+namespace bck.SMR_simulator.draw3d
 {
     public partial class Draw3D // 기본
     {

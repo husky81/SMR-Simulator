@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "003 FosSimulator016", "003 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "003 FosSimulator016Tests", "003 FosSimulator016Tests\003 FosSimulator016Tests.csproj", "{0D21EF61-9E4A-47A4-A5B0-83F852A479A5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CanvasTest", "CanvasTest\CanvasTest.csproj", "{88D35609-1261-42A1-B381-F24BCD50D93B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{0D21EF61-9E4A-47A4-A5B0-83F852A479A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D21EF61-9E4A-47A4-A5B0-83F852A479A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D21EF61-9E4A-47A4-A5B0-83F852A479A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88D35609-1261-42A1-B381-F24BCD50D93B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88D35609-1261-42A1-B381-F24BCD50D93B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88D35609-1261-42A1-B381-F24BCD50D93B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88D35609-1261-42A1-B381-F24BCD50D93B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

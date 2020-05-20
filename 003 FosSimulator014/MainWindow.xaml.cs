@@ -1,5 +1,6 @@
-﻿using _Draw2D;
-using _Draw3D;
+﻿using bck.SMR_simulator.draw2d;
+using bck.SMR_simulator.draw3d;
+using bck.SMR_simulator.fem;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,7 +21,7 @@ using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace _FosSimulator
+namespace bck.SMR_simulator.main
 {
     partial class MainWindow : Window
     {

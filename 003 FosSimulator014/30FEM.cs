@@ -1,4 +1,5 @@
-﻿using GeneralFunctions;
+﻿using bck.SMR_simulator.general_functions;
+using bck.SMR_simulator.main;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -11,7 +12,7 @@ using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Media.Media3D;
 
-namespace _FosSimulator
+namespace bck.SMR_simulator.fem
 {
     public class FEM
     {

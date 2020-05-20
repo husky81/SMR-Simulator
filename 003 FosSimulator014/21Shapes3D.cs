@@ -1,9 +1,9 @@
-﻿using GeneralFunctions;
+﻿using bck.SMR_simulator.general_functions;
 using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-namespace _Draw3D
+namespace bck.SMR_simulator.draw3d
 {
     public class Shapes3D : List<Shape3D>
     {
