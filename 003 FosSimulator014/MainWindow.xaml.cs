@@ -35,9 +35,8 @@ namespace _FosSimulator
         {
             InitializeComponent();
 
-            dkpStructureConcrete.Visibility = Visibility.Collapsed;
-            dkpCameraControl.Visibility = Visibility.Collapsed;
-            dkpFemWorks.Visibility = Visibility.Collapsed;
+            //dkpStructureConcrete.Visibility = Visibility.Collapsed;
+            //dkpCameraControl.Visibility = Visibility.Collapsed;
 
             smr = new SMR();
             fem = new FEM();
@@ -782,12 +781,12 @@ namespace _FosSimulator
     {
         private void OpenPannelCameraControl(object sender, RoutedEventArgs e)
         {
-            dkpCameraControl.Visibility = Visibility.Visible;
+            //dkpCameraControl.Visibility = Visibility.Visible;
             AfterViewChanged();
         }
         private void ClosePannelCameraControl(object sender, RoutedEventArgs e)
         {
-            dkpCameraControl.Visibility = Visibility.Collapsed;
+            //dkpCameraControl.Visibility = Visibility.Collapsed;
         }
         private void AfterViewChanged()
         {
@@ -836,14 +835,14 @@ namespace _FosSimulator
 
         private void OpenPannelConcreteSetting(object sender, RoutedEventArgs e)
         {
-            dkpStructureConcrete.Visibility = Visibility.Visible;
+            //dkpStructureConcrete.Visibility = Visibility.Visible;
             tbxHeight.Text = smr.structure.height.ToString();
             tbxLength.Text = smr.structure.length.ToString();
             tbxWidth.Text = smr.structure.width.ToString();
         }
         private void ClosePannelConcreteSetting(object sender, RoutedEventArgs e)
         {
-            dkpStructureConcrete.Visibility = Visibility.Collapsed;
+            //dkpStructureConcrete.Visibility = Visibility.Collapsed;
         }
         private void SetConcrete(object sender, RoutedEventArgs e)
         {
@@ -857,15 +856,14 @@ namespace _FosSimulator
     
         }
 
-
         private void OpenPannelFemWorks(object sender, RoutedEventArgs e)
         {
-            dkpFemWorks.Visibility = Visibility.Visible;
+            //dkpFemWorks.Visibility = Visibility.Visible;
             RedrawFemWorksTreeView();
         }
         private void ClosePannelFemWorks(object sender, RoutedEventArgs e)
         {
-            dkpFemWorks.Visibility = Visibility.Collapsed;
+            //dkpFemWorks.Visibility = Visibility.Collapsed;
         }
         private void RedrawFemWorksTreeView()
         {
