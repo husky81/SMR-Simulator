@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 
 namespace bck.SMR_simulator.draw2d
@@ -15,6 +16,7 @@ namespace bck.SMR_simulator.draw2d
     {
         private Grid grid;
         internal Shapes2D shapes = new Shapes2D();
+        internal Texts2D texts = new Texts2D();
 
         internal BoundaryConditionMarks boundaryConditionMarks;
 
@@ -28,14 +30,25 @@ namespace bck.SMR_simulator.draw2d
         {
             foreach (Line2D line in shapes.lines)
             {
-                grid.Children.Add(line.lineObj);
+                if (line.IsOnGrid)
+                {
+                    grid.Children.Add(line.lineObj);
+                }
             }
             foreach (Polygon2D polygon in shapes.polygons)
             {
-                grid.Children.Add(polygon.polygonObj);
+                if (polygon.IsOnGrid)
+                {
+                    grid.Children.Add(polygon.polygonObj);
+                }
+            }
+            foreach (Text2D text in texts)
+            {
+                grid.Children.Add(text.textObj);
             }
         }
     }
+
     class Shapes2D : List<Shape2D>
     {
         internal Lines2D lines = new Lines2D();
@@ -54,8 +67,22 @@ namespace bck.SMR_simulator.draw2d
     }
     class Shape2D
     {
+        internal List<Point> points;
+
         public Shape2D()
         {
+
+        }
+        internal bool IsOnGrid
+        {
+            get
+            {
+                foreach (Point point in points)
+                {
+                    if (point.X < 0 | point.Y < 0) return false;
+                }
+                return true;
+            }
         }
     }
     class Lines2D : List<Line2D>
@@ -69,19 +96,18 @@ namespace bck.SMR_simulator.draw2d
     class Line2D : Shape2D
     {
         internal Line lineObj;
-        private Point p0;
-        private Point p1;
         internal Line2D(Point p0, Point p1)
         {
-            this.p0 = p0;
-            this.p1 = p1;
+            points = new List<Point>();
+            points.Add(p0);
+            points.Add(p1);
             lineObj = new Line
             {
                 Stroke = System.Windows.Media.Brushes.Black,
-                X1 = p0.X,
-                X2 = p1.X,
-                Y1 = p0.Y,
-                Y2 = p1.Y,
+                X1 = points[0].X,
+                X2 = points[1].X,
+                Y1 = points[0].Y,
+                Y2 = points[1].Y,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top,
                 StrokeThickness = 1
@@ -111,7 +137,6 @@ namespace bck.SMR_simulator.draw2d
     class Polygon2D : Shape2D
     {
         internal Polygon polygonObj;
-        private List<Point> points;
         internal Brush Stroke
         {
             get
@@ -236,6 +261,35 @@ namespace bck.SMR_simulator.draw2d
         }
 
     }
+
+    class Texts2D : List<Text2D>
+    {
+        internal Text2D Add(Point p0, String text)
+        {
+            Text2D textObj = new Text2D(p0, text);
+            base.Add(textObj);
+            return textObj;
+        }
+    }
+    class Text2D
+    {
+        internal TextBlock textObj; //TextBlock이 Label보다 훨씬 가볍다. ref. https://m.blog.naver.com/PostView.nhn?blogId=inasie&logNo=70025582628&proxyReferer=http:%2F%2Fwww.google.com%2Furl%3Fsa%3Dt%26rct%3Dj%26q%3D%26esrc%3Ds%26source%3Dweb%26cd%3D%26ved%3D2ahUKEwjT5b7E8cTpAhVryosBHTHRC5YQFjAJegQIDBAB%26url%3Dhttp%253A%252F%252Fm.blog.naver.com%252Finasie%252F70025582628%26usg%3DAOvVaw3TmFXvkGjN0Y_VDPh11e20
+
+        Point point;
+        String text;
+        public Text2D(Point point, String text)
+        {
+            this.point = point;
+            this.text = text;
+            textObj = new TextBlock();
+            textObj.FontSize = 10;
+            textObj.Text = text;
+            textObj.HorizontalAlignment = HorizontalAlignment.Left;
+            textObj.VerticalAlignment = VerticalAlignment.Top;
+            textObj.Margin = new Thickness(point.X, point.Y, 0, 0);
+        }
+    }
+
     class SelectionWindow
     {
         private readonly Grid grid;
@@ -263,7 +317,6 @@ namespace bck.SMR_simulator.draw2d
         /// </summary>
         private double crossRadius = 10;
         double crossLineStrokeThickness = 1;
-
 
         public SelectionWindow(Grid grid)
         {

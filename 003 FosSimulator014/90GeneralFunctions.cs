@@ -694,5 +694,4 @@ namespace bck.SMR_simulator.general_functions
         }
     }
 
-
 }

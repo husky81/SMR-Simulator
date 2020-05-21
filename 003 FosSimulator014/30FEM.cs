@@ -22,6 +22,7 @@ namespace bck.SMR_simulator.fem
 
         public FemSelection selection;
 
+
         public FEM()
         {
             selection = new FemSelection(this);
@@ -298,6 +299,18 @@ namespace bck.SMR_simulator.fem
 
         internal void Check(CommandWindow cmd)
         {
+            //재료와 단면이 설정되지 않은경우 아무거나 입력.
+            if(model.materials.Count == 0)
+            {
+                WarningMessage("재료 모델이 설정되지 않아 임의 모델을 추가합니다.");
+                model.materials.AddConcrete("C30");
+            }
+            if (model.sections.Count == 0)
+            {
+                WarningMessage("단면 정보가 설정되지 않아 임의 단면을 추가합니다.");
+                model.sections.AddRectangle(0.2, 0.2);
+            }
+
             //Material이 하나뿐인 경우 그냥 다 1번으로 지정
             if (model.materials.Count == 1)
             {
@@ -317,6 +330,16 @@ namespace bck.SMR_simulator.fem
                     element.Section = section;
                 }
             }
+        }
+
+        internal CommandWindow cmd; //FEM 메시지를 보내기위한 용도로만 활용.
+        private void ErrorMessage(string message)
+        {
+            cmd.ErrorMessage(message);
+        }
+        private void WarningMessage(string message)
+        {
+            cmd.WarningMessage(message);
         }
 
         internal double[] GloF()

@@ -193,9 +193,8 @@
             <TextBox x:Name="tbxCommand" TextWrapping="Wrap" Text="&gt; " RenderTransformOrigin="0.5,0.5" ForceCursor="True" AcceptsReturn="True" VerticalScrollBarVisibility="Visible"/>
         </Grid>
 
-        
         <Grid x:Name="grdMain"/>
-
+        
     </DockPanel>
 
 </Window>

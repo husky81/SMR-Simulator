@@ -1,4 +1,5 @@
 ﻿using bck.SMR_simulator.draw2d;
+using bck.SMR_simulator.draw3d;
 using bck.SMR_simulator.general_functions;
 using System;
 using System.Collections.Generic;
@@ -628,7 +629,7 @@ namespace bck.SMR_simulator.main
             WriteText("*Cancel*");
             Enter();
             main.requestUserInput = new RequestUserInput(main);
-            main.draw.selectionWindow.End();
+            main.selectionWindow.End();
             EndCommand();
         }
         private void Clear()
@@ -682,6 +683,11 @@ namespace bck.SMR_simulator.main
         internal void ErrorMessage(string v)
         {
             WriteText("Error!!! " + v);
+            NewLine();
+        }
+        internal void WarningMessage(string v)
+        {
+            WriteText("Warning: " + v);
             NewLine();
         }
         public void Call(string cmdText)
@@ -769,7 +775,7 @@ namespace bck.SMR_simulator.main
             main.MouseDown -= GetPoints_Point;
             main.MouseDown -= GetPoints_SecondAfterPoint;
             main.MouseMove -= GetPoints_Moving;
-            main.draw.selectionWindow.End();
+            main.selectionWindow.End();
 
             userInputPoints.Add(userInputPoint3D);
             actionAfterPointWithPoint?.Invoke(userInputPoint3D);
@@ -780,10 +786,10 @@ namespace bck.SMR_simulator.main
                 return;
             }
 
-            main.draw.selectionWindow.viewType = SelectionWindow.ViewType.Line;
+            main.selectionWindow.viewType = SelectionWindow.ViewType.Line;
             Point p = GetPointFromPoint3D(userInputPoint3D);
-            main.draw.selectionWindow.viewType = viewType;
-            main.draw.selectionWindow.Start(p);
+            main.selectionWindow.viewType = viewType;
+            main.selectionWindow.Start(p);
             main.MouseMove += GetPoints_Moving;
 
             WriteText("다음 점을 입력하세요" + cmdMark);
@@ -802,13 +808,13 @@ namespace bck.SMR_simulator.main
             Point p0 = e.GetPosition(main.grdMain);
 
             //Cross인 경우 첫번째 점을 입력하기 전부터 시작되어야 함.
-            if (viewType == SelectionWindow.ViewType.Cross & !main.draw.selectionWindow.started)
+            if (viewType == SelectionWindow.ViewType.Cross & !main.selectionWindow.started)
             {
-                main.draw.selectionWindow.viewType = viewType;
-                main.draw.selectionWindow.Start(p0);
+                main.selectionWindow.viewType = viewType;
+                main.selectionWindow.Start(p0);
             }
 
-            main.draw.selectionWindow.Move(p0);
+            main.selectionWindow.Move(p0);
         }
         private void GetPoints_SecondAfterPoint(object sender, MouseButtonEventArgs e)
         {
@@ -822,7 +828,7 @@ namespace bck.SMR_simulator.main
         }
         private void PutPoints_End()
         {
-            main.draw.selectionWindow.End();
+            main.selectionWindow.End();
             actionAfterPoints?.Invoke(userInputPoints);
             EndCommand();
         }
@@ -875,8 +881,8 @@ namespace bck.SMR_simulator.main
             Point p = GetPointFromPoint3D(userInputPoint3D);
 
             main.MouseMove += GetVector_Moving;
-            main.draw.selectionWindow.viewType = SelectionWindow.ViewType.Line;
-            main.draw.selectionWindow.Start(p);
+            main.selectionWindow.viewType = SelectionWindow.ViewType.Line;
+            main.selectionWindow.Start(p);
 
             WriteText("벡터의 방향을 입력하세요." + cmdMark);
             SetCursorLast();
@@ -885,7 +891,7 @@ namespace bck.SMR_simulator.main
         private void GetVector_Moving(object sender, System.Windows.Input.MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
-            main.draw.selectionWindow.Move(p0);
+            main.selectionWindow.Move(p0);
         }
         private void PutVectorSecondPoint(object sender, MouseButtonEventArgs e)
         {
@@ -895,7 +901,7 @@ namespace bck.SMR_simulator.main
                 Point3D p3 = GetPoint3dFromPoint2D(p);
 
                 RemoveEvents_GetVector();
-                main.draw.selectionWindow.End();
+                main.selectionWindow.End();
 
                 Vector3D inputDirection = p3 - vectorFirstPoint;
                 main.requestUserInput.Put(inputDirection);

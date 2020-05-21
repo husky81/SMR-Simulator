@@ -27,8 +27,11 @@ namespace bck.SMR_simulator.main
     {
         private readonly SMR smr;
         public readonly FEM fem;
+
         public readonly Draw3D draw;
-        internal readonly Draw2D draw2D;
+        internal readonly Draw2D draw2d;
+        internal SelectionWindow selectionWindow;
+
         public readonly CommandWindow cmd;
         internal RequestUserInput requestUserInput;
 
@@ -39,11 +42,18 @@ namespace bck.SMR_simulator.main
             //dkpStructureConcrete.Visibility = Visibility.Collapsed;
             //dkpCameraControl.Visibility = Visibility.Collapsed;
 
+            cmd = new CommandWindow(this, tbxCommand);
+
             smr = new SMR();
             fem = new FEM();
+            fem.cmd = cmd; //fem에서 메시지를 보내기위한 용도로만 사용함.
+
             draw = new Draw3D(grdMain);
-            draw2D = new Draw2D(grdMain);
-            cmd = new CommandWindow(this,tbxCommand);
+            draw2d = new Draw2D(grdMain);
+            grdMain.SizeChanged += GrdMain_SizeChanged;
+            selectionWindow = new SelectionWindow(grdMain);
+
+
             requestUserInput = new RequestUserInput(this);
 
             TurnOnWheelPanZoom();
@@ -61,7 +71,12 @@ namespace bck.SMR_simulator.main
             //Drawing2dTest();
             BoundaryConditionDrawingTest();
 
-            RedrawFemModel();
+            //RedrawFemModel();
+        }
+
+        private void GrdMain_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            RedrawShapes_woGeneration();
         }
 
         private void BoundaryConditionDrawingTest()
@@ -91,14 +106,12 @@ namespace bck.SMR_simulator.main
 
             cmd.Call("re");
 
-            FemMaterial matl1 = fem.model.materials.AddConcrete("C30");
-            FemSection sect1 = fem.model.sections.AddRectangle(1, 0.2);
         }
         public void Drawing2dTest()
         {
             Point p0 = new Point(100, 100);
             Point p1 = new Point(200, 300);
-            draw2D.shapes.lines.Add(p0, p1);
+            draw2d.shapes.lines.Add(p0, p1);
             //p1 = new Point(400, 400);
             int[] boundaryCondition = new int[6];
             boundaryCondition[0] = 1;
@@ -108,7 +121,7 @@ namespace bck.SMR_simulator.main
             boundaryCondition[4] = 1;
             boundaryCondition[5] = 1;
 
-            draw2D.boundaryConditionMarks.Add(p0, boundaryCondition);
+            draw2d.boundaryConditionMarks.Add(p0, boundaryCondition);
 
         }
         public bool TwiceExtrudeTest()
@@ -311,7 +324,7 @@ namespace bck.SMR_simulator.main
 
         private void DrawSampleGradient(object sender, RoutedEventArgs e)
         {
-            draw.DrawGradient_Sample();
+            draw.Example_DrawGradient3D();
         }
         private void DrawCone(object sender, RoutedEventArgs e)
         {
@@ -396,122 +409,6 @@ namespace bck.SMR_simulator.main
         }
 
     }
-
-    internal class UserInputAction
-    {
-        internal enum RequestInputType
-        {
-            Point,
-            TwoPoints,
-            Points,
-            ElemSelection,
-            NodeSelection,
-            Selection,
-            Int,
-            Ints,
-            Double,
-            Distance,
-            /// <summary>
-            /// Vector3D 형식의 입력값. Vector로 요청했는데 사용자가 Point를 입력(마우스 클릭, 커멘트 창에 절대좌표로 입력)한 경우, 0,0,0을 기준으로한 벡터로 볼 수 있을지 검토 필요.
-            /// </summary>
-            Vector,
-            VectorValue,
-        }
-        internal RequestInputType requestInputType;
-        internal string message;
-        internal bool hasAction;
-        internal int numPointRequested = -1;
-        internal SelectionWindow.ViewType viewType;
-    }
-    public class RequestUserMouseWindowInput
-
-    {
-        private readonly MainWindow main;
-        private Point p0, p1;
-
-        internal delegate void Action(Point p0, Point p1);
-        internal Action action;
-        private bool hasFirstPoint = false;
-        private Point firstPoint;
-        internal SelectionWindow.ViewType viewType;
-
-        internal Point FirstPoint
-        {
-            get
-            {
-                return firstPoint;
-            }
-            set
-            {
-                hasFirstPoint = true;
-                firstPoint = value;
-            }
-        }
-
-        public RequestUserMouseWindowInput(MainWindow main)
-        {
-            this.main = main;
-        }
-        internal void Start()
-        {
-            main.TurnOnWindowSelection(false);
-            main.draw.selectionWindow.viewType = viewType;
-
-            if (hasFirstPoint)
-            {
-                // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
-                if (main.orbiting) return;
-                p0 = FirstPoint;
-                main.draw.selectionWindow.Start(p0);
-                main.MouseMove += WindowSelection_MouseMove;
-                main.MouseUp += WindowSelection_MouseLeftUp;
-                main.MouseLeave += WindowSelectionEnd;
-            }
-            else
-            {
-                main.MouseDown += WindowSelection_MouseLeftDown;
-            }
-        }
-        private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
-        {
-            if (main.orbiting) return;
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                p0 = e.GetPosition(main.grdMain);
-                main.draw.selectionWindow.Start(p0);
-                main.MouseMove += WindowSelection_MouseMove;
-                main.MouseUp += WindowSelection_MouseLeftUp;
-                main.MouseLeave += WindowSelectionEnd;
-            }
-        }
-        private void WindowSelection_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            p1 = e.GetPosition(main.grdMain);
-            main.draw.selectionWindow.Move(p1);
-            //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
-        }
-        private void WindowSelection_MouseLeftUp(object sender, MouseButtonEventArgs e)
-        {
-            WindowSelectionEnd(null, null);
-
-            if (p0.Equals(p1)) return; //사각형 크기가 0인 경우 pass~
-
-            action(p0, p1);
-            //main.bckD.GetInfinitePyramidBySelectionWindow(selectWindowStart, selectWindowEnd, ref p0, ref v0, ref v1, ref v2, ref v3);
-            //main.fem.SelectByInfinitePyramid(p0, v0, v1, v2, v3);
-            main.RedrawFemModel();
-        }
-        private void WindowSelectionEnd(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            main.draw.selectionWindow.End();
-            main.MouseMove -= WindowSelection_MouseMove;
-            main.MouseUp -= WindowSelection_MouseLeftUp;
-            main.MouseLeave -= WindowSelectionEnd;
-            main.MouseDown -= WindowSelection_MouseLeftDown;
-
-            main.TurnOnWindowSelection(true);
-        }
-    } // 개체 선택 사용자 입력
 
     public partial class MainWindow : Window
     {
@@ -1177,20 +1074,28 @@ namespace bck.SMR_simulator.main
         {
             draw.RedrawShapes();
             Redraw3dRelated2dShapes();
-            draw2D.RedrawShapes();
+            draw2d.RedrawShapes();
         }
         private void Redraw3dRelated2dShapes()
         {
             if (grdMain.ActualHeight == 0) return;
             if (fem.model.boundaries.visibility)
             {
-                draw2D.boundaryConditionMarks.Clear();
+                draw2d.boundaryConditionMarks.Clear();
                 foreach (FemBoundary boundary in fem.model.boundaries)
                 {
                     Point3D p0 = boundary.node.c0;
                     Point p = draw.GetPoint2D_FromPoint3D(p0);
-                    draw2D.boundaryConditionMarks.Add(p, boundary.condition);
+                    draw2d.boundaryConditionMarks.Add(p, boundary.condition);
                 }
+            }
+
+            draw2d.texts.Clear();
+            foreach (FemNode node in fem.model.nodes)
+            {
+                Point3D p0 = node.c0;
+                Point p = draw.GetPoint2D_FromPoint3D(p0);
+                draw2d.texts.Add(p, node.num.ToString());
             }
         }
     } // 패널, 격자배경, 좌표계, Redraw 등
@@ -1259,12 +1164,6 @@ namespace bck.SMR_simulator.main
                 r.FirstPoint = e.GetPosition(grdMain);
                 r.action = SelectFemByWindow;
                 r.Start();
-
-                //requestUserSelectionWindow.Reset(2);
-                //requestUserSelectionWindow.viewType = DRAW.SelectionWindow.ViewType.SelectionWindow;
-                //requestUserSelectionWindow.Put(e.GetPosition(grdMain));
-                //requestUserSelectionWindow.actionEveryLastTwoPoints = SelectFemByWindow;
-                //requestUserSelectionWindow.Start();
             }
         }
         private void UnselectAll_Esc(object sender, System.Windows.Input.KeyEventArgs e)

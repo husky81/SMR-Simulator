@@ -106,7 +106,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>R.resx</DependentUpon>
     </Compile>
-    <Compile Include="21Shapes3D.cs" />
     <Compile Include="40SMR.cs" />
     <Compile Include="30FEM.cs" />
     <Compile Include="MainWindow.xaml.cs">

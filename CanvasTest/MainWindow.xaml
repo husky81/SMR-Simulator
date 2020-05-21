@@ -10,9 +10,9 @@
         <Grid x:Name="subGrid" Margin="0,0,404,0">
             
         </Grid>
-        <Canvas x:Name="mainCanvas" Margin="439,0,0,0">
+        <Viewport3D x:Name="mainCanvs" Margin="422,0,0,0">
             
-        </Canvas>
+        </Viewport3D>
     </Grid>
 
 </Window>
