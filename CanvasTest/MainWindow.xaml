@@ -6,7 +6,13 @@
         xmlns:local="clr-namespace:CanvasTest"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
+    <Grid x:Name="mainGrid">
+        <Grid x:Name="subGrid" Margin="0,0,404,0">
+            
+        </Grid>
+        <Canvas x:Name="mainCanvas" Margin="439,0,0,0">
+            
+        </Canvas>
     </Grid>
+
 </Window>

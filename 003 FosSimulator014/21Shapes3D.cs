@@ -38,7 +38,7 @@ namespace bck.SMR_simulator.draw3d
             Add(t);
             return t;
         }
-        internal Line3D AddLine(Point3D sp, Point3D ep)
+        public Line3D AddLine(Point3D sp, Point3D ep)
         {
             Line3D l = new Line3D(sp, ep);
             Add(l);
@@ -101,7 +101,7 @@ namespace bck.SMR_simulator.draw3d
             Add(s);
             return s;
         }
-        internal Sphere AddSphere(Point3D point, double diameter, int resolution)
+        public Sphere AddSphere(Point3D point, double diameter, int resolution)
         {
             Sphere s = new Sphere(point, diameter, resolution);
             Add(s);
@@ -271,7 +271,7 @@ namespace bck.SMR_simulator.draw3d
             mesh = MeshGenerator.Rectangle(p0, p1, p2, p3);
         }
     }
-    class Line3D : Shape3D
+    public class Line3D : Shape3D
     {
         public Point3D p0;
         public Point3D p1;
@@ -475,7 +475,7 @@ namespace bck.SMR_simulator.draw3d
             SetTransforms(str, dir);
         }
     }
-    class Sphere : Shape3D
+    public class Sphere : Shape3D
     {
         private Point3D center;
         private double diameter;
@@ -1020,5 +1020,4 @@ namespace bck.SMR_simulator.draw3d
             return mesh;
         }
     }
-
 }

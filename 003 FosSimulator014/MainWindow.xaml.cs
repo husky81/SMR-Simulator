@@ -320,7 +320,7 @@ namespace bck.SMR_simulator.main
             Vector3D heightVector = new Vector3D(10,0, 0);
             //bckD.DrawCone(center, radius, heightVector, resolution, Colors.AliceBlue);
             draw.shapes.AddCone(radius, heightVector, center, 6);
-            draw.GenerateShapes_ModelVisual3ds();
+            draw.RegenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
         private void DrawCoordinationMark(object sender, RoutedEventArgs e)
@@ -346,7 +346,7 @@ namespace bck.SMR_simulator.main
             draw.shapes.AddCylinderClosed(str, dir, dia, resolution);
             draw.shapes.RecentShape.Color(Colors.Black);
             //bckD.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(10, 10, 10));
-            draw.GenerateShapes_ModelVisual3ds();
+            draw.RegenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
         private void DrawSphere(object sender, RoutedEventArgs e)
@@ -357,7 +357,7 @@ namespace bck.SMR_simulator.main
 
             draw.shapes.AddSphere(point, diameter, resolution);
             draw.shapes.RecentShape.Color(Colors.Red);
-            draw.GenerateShapes_ModelVisual3ds();
+            draw.RegenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
         private void DrawPerformanceTest(object sender, RoutedEventArgs e)
@@ -373,7 +373,7 @@ namespace bck.SMR_simulator.main
                     }
                 }
             }
-            draw.GenerateShapes_ModelVisual3ds();
+            draw.RegenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
 
@@ -851,7 +851,7 @@ namespace bck.SMR_simulator.main
             smr.structure.length = Convert.ToDouble(tbxLength.Text);
             smr.structure.width = Convert.ToDouble(tbxWidth.Text);
             draw.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(smr.structure.length, smr.structure.width, smr.structure.height));
-            draw.GenerateShapes_ModelVisual3ds();
+            draw.RegenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
 
     
@@ -926,14 +926,14 @@ namespace bck.SMR_simulator.main
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
             draw.showCoordinateSystem = sd.IsChecked;
-            draw.GenerateShapes_ModelVisual3ds();
+            draw.RegenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
         private void ViewBasePlaneGrid(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
             draw.showBasePlaneGrid = sd.IsChecked;
-            draw.GenerateShapes_ModelVisual3ds();
+            draw.RegenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
 
@@ -1170,10 +1170,10 @@ namespace bck.SMR_simulator.main
         }
         public void RedrawShapes()
         {
-            draw.GenerateShapes_ModelVisual3ds();
+            draw.RegenerateShapes_ModelVisual3ds();
             RedrawShapes_woGeneration();
         }
-        private void RedrawShapes_woGeneration()
+        public void RedrawShapes_woGeneration()
         {
             draw.RedrawShapes();
             Redraw3dRelated2dShapes();
@@ -1305,7 +1305,7 @@ namespace bck.SMR_simulator.main
                     WindowState = System.Windows.WindowState.Normal;
                     break;
             }
-            draw.GenerateShapes_ModelVisual3ds();
+            draw.RegenerateShapes_ModelVisual3ds();
             draw.RedrawShapes();
         }
 

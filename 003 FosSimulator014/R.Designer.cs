@@ -8,7 +8,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace _FosSimulator {
+namespace bck.SMR_simulator.main
+{
     using System;
     
     

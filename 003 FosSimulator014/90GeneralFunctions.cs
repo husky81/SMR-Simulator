@@ -9,7 +9,7 @@ using System.Windows.Media.Media3D;
 
 namespace bck.SMR_simulator.general_functions
 {
-    static class GF
+    public static class GF
     {
         internal static double Determinant(double[,] mat)
         {
@@ -432,7 +432,7 @@ namespace bck.SMR_simulator.general_functions
             return iList;
         }
 
-        internal static Vector3D RotationVector3D(Vector3D vec, in Vector3D baseAxis, in double rotationAngleDeg)
+        public static Vector3D RotationVector3D(Vector3D vec, in Vector3D baseAxis, in double rotationAngleDeg)
         {
             Vector3D axisZ = baseAxis;
             axisZ.Normalize();
@@ -499,7 +499,7 @@ namespace bck.SMR_simulator.general_functions
             if(0 <= u & u <= 1.0) p= lineP0 + u * (lineP1 - lineP0);
             return p;
         }
-        internal static Point3D CrossPoint_3Planes(Vector3D v1, Point3D p1, Vector3D v2, Point3D p2, Vector3D v3, Point3D p3)
+        public static Point3D CrossPoint_3Planes(Vector3D v1, Point3D p1, Vector3D v2, Point3D p2, Vector3D v3, Point3D p3)
         {
             Vector3D crossLineP1P2 = Vector3D.CrossProduct(v1, v2);
             Vector3D p1toCrossLine = Vector3D.CrossProduct(crossLineP1P2, v1);
@@ -513,7 +513,7 @@ namespace bck.SMR_simulator.general_functions
         /// <param name="planeAxis"></param>
         /// <param name="point"></param>
         /// <returns></returns>
-        internal static double PlanePosition(Vector3D planeAxis, Point3D point)
+        public static double PlanePosition(Vector3D planeAxis, Point3D point)
         {
             //ref. https://m.blog.naver.com/PostView.nhn?blogId=joy3x94&logNo=70145080536&proxyReferer=https:%2F%2Fwww.google.com%2F
             Point3D P = new Point3D(0, 0, 0);
@@ -577,8 +577,8 @@ namespace bck.SMR_simulator.general_functions
     }
     public class SectionPolyPoint
     {
-        internal double X;
-        internal double Y;
+        public double X;
+        public double Y;
         public SectionPolyPoint(double x, double y)
         {
             this.X = x;

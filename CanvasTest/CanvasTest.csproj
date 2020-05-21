@@ -94,5 +94,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\003 FosSimulator014\003 FosSimulator016.csproj">
+      <Project>{BEBD0B1B-231E-4AFE-9950-7D42637E390D}</Project>
+      <Name>003 FosSimulator016</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

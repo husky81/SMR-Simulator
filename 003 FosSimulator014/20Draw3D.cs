@@ -1,4 +1,5 @@
 ﻿using bck.SMR_simulator.draw2d;
+using bck.SMR_simulator.general_functions;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -6,6 +7,7 @@ using System.Windows;
 using System.Windows.Annotations;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
@@ -14,6 +16,7 @@ namespace bck.SMR_simulator.draw3d
     public partial class Draw3D // 기본
     {
         public readonly Grid grid;
+
         public Shapes3D shapes;
         public TextShapes3D texts = new TextShapes3D();
         private ModelVisual3D modelVisual3d_Shapes;
@@ -189,7 +192,7 @@ namespace bck.SMR_simulator.draw3d
             pointMarker = new PointMarker3D(this);
             selectionWindow = new SelectionWindow(grid);
 
-            GenerateShapes_ModelVisual3ds();
+            RegenerateShapes_ModelVisual3ds();
             RedrawShapes();
         }
         public void RedrawShapes()
@@ -211,7 +214,7 @@ namespace bck.SMR_simulator.draw3d
             grid.Children.Clear();
             grid.Children.Add(viewport);
         }
-        internal void GenerateShapes_ModelVisual3ds()
+        public void RegenerateShapes_ModelVisual3ds()
         {
             modelVisual3d_Shapes = shapes.ModelVisual3D();
             modelVisual3d_Texts = texts.ModelVisual3D();
@@ -1053,7 +1056,64 @@ namespace bck.SMR_simulator.draw3d
             ViewZoomPoints(points);
         }
 
-        internal void ViewTop()
+        private bool isOnZoomPan_WheelScroll = false;
+        private Point pointMouseDown;
+        public bool IsOnZoomPan_WheelScroll
+        {
+            get
+            {
+                return isOnZoomPan_WheelScroll;
+            }
+            set
+            {
+                if (value)
+                {
+                    grid.MouseWheel += new MouseWheelEventHandler(Zoom_MouseWheelScroll);
+                    grid.MouseDown += PanOn_MouseWheelDown;
+                    grid.MouseUp += PanOff_MouseWheelUp;
+                }
+                else
+                {
+                    grid.MouseWheel -= new MouseWheelEventHandler(Zoom_MouseWheelScroll);
+                    grid.MouseDown -= PanOn_MouseWheelDown;
+                    grid.MouseUp -= PanOff_MouseWheelUp;
+                    grid.MouseMove -= Pan_MouseWheelDownMove;
+                }
+                isOnZoomPan_WheelScroll = value;
+            }
+        }
+        private void Zoom_MouseWheelScroll(object sender, MouseWheelEventArgs e)
+        {
+            ZoomForward(e.Delta);
+        }
+        private void PanOn_MouseWheelDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.MiddleButton == MouseButtonState.Pressed)
+            {
+                pointMouseDown = e.GetPosition(grid);
+                OrbitStart();
+                grid.MouseMove += Pan_MouseWheelDownMove;
+            }
+        }
+        private void Pan_MouseWheelDownMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (e.MiddleButton == MouseButtonState.Pressed)
+            {
+                Point p = e.GetPosition(grid);
+                Vector mov = p - pointMouseDown;
+                //bckD.OrbitMoveX(mov.X / 2); //MoveX와 MoveY중 처음 실행된 것 하나만 동작함.
+                //bckD.OrbitMoveY(mov.Y / 2);
+                OrbitMove(mov);
+            }
+        }
+        private void PanOff_MouseWheelUp(object sender, MouseButtonEventArgs e)
+        {
+            OrbitEnd();
+            grid.MouseMove -= Pan_MouseWheelDownMove;
+        }
+
+
+        public void ViewTop()
         {
             Point3D focalPoint = GetFocalPoint(PCamera);
             Vector3D distVector = focalPoint - PCamera.Position;
@@ -1064,7 +1124,7 @@ namespace bck.SMR_simulator.draw3d
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 1, 0);
         }
-        internal void ViewFront()
+        public void ViewFront()
         {
             Point3D focalPoint = GetFocalPoint(PCamera);
             Vector3D distVector = focalPoint - PCamera.Position;
@@ -1075,7 +1135,7 @@ namespace bck.SMR_simulator.draw3d
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
         }
-        internal void ViewBack()
+        public void ViewBack()
         {
             Point3D focalPoint = GetFocalPoint(PCamera);
             Vector3D distVector = focalPoint - PCamera.Position;
@@ -1086,7 +1146,7 @@ namespace bck.SMR_simulator.draw3d
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
         }
-        internal void ViewRight()
+        public void ViewRight()
         {
             Point3D focalPoint = GetFocalPoint(PCamera);
             Vector3D distVector = focalPoint - PCamera.Position;
@@ -1097,7 +1157,7 @@ namespace bck.SMR_simulator.draw3d
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
         }
-        internal void ViewLeft()
+        public void ViewLeft()
         {
             Point3D focalPoint = GetFocalPoint(PCamera);
             Vector3D distVector = focalPoint - PCamera.Position;
@@ -1108,7 +1168,7 @@ namespace bck.SMR_simulator.draw3d
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
         }
-        internal void ViewBottom()
+        public void ViewBottom()
         {
             Point3D focalPoint = GetFocalPoint(PCamera);
             Vector3D distVector = focalPoint - PCamera.Position;
@@ -1119,7 +1179,7 @@ namespace bck.SMR_simulator.draw3d
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 1, 0);
         }
-        internal void ViewSE()
+        public void ViewSE()
         {
             Point3D focalPoint = GetFocalPoint(PCamera);
             Vector3D distVector = focalPoint - PCamera.Position;
@@ -1135,7 +1195,7 @@ namespace bck.SMR_simulator.draw3d
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
         }
-        internal void ViewSW()
+        public void ViewSW()
         {
             Point3D focalPoint = GetFocalPoint(PCamera);
             Vector3D distVector = focalPoint - PCamera.Position;
@@ -1151,7 +1211,7 @@ namespace bck.SMR_simulator.draw3d
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
         }
-        internal void ViewNW()
+        public void ViewNW()
         {
             Point3D focalPoint = GetFocalPoint(PCamera);
             Vector3D distVector = focalPoint - PCamera.Position;
@@ -1167,7 +1227,7 @@ namespace bck.SMR_simulator.draw3d
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
         }
-        internal void ViewNE()
+        public void ViewNE()
         {
             Point3D focalPoint = GetFocalPoint(PCamera);
             Vector3D distVector = focalPoint - PCamera.Position;
@@ -1225,4 +1285,6 @@ namespace bck.SMR_simulator.draw3d
 
         }
     }
+
+
 }

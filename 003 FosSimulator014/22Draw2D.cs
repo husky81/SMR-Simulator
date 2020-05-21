@@ -8,7 +8,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using Polygon = System.Windows.Shapes.Polygon;
 
 namespace bck.SMR_simulator.draw2d
 {
