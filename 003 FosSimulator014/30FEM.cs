@@ -893,15 +893,29 @@ namespace bck.SMR_simulator.fem
     {
         internal int maxNum = 1;
         internal bool visibility = true;
-        internal bool showNumber = false;
+        internal bool numberVisibility = false;
+        private double positionTolerance = 0.0000001;
 
         public FemNodes()
         {
         }
 
+        internal void Add_NoReturn(Point3D p0)
+        {
+            Add(p0.X, p0.Y, p0.Z);
+        }
         internal FemNode Add(double x, double y, double z)
         {
-            FemNode node = new FemNode(x, y, z)
+            return Add(new Point3D(x, y, z));
+        }
+        internal FemNode Add(Point3D p0)
+        {
+            //p0의 위치에 노드가 있는지 검사하고 있으면 그 노드를 반환하고 끝냄
+            FemNode existedNode = GetNode(p0);
+            if (existedNode != null) return existedNode;
+
+            //노드 생성
+            FemNode node = new FemNode(p0)
             {
                 num = maxNum
             };
@@ -909,14 +923,19 @@ namespace bck.SMR_simulator.fem
             base.Add(node);
             return node;
         }
-        internal FemNode Add(Point3D p0)
+
+        private FemNode GetNode(Point3D p0)
         {
-            return Add(p0.X, p0.Y, p0.Z);
+            foreach (FemNode node in this)
+            {
+                if ((node.c0 - p0).Length < positionTolerance)
+                {
+                    return node;
+                }
+            }
+            return null;
         }
-        internal void Add_NoReturn(Point3D p0)
-        {
-            Add(p0.X, p0.Y, p0.Z);
-        }
+
         internal FemNode GetNode(int nodeNumber)
         {
             foreach (FemNode node in this)

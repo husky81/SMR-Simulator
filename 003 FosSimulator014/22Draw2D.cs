@@ -15,6 +15,7 @@ namespace bck.SMR_simulator.draw2d
     class Draw2D
     {
         private Grid grid;
+
         internal Shapes2D shapes = new Shapes2D();
         internal Texts2D texts = new Texts2D();
 
@@ -44,7 +45,10 @@ namespace bck.SMR_simulator.draw2d
             }
             foreach (Text2D text in texts)
             {
-                grid.Children.Add(text.textObj);
+                if (text.IsOnGrid)
+                {
+                    grid.Children.Add(text.textObj);
+                }
             }
         }
     }
@@ -60,8 +64,8 @@ namespace bck.SMR_simulator.draw2d
         internal void AddRectangle(Point strPoint, Point endPoint)
         {
             Rectangle r = new Rectangle();
-            //r.PointFromScreen(strPoint);
-            //r.PointToScreen(endPoint);
+            r.PointFromScreen(strPoint);
+            r.PointToScreen(endPoint);
             rectangles.Add(r);
         }
     }
@@ -282,11 +286,23 @@ namespace bck.SMR_simulator.draw2d
             this.point = point;
             this.text = text;
             textObj = new TextBlock();
-            textObj.FontSize = 10;
+            textObj.FontSize = 12;
             textObj.Text = text;
             textObj.HorizontalAlignment = HorizontalAlignment.Left;
             textObj.VerticalAlignment = VerticalAlignment.Top;
             textObj.Margin = new Thickness(point.X, point.Y, 0, 0);
+        }
+
+        internal bool IsOnGrid
+        {
+            get
+            {
+                if(point.X<0 | point.Y < 0)
+                {
+                    return false;
+                }
+                return true;
+            }
         }
     }
 

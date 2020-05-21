@@ -57,7 +57,7 @@
             <MenuItem Header="F_EM">
                 <MenuItem Header="_View">
                     <MenuItem Header="_Node" Click="ViewNode" IsCheckable="True" IsChecked="True"/>
-                    <MenuItem Header="No_de Number" Click="ViewNodeNumber" IsCheckable="True" IsChecked="False"/>
+                    <MenuItem x:Name="isFemViewNode" Header="No_de Number" Click="ViewNodeNumber" IsCheckable="True" IsChecked="True"/>
                     <MenuItem Header="_Element" Click="ViewElement" IsCheckable="True" IsChecked="True"/>
                     <MenuItem Header="E_lement Number" Click="ViewElementNumber" IsCheckable="True" IsChecked="False"/>
                 </MenuItem>

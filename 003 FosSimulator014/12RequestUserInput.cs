@@ -226,7 +226,7 @@ namespace bck.SMR_simulator.main
             UserInputAction userInputAction = new UserInputAction
             {
                 requestInputType = UserInputAction.RequestInputType.Points,
-                message = R.String8,
+                message = Properties.Resource.String8,
                 numPointRequested = numPoint,
                 viewType = viewType
             };
@@ -342,7 +342,7 @@ namespace bck.SMR_simulator.main
                 default:
                     break;
             }
-            main.cmd.ErrorMessage(R.String9);
+            main.cmd.ErrorMessage(Properties.Resource.String9);
             End();
             return;
         } //Command에 요청하거나 액션 수행.

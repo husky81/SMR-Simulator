@@ -3,6 +3,7 @@ using bck.SMR_simulator.draw3d;
 using bck.SMR_simulator.fem;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -14,6 +15,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Forms;
+using System.Windows.Forms.PropertyGridInternal;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -25,6 +27,7 @@ namespace bck.SMR_simulator.main
 {
     partial class MainWindow : Window
     {
+
         private readonly SMR smr;
         public readonly FEM fem;
 
@@ -53,7 +56,6 @@ namespace bck.SMR_simulator.main
             grdMain.SizeChanged += GrdMain_SizeChanged;
             selectionWindow = new SelectionWindow(grdMain);
 
-
             requestUserInput = new RequestUserInput(this);
 
             TurnOnWheelPanZoom();
@@ -72,6 +74,10 @@ namespace bck.SMR_simulator.main
             BoundaryConditionDrawingTest();
 
             //RedrawFemModel();
+
+            Properties.Settings1.Default.r1 = 100;
+
+
         }
 
         private void GrdMain_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -415,14 +421,14 @@ namespace bck.SMR_simulator.main
         internal void SelectNode()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestInts(R.String2);
+            requestUserInput.RequestInts(Properties.Resource.String2);
             requestUserInput.actionAfterIntsWithInts += fem.SelectNode;
             requestUserInput.Start();
         }
         internal void SelectElem()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestInts(R.SelectElementNumber);
+            requestUserInput.RequestInts(Properties.Resource.SelectElementNumber);
             requestUserInput.actionAfterIntsWithInts += fem.SelectElem;
             requestUserInput.Start();
         }
@@ -479,7 +485,7 @@ namespace bck.SMR_simulator.main
         {
             requestUserInput = new RequestUserInput(this);
             requestUserInput.viewType = SelectionWindow.ViewType.Line;
-            requestUserInput.RequestPoints(R.String7);
+            requestUserInput.RequestPoints(Properties.Resource.String7);
             requestUserInput.actionEveryLastTwoPointsWithPointPoint += AddFemLine;
             requestUserInput.actionEveryLastTwoPoints += RedrawFemModel;
             requestUserInput.Start();
@@ -498,8 +504,8 @@ namespace bck.SMR_simulator.main
         internal void DivideElem()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestElemSelection(R.String1);
-            requestUserInput.RequestInt(R.String3);
+            requestUserInput.RequestElemSelection(Properties.Resource.String1);
+            requestUserInput.RequestInt(Properties.Resource.String3);
             requestUserInput.actionAfterIntWithInt += fem.DivideSelectedElems;
             requestUserInput.actionEnd += fem.selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
@@ -512,9 +518,9 @@ namespace bck.SMR_simulator.main
         internal void ExtrudeElem()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestElemSelection(R.String4);
-            requestUserInput.RequestVector(R.String5);
-            requestUserInput.RequestInt(R.String6);
+            requestUserInput.RequestElemSelection(Properties.Resource.String4);
+            requestUserInput.RequestVector(Properties.Resource.String5);
+            requestUserInput.RequestInt(Properties.Resource.String6);
             requestUserInput.actionAfterIntWithVecInt += fem.ExtrudeWoReturn;
             requestUserInput.actionEnd += fem.selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
@@ -524,7 +530,7 @@ namespace bck.SMR_simulator.main
         internal void BoundaryFixRx()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 0, 1, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += fem.selection.Clear;
@@ -534,7 +540,7 @@ namespace bck.SMR_simulator.main
         internal void BoundaryFixRy()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 1, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += fem.selection.Clear;
@@ -544,7 +550,7 @@ namespace bck.SMR_simulator.main
         internal void BoundaryRemove()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             requestUserInput.actionEnd += BoundaryRemoveAll;
             requestUserInput.actionEnd += fem.selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
@@ -556,7 +562,7 @@ namespace bck.SMR_simulator.main
         internal void BoundaryFixRz()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 0, 1 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += fem.selection.Clear;
@@ -566,7 +572,7 @@ namespace bck.SMR_simulator.main
         internal void BoundaryFixDz()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 1, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += fem.selection.Clear;
@@ -576,7 +582,7 @@ namespace bck.SMR_simulator.main
         internal void BoundaryFixDy()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 1, 0, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += fem.selection.Clear;
@@ -586,7 +592,7 @@ namespace bck.SMR_simulator.main
         internal void BoundaryFixDx()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 1, 0, 0, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += fem.selection.Clear;
@@ -596,7 +602,7 @@ namespace bck.SMR_simulator.main
         internal void BoundaryFixDXYZ()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 1, 1, 1, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += fem.selection.Clear;
@@ -606,7 +612,7 @@ namespace bck.SMR_simulator.main
         internal void BoundaryFixAll()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(R.String10);
+            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 1, 1, 1, 1, 1, 1 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += fem.selection.Clear;
@@ -879,7 +885,7 @@ namespace bck.SMR_simulator.main
                         draw.shapes.RecentShape.Color(colorNode);
                     }
                 }
-                if (fem.model.nodes.showNumber)
+                if (fem.model.nodes.numberVisibility)
                 {
                     foreach (FemNode node in fem.model.nodes)
                     {
@@ -985,7 +991,7 @@ namespace bck.SMR_simulator.main
                             draw.shapes.RecentShape.Opacity(opacity);
                         }
                     }
-                    if (fem.model.nodes.showNumber)
+                    if (fem.model.nodes.numberVisibility)
                     {
                         foreach (FemNode node in fem.model.nodes)
                         {
@@ -1091,11 +1097,14 @@ namespace bck.SMR_simulator.main
             }
 
             draw2d.texts.Clear();
-            foreach (FemNode node in fem.model.nodes)
+            if (fem.model.nodes.numberVisibility)
             {
-                Point3D p0 = node.c0;
-                Point p = draw.GetPoint2D_FromPoint3D(p0);
-                draw2d.texts.Add(p, node.num.ToString());
+                foreach (FemNode node in fem.model.nodes)
+                {
+                    Point3D p0 = node.c0;
+                    Point p = draw.GetPoint2D_FromPoint3D(p0);
+                    draw2d.texts.Add(p, node.num.ToString());
+                }
             }
         }
     } // 패널, 격자배경, 좌표계, Redraw 등
@@ -1442,7 +1451,7 @@ namespace bck.SMR_simulator.main
         private void ViewNodeNumber(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            fem.model.nodes.showNumber = sd.IsChecked;
+            fem.model.nodes.numberVisibility = sd.IsChecked;
             RedrawFemModel();
         }
         private void ViewElement(object sender, RoutedEventArgs e)
