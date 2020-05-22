@@ -75,14 +75,13 @@ namespace bck.SMR_simulator.main
 
             //RedrawFemModel();
 
-            Properties.Settings1.Default.r1 = 100;
-
+            isFemViewNode.IsChecked = Properties.Settings.Default.isFemViewNode;
 
         }
 
         private void GrdMain_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            RedrawShapes_woGeneration();
+            RedrawShapesWoGeneration();
         }
 
         private void BoundaryConditionDrawingTest()
@@ -695,7 +694,7 @@ namespace bck.SMR_simulator.main
         private void AfterViewChanged()
         {
             GetCameraInfo();
-            RedrawShapes_woGeneration();
+            RedrawShapesWoGeneration();
         }
         private void GetCameraInfo()
         {
@@ -1074,14 +1073,17 @@ namespace bck.SMR_simulator.main
         public void RedrawShapes()
         {
             draw.RegenerateShapes_ModelVisual3ds();
-            RedrawShapes_woGeneration();
+            RedrawShapesWoGeneration();
         }
-        public void RedrawShapes_woGeneration()
+        public void RedrawShapesWoGeneration()
         {
             draw.RedrawShapes();
             Redraw3dRelated2dShapes();
             draw2d.RedrawShapes();
         }
+
+        //ToString()에 밑줄 쳐지길래 alt+enter 눌렀더니 뭘 추가라고 해서 자동생성된 줄 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "<Pending>")]
         private void Redraw3dRelated2dShapes()
         {
             if (grdMain.ActualHeight == 0) return;
@@ -1422,7 +1424,7 @@ namespace bck.SMR_simulator.main
             draw.OrbitEnd();
             this.MouseMove -= new System.Windows.Input.MouseEventHandler(Orbit_MouseMove);
             draw.RedrawShapes();
-            RedrawShapes_woGeneration();
+            RedrawShapesWoGeneration();
 
         }
         private void TurnOffOrbit_Esc(object sender, System.Windows.Input.KeyEventArgs e)

@@ -22,5 +22,17 @@ namespace bck.SMR_simulator.main.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool isFemViewNode {
+            get {
+                return ((bool)(this["isFemViewNode"]));
+            }
+            set {
+                this["isFemViewNode"] = value;
+            }
+        }
     }
 }
