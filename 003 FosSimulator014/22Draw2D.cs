@@ -290,7 +290,19 @@ namespace bck.SMR_simulator.draw2d
             textObj.Text = text;
             textObj.HorizontalAlignment = HorizontalAlignment.Left;
             textObj.VerticalAlignment = VerticalAlignment.Top;
-            textObj.Margin = new Thickness(point.X, point.Y, 0, 0);
+
+            try
+            {
+                textObj.Margin = new Thickness(point.X, point.Y, 0, 0);
+            }
+            catch (Exception)
+            {
+                if(point.X.Equals(double.NaN))
+                {
+                    
+                }
+                throw;
+            }
         }
 
         internal bool IsOnGrid

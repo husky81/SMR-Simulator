@@ -12,12 +12,12 @@ using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Media.Media3D;
 
-namespace bck.SMR_simulator.fem
+namespace bck.SMR_simulator.finiteElementMethod
 {
     public class FEM
     {
         public readonly FemModel model = new FemModel();
-        public readonly FemLoads loads = new FemLoads();
+        public readonly FemLoadCollection loads = new FemLoadCollection();
         internal bool solved = false;
 
         public FemSelection selection;
@@ -62,7 +62,7 @@ namespace bck.SMR_simulator.fem
         {
             foreach (FemElement elem in model.elems)
             {
-                if (elem.num == elemNumber)
+                if (elem.Num == elemNumber)
                 {
                     selection.AddElement(elem);
                     break;
@@ -84,7 +84,7 @@ namespace bck.SMR_simulator.fem
         {
             foreach (FemElement elem in model.elems)
             {
-                if (strElemNum <= elem.num & elem.num <= endElemNum)
+                if (strElemNum <= elem.Num & elem.Num <= endElemNum)
                 {
                     selection.AddElement(elem);
                 }
@@ -100,7 +100,7 @@ namespace bck.SMR_simulator.fem
         /// </summary>
         internal void SelectByInfinitePyramid(Point3D p0, Vector3D v0, Vector3D v1, Vector3D v2, Vector3D v3)
         {
-            FemNodes selectedNodes = new FemNodes();
+            FemNodeCollection selectedNodes = new FemNodeCollection();
 
             Vector3D plane0 = Vector3D.CrossProduct(v0, v1);
             Vector3D plane1 = Vector3D.CrossProduct(v1, v2);
@@ -177,7 +177,7 @@ namespace bck.SMR_simulator.fem
         /// </summary>
         internal void SelectByInfiniteTriangle(Point3D p0, Vector3D v0, Vector3D v1)
         {
-            FemElements selected1 = new FemElements();
+            FemElementCollections selected1 = new FemElementCollections();
             Vector3D plane = Vector3D.CrossProduct(v0, v1);
 
             //절점 하나라도 평면에 걸리면 선택
@@ -196,7 +196,7 @@ namespace bck.SMR_simulator.fem
                 }
             }
 
-            FemElements selected2 = new FemElements();
+            FemElementCollections selected2 = new FemElementCollections();
             Point3D n0;
             Point3D n1;
             Point3D crossPoint;
@@ -317,7 +317,7 @@ namespace bck.SMR_simulator.fem
                 FemMaterial material = model.materials[0];
                 foreach (FemElement element in model.elems)
                 {
-                    element.material = material;
+                    element.Material = material;
                 }
             }
 
@@ -404,7 +404,7 @@ namespace bck.SMR_simulator.fem
                         {
                             fs[i] = model.elems.AddFrame(n[i], n[i + 1]);
                             fs[i].type = f.type;
-                            fs[i].material = f.material;
+                            fs[i].Material = f.Material;
                             fs[i].Section = f.Section;
                         }
                         model.elems.Remove(f);
@@ -417,21 +417,21 @@ namespace bck.SMR_simulator.fem
             selection.elems.Clear();
         }
 
-        internal FemElements Extrude(FemElements elems, Vector3D dir, int iter)
+        internal FemElementCollections Extrude(FemElementCollections elems, Vector3D dir, int iter)
         {
-            FemElements extrudedElems = new FemElements();
+            FemElementCollections extrudedElems = new FemElementCollections();
 
             FemFrames frames = elems.frames;
             if (frames.Count > 0)
             {
-                FemElements extrudedFrames = Extrude_Frame(frames, dir, iter);
+                FemElementCollections extrudedFrames = Extrude_Frame(frames, dir, iter);
                 extrudedElems.Add(extrudedFrames);
             }
 
             FemPlates plates = elems.plates;
             if (plates.Count > 0)
             {
-                FemElements extrudedPlates = Extrude_Plate(plates, dir, iter);
+                FemElementCollections extrudedPlates = Extrude_Plate(plates, dir, iter);
                 extrudedElems.Add(extrudedPlates);
             }
 
@@ -441,7 +441,7 @@ namespace bck.SMR_simulator.fem
             }
             return extrudedElems;
         }
-        internal FemElements ExtrudeSelectedElems(Vector3D dir, int iter)
+        internal FemElementCollections ExtrudeSelectedElems(Vector3D dir, int iter)
         {
             return Extrude(selection.elems, dir, iter);
         }
@@ -449,12 +449,12 @@ namespace bck.SMR_simulator.fem
         {
             Extrude(selection.elems, dir, iter);
         }
-        private FemElements Extrude_Frame(FemFrames frames, Vector3D dir, int iter)
+        private FemElementCollections Extrude_Frame(FemFrames frames, Vector3D dir, int iter)
         {
-            FemElements extrudedElems = new FemElements();
+            FemElementCollections extrudedElems = new FemElementCollections();
 
-            FemNodes nodes = frames.ConnectedNodes();
-            FemNodes nodesDdp = nodes.Copy(); //de-duplicated
+            FemNodeCollection nodes = frames.ConnectedNodes();
+            FemNodeCollection nodesDdp = nodes.Copy(); //de-duplicated
             List<int> nodesNumber = new List<int>();
             List<int> nodesNumberDdp = new List<int>();
             ExtrudedNodeList(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
@@ -466,16 +466,16 @@ namespace bck.SMR_simulator.fem
                 for (int j = 0; j < frames.Count * 2; j += 2)
                 {
                     FemPlate p = model.elems.AddPlate(nodeMatrix[i, nodesNumber[j]], nodeMatrix[i, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j]]);
-                    p.material = frames[j / 2].material;
+                    p.Material = frames[j / 2].Material;
                     extrudedElems.Add(p);
                 }
             }
             return extrudedElems;
         }
-        private FemElements Extrude_Plate(FemPlates plates, Vector3D dir, int iter)
+        private FemElementCollections Extrude_Plate(FemPlates plates, Vector3D dir, int iter)
         {
-            FemNodes nodes = plates.ConnectedNodes();
-            FemNodes nodesDdp = nodes.Copy(); //de-duplicated
+            FemNodeCollection nodes = plates.ConnectedNodes();
+            FemNodeCollection nodesDdp = nodes.Copy(); //de-duplicated
             List<int> nodesNumber = new List<int>();
             List<int> nodesNumberDdp = new List<int>();
 
@@ -485,7 +485,7 @@ namespace bck.SMR_simulator.fem
             //중복을 제거한 노드리스트를 dir 방향으로 iter번 반복해서 절점 생성.
             FemNode[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
 
-            FemElements extrudedElems = new FemElements();
+            FemElementCollections extrudedElems = new FemElementCollections();
             for (int i = 0; i < iter; i++)
             {
                 for (int j = 0; j < plates.Count * 4; j += 4)
@@ -499,13 +499,13 @@ namespace bck.SMR_simulator.fem
                     FemNode n6 = nodeMatrix[i + 1, nodesNumber[j + 2]];
                     FemNode n7 = nodeMatrix[i + 1, nodesNumber[j + 3]];
                     FemSolid s = model.elems.AddSolid(n0,n1,n2,n3,n4,n5,n6,n7);
-                    s.material = plates[j / 4].material;
+                    s.Material = plates[j / 4].Material;
                     extrudedElems.Add(s);
                 }
             }
             return extrudedElems;
         }
-        private void ExtrudedNodeList(FemNodes nodes, FemNodes nodesDdp, List<int> nodesNumber, List<int> nodesNumberDdp)
+        private void ExtrudedNodeList(FemNodeCollection nodes, FemNodeCollection nodesDdp, List<int> nodesNumber, List<int> nodesNumberDdp)
         {
             //nodes : extrude에 참여하는 모든 요소의 절점을 순서대로 중복해서 저장한 배열임.
             //nodesDdp(Out) : 중복되는 노드를 제거한 배열.
@@ -564,7 +564,7 @@ namespace bck.SMR_simulator.fem
                 }
             }
         }
-        private FemNode[,] ExtrudedNodeMatrix_AddNode(FemNodes nodesDdp, int iter, Vector3D dir)
+        private FemNode[,] ExtrudedNodeMatrix_AddNode(FemNodeCollection nodesDdp, int iter, Vector3D dir)
         {
             //중복을 제거한 노드리스트를 dir 방향으로 iter번 반복해서 절점 생성.
             FemNode[,] nodeMatrix = new FemNode[iter + 1, nodesDdp.Count];
@@ -587,8 +587,8 @@ namespace bck.SMR_simulator.fem
     public class FemSelection
     {
         private readonly FEM fem;
-        internal FemNodes nodes = new FemNodes();
-        internal FemElements elems = new FemElements();
+        internal FemNodeCollection nodes = new FemNodeCollection();
+        internal FemElementCollections elems = new FemElementCollections();
         public int Count
         {
             get
@@ -612,7 +612,7 @@ namespace bck.SMR_simulator.fem
             element.selected = true;
             elems.Add(element);
         }
-        internal void AddElement(FemElements elements)
+        internal void AddElement(FemElementCollections elements)
         {
             foreach (FemElement element in elements)
             {
@@ -650,11 +650,11 @@ namespace bck.SMR_simulator.fem
 
     public class FemModel
     {
-        public readonly FemNodes nodes = new FemNodes();
-        public readonly FemElements elems = new FemElements();
-        public readonly FemSections sections = new FemSections();
-        public readonly FemMaterials materials = new FemMaterials();
-        public readonly FemBoundaries boundaries = new FemBoundaries();
+        public readonly FemNodeCollection nodes = new FemNodeCollection();
+        public readonly FemElementCollections elems = new FemElementCollections();
+        public readonly FemSectionCollection sections = new FemSectionCollection();
+        public readonly FemMaterialCollection materials = new FemMaterialCollection();
+        public readonly FemBoundarieCollection boundaries = new FemBoundarieCollection();
 
         internal int dof;
 
@@ -772,7 +772,7 @@ namespace bck.SMR_simulator.fem
             }
             foreach (FemElement elem in this.elems)
             {
-                for (int n = 0; n < elem.numNode; n++)
+                for (int n = 0; n < elem.NumNode; n++)
                 {
                     switch (elem.type)
                     {
@@ -796,7 +796,7 @@ namespace bck.SMR_simulator.fem
             }
         }
     }
-    public class FemMaterials : List<FemMaterial>
+    public class FemMaterialCollection : List<FemMaterial>
     {
         public int maxNum = 1;
         FemMaterial activeMaterial;
@@ -837,7 +837,7 @@ namespace bck.SMR_simulator.fem
             this.G = G;
         }
     }
-    public class FemSections : List<FemSection>
+    public class FemSectionCollection : List<FemSection>
     {
         public int maxNum = 1;
         FemSection activeSection;
@@ -889,14 +889,13 @@ namespace bck.SMR_simulator.fem
         }
     }
 
-    public class FemNodes : List<FemNode>
+    public class FemNodeCollection : List<FemNode>
     {
         internal int maxNum = 1;
         internal bool visibility = true;
-        internal bool numberVisibility = false;
         private double positionTolerance = 0.0000001;
 
-        public FemNodes()
+        public FemNodeCollection()
         {
         }
 
@@ -973,7 +972,7 @@ namespace bck.SMR_simulator.fem
         }
         internal void Deduplicate()
         {
-            FemNodes list = this;
+            FemNodeCollection list = this;
             int count = list.Count;
             for (int i = 0; i < count - 1; i++)
             {
@@ -989,9 +988,9 @@ namespace bck.SMR_simulator.fem
             }
         }
 
-        internal FemNodes Copy()
+        internal FemNodeCollection Copy()
         {
-            FemNodes newNodes = new FemNodes();
+            FemNodeCollection newNodes = new FemNodeCollection();
 
             for (int i = 0; i < this.Count; i++)
             {
@@ -1013,13 +1012,13 @@ namespace bck.SMR_simulator.fem
         /// <summary>
         /// 해석결과로 나온 변위를 포함한 절점의 좌표입니다. initialPoint + disp;
         /// </summary>
-        public Point3D c1; //
+        public Point3D c1;
         public int[] id;
         public double[] gloF;
         internal double[] gloD;
         internal double[] reactionForce = { 0, 0, 0, 0, 0, 0 };
         internal bool selected = false;
-        internal FemElements connectedElements = new FemElements();
+        internal FemElementCollections connectedElements = new FemElementCollections();
         internal bool selectedAtThisTime;
 
         public FemNode(Point3D point)
@@ -1040,7 +1039,7 @@ namespace bck.SMR_simulator.fem
 
     }
 
-    public class FemElements : List<FemElement>
+    public class FemElementCollections : List<FemElement>
     {
         public int maxNum = 1;
         //internal int countTruss = 0;
@@ -1076,7 +1075,7 @@ namespace bck.SMR_simulator.fem
             }
             base.Add(elem);
         }
-        internal void Add(FemElements elems)
+        internal void Add(FemElementCollections elems)
         {
             foreach (FemElement element in elems)
             {
@@ -1093,7 +1092,7 @@ namespace bck.SMR_simulator.fem
         internal FemFrame AddFrame(FemNode n1, FemNode n2)
         {
             FemFrame f = new FemFrame(n1, n2);
-            f.num = maxNum;
+            f.Num = maxNum;
             maxNum++;
 
             frames.Add(f);
@@ -1103,7 +1102,7 @@ namespace bck.SMR_simulator.fem
         internal FemPlate AddPlate(FemNode n1, FemNode n2, FemNode n3, FemNode n4)
         {
             FemPlate p = new FemPlate(n1, n2, n3, n4);
-            p.num = maxNum;
+            p.Num = maxNum;
             maxNum += 1;
 
             plates.Add(p);
@@ -1113,7 +1112,7 @@ namespace bck.SMR_simulator.fem
         internal FemSolid AddSolid(FemNode n1, FemNode n2, FemNode n3, FemNode n4, FemNode n5, FemNode n6, FemNode n7, FemNode n8)
         {
             FemSolid s = new FemSolid(n1, n2, n3, n4, n5, n6, n7, n8);
-            s.num = maxNum;
+            s.Num = maxNum;
             maxNum += 1;
 
             solids.Add(s);
@@ -1149,9 +1148,9 @@ namespace bck.SMR_simulator.fem
                 element.UpdateMemberForce001();
             }
         }
-        internal FemNodes ConnectedNodes()
+        internal FemNodeCollection ConnectedNodes()
         {
-            FemNodes connectedNodes = new FemNodes();
+            FemNodeCollection connectedNodes = new FemNodeCollection();
             foreach (FemElement element in this)
             {
                 connectedNodes.AddRange(element.nodes);
@@ -1159,9 +1158,9 @@ namespace bck.SMR_simulator.fem
             connectedNodes.Deduplicate();
             return connectedNodes;
         } // Elements와 연결된 모든 노드 찾기
-        internal static FemNodes ConnectedNodes(FemElements elems)
+        internal static FemNodeCollection ConnectedNodes(FemElementCollections elems)
         {
-            FemNodes connectedNodes = new FemNodes();
+            FemNodeCollection connectedNodes = new FemNodeCollection();
             foreach (FemElement element in elems)
             {
                 connectedNodes.AddRange(element.nodes);
@@ -1172,7 +1171,7 @@ namespace bck.SMR_simulator.fem
 
         internal void Deduplicate()
         {
-            FemElements list = this;
+            FemElementCollections list = this;
             int count = list.Count;
             for (int i = 0; i < count - 1; i++)
             {
@@ -1190,22 +1189,26 @@ namespace bck.SMR_simulator.fem
     }
     public class FemElement
     {
-        public int num;
-        public int numNode;
-        public FemMaterial material;
-        protected FemSection section1, section2;
+        private int num;
+        public int Num { get => num; set => num = value; }
+        private int numNode;
+        public int NumNode { get => numNode; set => numNode = value; }
+        private FemMaterial material;
+        public FemMaterial Material { get => material; set => material = value; }
+        private FemSection section;
         public FemSection Section
         {
             get
             {
-                return section1;
+                return section;
             }
             set
             {
-                section1 = value;
+                section = value;
                 section2 = value;
             }
         }
+        private FemSection section2;
         public FemSection Section2
         {
             get
@@ -1217,10 +1220,12 @@ namespace bck.SMR_simulator.fem
                 section2 = value;
             }
         }
+
+
         internal List<FemNode> nodes = new List<FemNode>();
 
         internal int type; //20:Truss, 21:Frame, 25:Cable, 40:Plate, 80:Solid
-        public int dof;
+        internal int dof;
         public int[] id;
 
         internal double[,] locK;
@@ -1244,12 +1249,13 @@ namespace bck.SMR_simulator.fem
                     center.Y += node.c1.Y;
                     center.Z += node.c1.Z;
                 }
-                center.X /= numNode;
-                center.Y /= numNode;
-                center.Z /= numNode;
+                center.X /= NumNode;
+                center.Y /= NumNode;
+                center.Z /= NumNode;
                 return center;
             }
         }
+
         internal double[,] GloK()
         {
             switch (type)
@@ -1370,9 +1376,9 @@ namespace bck.SMR_simulator.fem
     }
     public class FemFrames : List<FemFrame>
     {
-        internal FemNodes ConnectedNodes()
+        internal FemNodeCollection ConnectedNodes()
         {
-            FemNodes connectedNodes = new FemNodes();
+            FemNodeCollection connectedNodes = new FemNodeCollection();
             foreach (FemElement element in this)
             {
                 connectedNodes.AddRange(element.nodes);
@@ -1391,7 +1397,7 @@ namespace bck.SMR_simulator.fem
         public FemFrame(FemNode n1, FemNode n2)
         {
             type = 21;
-            numNode = 2;
+            NumNode = 2;
             dof = 12;
             nodes.Add(n1);
             nodes.Add(n2);
@@ -1438,14 +1444,14 @@ namespace bck.SMR_simulator.fem
             locK = new double[12, 12];
 
             //Get Properities
-            E = material.E;
-            G = material.G;
-            Iy = (section1.Iy + section2.Iy) / 2.0d;
-            Iz = (section1.Iz + section2.Iz) / 2.0d;
-            J = (section1.J + section2.J) / 2.0d;
-            A = (section1.A + section2.A) / 2.0d;
-            Asy = (section1.Asy + section2.Asy) / 2.0d;
-            Asz = (section1.Asz + section2.Asz) / 2.0d;
+            E = Material.E;
+            G = Material.G;
+            Iy = (Section.Iy + Section2.Iy) / 2.0d;
+            Iz = (Section.Iz + Section2.Iz) / 2.0d;
+            J = (Section.J + Section2.J) / 2.0d;
+            A = (Section.A + Section2.A) / 2.0d;
+            Asy = (Section.Asy + Section2.Asy) / 2.0d;
+            Asz = (Section.Asz + Section2.Asz) / 2.0d;
 
             //Variable set
             L1 = L; L2 = L * L; L3 = L2 * L;
@@ -1503,14 +1509,14 @@ namespace bck.SMR_simulator.fem
         void SetLocK_old()
         {
             //Get Properities
-            E = material.E;
-            G = material.G;
-            Iy = (section1.Iy + section2.Iy) / 2.0d;
-            Iz = (section1.Iz + section2.Iz) / 2.0d;
-            J = (section1.J + section2.J) / 2.0d;
-            A = (section1.A + section2.A) / 2.0d;
-            Asy = (section1.Asy + section2.Asy) / 2.0d;
-            Asz = (section1.Asz + section2.Asz) / 2.0d;
+            E = Material.E;
+            G = Material.G;
+            Iy = (Section.Iy + Section2.Iy) / 2.0d;
+            Iz = (Section.Iz + Section2.Iz) / 2.0d;
+            J = (Section.J + Section2.J) / 2.0d;
+            A = (Section.A + Section2.A) / 2.0d;
+            Asy = (Section.Asy + Section2.Asy) / 2.0d;
+            Asz = (Section.Asz + Section2.Asz) / 2.0d;
 
             //Variable set
             L1 = L; L2 = L * L; L3 = L2 * L;
@@ -1578,9 +1584,9 @@ namespace bck.SMR_simulator.fem
     }
     public class FemPlates : List<FemPlate>
     {
-        internal FemNodes ConnectedNodes()
+        internal FemNodeCollection ConnectedNodes()
         {
-            FemNodes connectedNodes = new FemNodes();
+            FemNodeCollection connectedNodes = new FemNodeCollection();
             foreach (FemElement element in this)
             {
                 connectedNodes.AddRange(element.nodes);
@@ -1594,7 +1600,7 @@ namespace bck.SMR_simulator.fem
         public FemPlate(FemNode n1, FemNode n2, FemNode n3, FemNode n4)
         {
             type = 40;
-            numNode = 4;
+            NumNode = 4;
             dof = 12;
             nodes.Add(n1);
             nodes.Add(n2);
@@ -1616,7 +1622,7 @@ namespace bck.SMR_simulator.fem
         public FemSolid(FemNode n1, FemNode n2, FemNode n3, FemNode n4, FemNode n5, FemNode n6, FemNode n7, FemNode n8)
         {
             type = 80;
-            numNode = 8;
+            NumNode = 8;
             dof = 24;
             nodes.Add(n1);
             nodes.Add(n2);
@@ -1670,7 +1676,7 @@ namespace bck.SMR_simulator.fem
                 //double[] xyz = GF.Multiply(matN(r, s, t), xyz1to8); //rst를 xyz로 좌표변환
 
                 double[,] matb = matB(r, s, t);
-                double E = material.E;
+                double E = Material.E;
                 double[,] matBE = GF.Multiply(matb, E);
 
                 double[,] lockrst = GF.Multiply(GF.Transpose(matBE), matb);
@@ -1795,7 +1801,7 @@ namespace bck.SMR_simulator.fem
         }
     }
 
-    public class FemBoundaries : List<FemBoundary>
+    public class FemBoundarieCollection : List<FemBoundary>
     {
         internal bool visibility = true;
         int maxNum = 1;
@@ -1825,7 +1831,7 @@ namespace bck.SMR_simulator.fem
         }
     }
 
-    public class FemLoads : List<FemLoad>
+    public class FemLoadCollection : List<FemLoad>
     {
         public int maxNum = 1;
 

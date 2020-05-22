@@ -73,10 +73,10 @@ namespace bck.SMR_simulator.draw3d
                     c.mesh = meshSub;
                     c.Opacity(opacitySub);
                 }
-                c.rotateTransform3dZ = rotateTransform3dZ;
-                c.rotateTransform3dY = rotateTransform3dY;
-                c.rotateTransform3dZ2 = rotateTransform3dZ2;
-                c.translateTransform3D = new TranslateTransform3D(new Vector3D(-length / 2, subGap * i, 0));
+                c.RotateTransform3dZ = rotateTransform3dZ;
+                c.RotateTransform3dY = rotateTransform3dY;
+                c.RotateTransform3dZ2 = rotateTransform3dZ2;
+                c.TranslateTransform3D = new TranslateTransform3D(new Vector3D(-length / 2, subGap * i, 0));
                 c.Color(color);
                 modelGroup.Children.Add(c.GeoModel());
             }
@@ -97,10 +97,10 @@ namespace bck.SMR_simulator.draw3d
                     c.mesh = meshSub;
                     c.Opacity(opacitySub);
                 }
-                c.rotateTransform3dZ = rotateTransform3dZ;
-                c.rotateTransform3dY = rotateTransform3dY;
-                c.rotateTransform3dZ2 = rotateTransform3dZ2;
-                c.translateTransform3D = new TranslateTransform3D(new Vector3D(subGap * i, -length / 2, 0));
+                c.RotateTransform3dZ = rotateTransform3dZ;
+                c.RotateTransform3dY = rotateTransform3dY;
+                c.RotateTransform3dZ2 = rotateTransform3dZ2;
+                c.TranslateTransform3D = new TranslateTransform3D(new Vector3D(subGap * i, -length / 2, 0));
                 c.Color(color);
                 modelGroup.Children.Add(c.GeoModel());
             }
@@ -1394,12 +1394,19 @@ namespace bck.SMR_simulator.draw3d
         internal MeshGeometry3D mesh;
         private Color color;
         private double opacity;
-        public Material material;
-        public RotateTransform3D rotateTransform3D = new RotateTransform3D();
-        public RotateTransform3D rotateTransform3dZ = new RotateTransform3D();
-        public RotateTransform3D rotateTransform3dY = new RotateTransform3D();
-        public RotateTransform3D rotateTransform3dZ2 = new RotateTransform3D();
-        public TranslateTransform3D translateTransform3D = new TranslateTransform3D();
+        public Material Material { get => material; set => material = value; }
+        private Material material;
+        public RotateTransform3D RotateTransform3D { get => rotateTransform3D; set => rotateTransform3D = value; }
+        private RotateTransform3D rotateTransform3D = new RotateTransform3D();
+        public RotateTransform3D RotateTransform3dZ { get => rotateTransform3dZ; set => rotateTransform3dZ = value; }
+        private RotateTransform3D rotateTransform3dZ = new RotateTransform3D();
+        public RotateTransform3D RotateTransform3dY { get => rotateTransform3dY; set => rotateTransform3dY = value; }
+        private RotateTransform3D rotateTransform3dY = new RotateTransform3D();
+        public RotateTransform3D RotateTransform3dZ2 { get => rotateTransform3dZ2; set => rotateTransform3dZ2 = value; }
+        private RotateTransform3D rotateTransform3dZ2 = new RotateTransform3D();
+        public TranslateTransform3D TranslateTransform3D { get => translateTransform3D; set => translateTransform3D = value; }
+        private TranslateTransform3D translateTransform3D = new TranslateTransform3D();
+
         private GeometryModel3D geoModel;
 
         private Point3D basePoint;
@@ -1415,24 +1422,25 @@ namespace bck.SMR_simulator.draw3d
                 SetTransforms(basePoint, direction);
             }
         }
+
         private Vector3D direction;
         public Shape3D()
         {
             color = Colors.Blue;
             opacity = 1;
-            material = new DiffuseMaterial(new SolidColorBrush(color));
+            Material = new DiffuseMaterial(new SolidColorBrush(color));
         }
         public GeometryModel3D GeoModel()
         {
             Transform3DGroup trn = new Transform3DGroup();
             //trn.Children.Add(rotateTransform3D);
 
-            trn.Children.Add(rotateTransform3dZ);
-            trn.Children.Add(rotateTransform3dY);
-            trn.Children.Add(rotateTransform3dZ2);
-            trn.Children.Add(translateTransform3D);
+            trn.Children.Add(RotateTransform3dZ);
+            trn.Children.Add(RotateTransform3dY);
+            trn.Children.Add(RotateTransform3dZ2);
+            trn.Children.Add(TranslateTransform3D);
 
-            geoModel = new GeometryModel3D(mesh, material);
+            geoModel = new GeometryModel3D(mesh, Material);
             geoModel.Transform = trn;
 
             return geoModel;
@@ -1442,14 +1450,14 @@ namespace bck.SMR_simulator.draw3d
             this.color = color;
             SolidColorBrush strokeBrush = new SolidColorBrush(color);
             strokeBrush.Opacity = opacity;
-            material = new DiffuseMaterial(strokeBrush);
+            Material = new DiffuseMaterial(strokeBrush);
         }
         public void Opacity(double opacity)
         {
             this.opacity = opacity;
             SolidColorBrush strokeBrush = new SolidColorBrush(color);
             strokeBrush.Opacity = opacity;
-            material = new DiffuseMaterial(strokeBrush);
+            Material = new DiffuseMaterial(strokeBrush);
         }
         public void SetTransforms(Point3D basePoint, Vector3D direction)
         {
@@ -1467,10 +1475,10 @@ namespace bck.SMR_simulator.draw3d
             angleZ2 = Math.Atan2(direction.Y, direction.X) * 180 / Math.PI;
             angleY -= Math.Atan2(direction.Z, Math.Sqrt(direction.X * direction.X + direction.Y * direction.Y)) * 180 / Math.PI;
 
-            rotateTransform3dZ = new RotateTransform3D(new AxisAngleRotation3D(axisZ, angleZ));
-            rotateTransform3dY = new RotateTransform3D(new AxisAngleRotation3D(axisY, angleY));
-            rotateTransform3dZ2 = new RotateTransform3D(new AxisAngleRotation3D(axisZ, angleZ2));
-            translateTransform3D = new TranslateTransform3D(new Vector3D(basePoint.X, basePoint.Y, basePoint.Z));
+            RotateTransform3dZ = new RotateTransform3D(new AxisAngleRotation3D(axisZ, angleZ));
+            RotateTransform3dY = new RotateTransform3D(new AxisAngleRotation3D(axisY, angleY));
+            RotateTransform3dZ2 = new RotateTransform3D(new AxisAngleRotation3D(axisZ, angleZ2));
+            TranslateTransform3D = new TranslateTransform3D(new Vector3D(basePoint.X, basePoint.Y, basePoint.Z));
         }
 
         internal void Move(Vector3D moveVector)

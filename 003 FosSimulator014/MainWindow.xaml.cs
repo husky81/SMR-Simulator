@@ -1,6 +1,6 @@
 ﻿using bck.SMR_simulator.draw2d;
 using bck.SMR_simulator.draw3d;
-using bck.SMR_simulator.fem;
+using bck.SMR_simulator.finiteElementMethod;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -172,7 +172,7 @@ namespace bck.SMR_simulator.main
             FemNode n1 = fem.model.nodes.Add(0, 0, 0);
             FemNode n2 = fem.model.nodes.Add(10, 0, 0);
             FemFrame f = fem.model.elems.AddFrame(n1, n2);
-            f.material = matl1;
+            f.Material = matl1;
             f.Section = sect1;
             fem.Select(f);
             fem.DivideSelectedElems(2);
@@ -214,14 +214,14 @@ namespace bck.SMR_simulator.main
             FemNode n1 = fem.model.nodes.Add(0, 0, 0);
             FemNode n2 = fem.model.nodes.Add(2, 0, 0);
             FemFrame f = fem.model.elems.AddFrame(n1, n2);
-            f.material = matl1;
+            f.Material = matl1;
             f.Section = sect1;
             fem.Select(f);
             fem.DivideSelectedElems(2);
 
             fem.SelectElemAll();
             Vector3D dir = new Vector3D(0, 1, 0);
-            FemElements ee = fem.ExtrudeSelectedElems(dir, 2);
+            FemElementCollections ee = fem.ExtrudeSelectedElems(dir, 2);
             
             dir = new Vector3D(0, 0, 0.5);
             fem.Extrude(ee, dir, 20);
@@ -271,7 +271,7 @@ namespace bck.SMR_simulator.main
             FemNode n1 = fem.model.nodes.Add(0, 0, 0);
             FemNode n2 = fem.model.nodes.Add(10, 0, 0);
             FemFrame f = fem.model.elems.AddFrame(n1, n2);
-            f.material = matl1;
+            f.Material = matl1;
             f.Section = sect1;
             
             fem.Select(f);
@@ -302,7 +302,7 @@ namespace bck.SMR_simulator.main
             FemNode n1 = fem.model.nodes.Add(0, 0, 0);
             FemNode n2 = fem.model.nodes.Add(10, 0, 0);
             FemFrame f = fem.model.elems.AddFrame(n1, n2);
-            f.material = matl1;
+            f.Material = matl1;
             f.Section = sect1;
 
             fem.Select(f);
@@ -797,7 +797,7 @@ namespace bck.SMR_simulator.main
             treeViewFemWorks.Items.Add(item);
 
             item = new TreeViewItem();
-            FemElements elems = fem.model.elems;
+            FemElementCollections elems = fem.model.elems;
             item.Header = "Elements(" + elems.Count + ")";
             item.IsExpanded = true;
             if (elems.frames.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Frame(" + elems.frames.Count + ")" });
@@ -884,7 +884,7 @@ namespace bck.SMR_simulator.main
                         draw.shapes.RecentShape.Color(colorNode);
                     }
                 }
-                if (fem.model.nodes.numberVisibility)
+                if (Properties.Settings.Default.isFemViewNode)
                 {
                     foreach (FemNode node in fem.model.nodes)
                     {
@@ -930,7 +930,7 @@ namespace bck.SMR_simulator.main
                 {
                     foreach (FemElement elem in fem.model.elems)
                     {
-                        draw.texts.Add(elem.num.ToString(), elem.Center, 8);
+                        draw.texts.Add(elem.Num.ToString(), elem.Center, 8);
                     }
                 }
 
@@ -990,7 +990,7 @@ namespace bck.SMR_simulator.main
                             draw.shapes.RecentShape.Opacity(opacity);
                         }
                     }
-                    if (fem.model.nodes.numberVisibility)
+                    if (Properties.Settings.Default.isFemViewNode)
                     {
                         foreach (FemNode node in fem.model.nodes)
                         {
@@ -1099,7 +1099,7 @@ namespace bck.SMR_simulator.main
             }
 
             draw2d.texts.Clear();
-            if (fem.model.nodes.numberVisibility)
+            if (Properties.Settings.Default.isFemViewNode)
             {
                 foreach (FemNode node in fem.model.nodes)
                 {
@@ -1453,7 +1453,8 @@ namespace bck.SMR_simulator.main
         private void ViewNodeNumber(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            fem.model.nodes.numberVisibility = sd.IsChecked;
+            Properties.Settings.Default.isFemViewNode = sd.IsChecked;
+            Properties.Settings.Default.Save();
             RedrawFemModel();
         }
         private void ViewElement(object sender, RoutedEventArgs e)
