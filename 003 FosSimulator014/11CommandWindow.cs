@@ -1,6 +1,6 @@
-﻿using BCK.SmrSimulator.Draw2D;
-using BCK.SmrSimulator.Draw3D;
-using BCK.SmrSimulator.GeneralFunctions;
+﻿using BCK.SmrSimulation.Draw2D;
+using BCK.SmrSimulation.Draw3D;
+using BCK.SmrSimulation.GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,7 +11,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 
-namespace BCK.SmrSimulator.Main
+namespace BCK.SmrSimulation.Main
 {
     public class CommandWindow
     {
@@ -935,7 +935,7 @@ namespace BCK.SmrSimulator.Main
         }
         private Point GetPointFromPoint3D(Point3D p3d)
         {
-            return main.Draw.GetPoint2D_FromPoint3D(p3d);
+            return main.Draw.GetPoint2DFromPoint3D(p3d);
         }
         enum InputTypes
         {

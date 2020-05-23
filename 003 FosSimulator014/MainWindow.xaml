@@ -1,9 +1,9 @@
-﻿<Window x:Name="window" x:Class="BCK.SmrSimulator.Main.MainWindow"
+﻿<Window x:Name="window" x:Class="BCK.SmrSimulation.Main.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:BCK.SmrSimulator.Main"
+        xmlns:local="clr-namespace:BCK.SmrSimulation.Main"
         mc:Ignorable="d"
         Title="SMR simulator 2.0" Height="570" Width="908" Icon="Resources/SMR.png">
 
@@ -56,10 +56,10 @@
             </MenuItem>
             <MenuItem Header="F_EM">
                 <MenuItem Header="_View">
-                    <MenuItem Header="_Node" Click="ViewNode" IsCheckable="True" IsChecked="True"/>
-                    <MenuItem x:Name="isFemViewNode" Header="No_de Number" Click="ViewNodeNumber" IsCheckable="True" IsChecked="True"/>
-                    <MenuItem Header="_Element" Click="ViewElement" IsCheckable="True" IsChecked="True"/>
-                    <MenuItem Header="E_lement Number" Click="ViewElementNumber" IsCheckable="True" IsChecked="False"/>
+                    <MenuItem Header="No_de" Click="ViewNode" IsCheckable="True" IsChecked="True"/>
+                    <MenuItem x:Name="isFemViewNodeNumber" Header="_Node Number" Click="ViewNodeNumber" IsCheckable="True" IsChecked="True"/>
+                    <MenuItem Header="E_lement" Click="ViewElement" IsCheckable="True" IsChecked="True"/>
+                    <MenuItem x:Name="isFemViewElemNumber" Header="_Element Number" Click="ViewElementNumber" IsCheckable="True" IsChecked="False"/>
                 </MenuItem>
                 <MenuItem Header="M_odel">
                     <MenuItem Header="Add _Material" Click="AddMaterial"/>

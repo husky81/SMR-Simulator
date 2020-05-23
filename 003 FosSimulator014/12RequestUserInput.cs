@@ -1,5 +1,6 @@
-﻿using BCK.SmrSimulator.Draw2D;
-using BCK.SmrSimulator.Draw3D;
+﻿using BCK.SmrSimulation.Draw2D;
+using BCK.SmrSimulation.Draw3D;
+using BCK.SmrSimulator.Main.Properties;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 
-namespace BCK.SmrSimulator.Main
+namespace BCK.SmrSimulation.Main
 {
     /// <summary>
     /// 사용자가 요청한 하나하나의 실행 단위.
@@ -225,7 +226,7 @@ namespace BCK.SmrSimulator.Main
             UserInputAction userInputAction = new UserInputAction
             {
                 requestInputType = UserInputAction.RequestInputType.Points,
-                message = Properties.Resource.String8,
+                message = Resource.String8,
                 numPointRequested = numPoint,
                 viewType = viewType
             };
@@ -341,7 +342,7 @@ namespace BCK.SmrSimulator.Main
                 default:
                     break;
             }
-            main.Cmd.ErrorMessage(Properties.Resource.String9);
+            main.Cmd.ErrorMessage(Resource.String9);
             End();
             return;
         } //Command에 요청하거나 액션 수행.
@@ -401,7 +402,7 @@ namespace BCK.SmrSimulator.Main
         }
         private Point GetPointFromPoint3D(Point3D p3d)
         {
-            return main.Draw.GetPoint2D_FromPoint3D(p3d);
+            return main.Draw.GetPoint2DFromPoint3D(p3d);
         }
 
     }

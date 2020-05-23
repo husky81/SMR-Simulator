@@ -97,6 +97,15 @@ namespace BCK.SmrSimulator.Main.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 하중을 재하할 노드를 선택하세요..
+        /// </summary>
+        internal static string String12 {
+            get {
+                return ResourceManager.GetString("String12", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 선택할 노드번호를 입력하세요. (ex. 1~10,15-20).
         /// </summary>
         internal static string String2 {

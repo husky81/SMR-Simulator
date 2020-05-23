@@ -1,5 +1,5 @@
-﻿using BCK.SmrSimulator.GeneralFunctions;
-using BCK.SmrSimulator.Main;
+﻿using BCK.SmrSimulation.GeneralFunctions;
+using BCK.SmrSimulation.Main;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -12,7 +12,7 @@ using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Media.Media3D;
 
-namespace BCK.SmrSimulator.finiteElementMethod
+namespace BCK.SmrSimulation.finiteElementMethod
 {
     public class FEM
     {
@@ -428,14 +428,14 @@ namespace BCK.SmrSimulator.finiteElementMethod
         {
             FemElementCollection extrudedElems = new FemElementCollection();
 
-            FemFrames frames = elems.Frames;
+            FemFrameCollection frames = elems.Frames;
             if (frames.Count > 0)
             {
                 FemElementCollection extrudedFrames = Extrude_Frame(frames, dir, iter);
                 extrudedElems.Add(extrudedFrames);
             }
 
-            FemPlates plates = elems.Plates;
+            FemPlateCollection plates = elems.Plates;
             if (plates.Count > 0)
             {
                 FemElementCollection extrudedPlates = Extrude_Plate(plates, dir, iter);
@@ -456,7 +456,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
         {
             Extrude(Selection.elems, dir, iter);
         }
-        private FemElementCollection Extrude_Frame(FemFrames frames, Vector3D dir, int iter)
+        private FemElementCollection Extrude_Frame(FemFrameCollection frames, Vector3D dir, int iter)
         {
             FemElementCollection extrudedElems = new FemElementCollection();
 
@@ -479,7 +479,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
             }
             return extrudedElems;
         }
-        private FemElementCollection Extrude_Plate(FemPlates plates, Vector3D dir, int iter)
+        private FemElementCollection Extrude_Plate(FemPlateCollection plates, Vector3D dir, int iter)
         {
             FemNodeCollection nodes = plates.ConnectedNodes();
             FemNodeCollection nodesDdp = nodes.Copy(); //de-duplicated
@@ -1049,7 +1049,13 @@ namespace BCK.SmrSimulator.finiteElementMethod
         internal bool selectedAtThisTime;
 
         public int Num { get => num; set => num = value; }
-        public Point3D C0 { get => c0; set => c0 = value; }
+        public Point3D C0 { get => c0; 
+            set
+            {
+                c1 = value;
+                c0 = value;
+            }
+        }
         public Point3D C1 { get => c1; set => c1 = value; }
         public int[] Id { get => id; set => id = value; }
         public double[] GloF { get => gloF; set => gloF = value; }
@@ -1081,15 +1087,14 @@ namespace BCK.SmrSimulator.finiteElementMethod
         //internal int countPlate = 0;
         //internal int countSolid = 0;
         //internal List<Frame> frames = new List<Frame>();
-        private FemFrames frames = new FemFrames();
-        private FemPlates plates = new FemPlates();
+        private FemFrameCollection frames = new FemFrameCollection();
+        private FemPlateCollection plates = new FemPlateCollection();
         private List<FemSolid> solids = new List<FemSolid>();
         internal bool show = true;
-        internal bool showNumber = false;
 
         public int MaxNum { get => maxNum; set => maxNum = value; }
-        public FemFrames Frames { get => frames; }
-        public FemPlates Plates { get => plates; }
+        public FemFrameCollection Frames { get => frames; }
+        public FemPlateCollection Plates { get => plates; }
         public List<FemSolid> Solids { get => solids; }
 
         internal new void Add(FemElement elem)
@@ -1276,7 +1281,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
         internal double[,] trans;
         internal bool selected = false;
 
-        public Point3D Center
+        public Point3D CenterC1
         {
             get
             {
@@ -1286,6 +1291,23 @@ namespace BCK.SmrSimulator.finiteElementMethod
                     center.X += node.C1.X;
                     center.Y += node.C1.Y;
                     center.Z += node.C1.Z;
+                }
+                center.X /= NumNode;
+                center.Y /= NumNode;
+                center.Z /= NumNode;
+                return center;
+            }
+        }
+        public Point3D CenterC0
+        {
+            get
+            {
+                Point3D center = new Point3D();
+                foreach (FemNode node in nodes)
+                {
+                    center.X += node.C0.X;
+                    center.Y += node.C0.Y;
+                    center.Z += node.C0.Z;
                 }
                 center.X /= NumNode;
                 center.Y /= NumNode;
@@ -1412,7 +1434,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
             }
         }
     }
-    public class FemFrames : List<FemFrame>
+    public class FemFrameCollection : List<FemFrame>
     {
         internal FemNodeCollection ConnectedNodes()
         {
@@ -1620,7 +1642,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
         }
 
     }
-    public class FemPlates : List<FemPlate>
+    public class FemPlateCollection : List<FemPlate>
     {
         internal FemNodeCollection ConnectedNodes()
         {
@@ -1890,7 +1912,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
             base.Add(n);
             return n;
         }
-        internal double GetMaxLoadLength()
+        internal double GetMaxLoadSize()
         {
             double maxLoadLength = 1;
             foreach (FemLoad load in this)

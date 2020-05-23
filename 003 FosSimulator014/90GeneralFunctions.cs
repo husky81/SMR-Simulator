@@ -6,14 +6,32 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Media3D;
 
-namespace BCK.SmrSimulator.GeneralFunctions
+namespace BCK.SmrSimulation.GeneralFunctions
 {
     public static class GF
     {
         public static CultureInfo CultureInfo => cultureInfo;
         private static readonly CultureInfo cultureInfo = new CultureInfo("ko-KR", false);
+        
+        public static Size MeasureString(string candidate, TextBlock textBlock)
+        {
+            var formattedText = new FormattedText(
+                candidate,
+                cultureInfo,
+                FlowDirection.LeftToRight,
+                new Typeface(textBlock.FontFamily, textBlock.FontStyle, textBlock.FontWeight, textBlock.FontStretch),
+                textBlock.FontSize,
+                Brushes.Black,
+                new NumberSubstitution(),
+                1);
+
+            return new Size(formattedText.Width, formattedText.Height);
+        }
 
         internal static double Determinant(double[,] mat)
         {
@@ -653,7 +671,7 @@ namespace BCK.SmrSimulator.GeneralFunctions
         //this method determines the sub matrix corresponding to a given element
         static double[,] CreateSmallerMatrix(double[,] input, int i, int j)
         {
-            int order = int.Parse(System.Math.Sqrt(input.Length).ToString());
+            int order = int.Parse(Math.Sqrt(input.Length).ToString(GF.CultureInfo),GF.CultureInfo);
             double[,] output = new double[order - 1, order - 1];
             int x = 0, y = 0;
             for (int m = 0; m < order; m++, x++)

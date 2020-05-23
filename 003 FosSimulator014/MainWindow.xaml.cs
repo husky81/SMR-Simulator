@@ -1,6 +1,7 @@
-﻿using BCK.SmrSimulator.Draw2D;
-using BCK.SmrSimulator.Draw3D;
-using BCK.SmrSimulator.finiteElementMethod;
+﻿using BCK.SmrSimulator.Main.Properties;
+using BCK.SmrSimulation.Draw2D;
+using BCK.SmrSimulation.Draw3D;
+using BCK.SmrSimulation.finiteElementMethod;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -24,7 +25,7 @@ using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace BCK.SmrSimulator.Main
+namespace BCK.SmrSimulation.Main
 {
     partial class MainWindow : Window
     {
@@ -80,7 +81,9 @@ namespace BCK.SmrSimulator.Main
         {
             
             //Fem Node번호 보일지 말지 결정하는 옵션
-            isFemViewNode.IsChecked = Properties.Settings.Default.isFemViewNode;
+            isFemViewNodeNumber.IsChecked = Settings.Default.isFemViewNodeNumber;
+            isFemViewElemNumber.IsChecked = Settings.Default.isFemViewElemNumber;
+            
         }
 
         private void EventSetter()
@@ -95,7 +98,7 @@ namespace BCK.SmrSimulator.Main
 
         private void GrdMain_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            RedrawShapesWoGeneration();
+            RedrawShapesWo3dGeneration();
         }
 
         private void BoundaryConditionDrawingTest()
@@ -434,14 +437,14 @@ namespace BCK.SmrSimulator.Main
         internal void SelectNode()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestInts(Properties.Resource.String2);
+            requestUserInput.RequestInts(Resource.String2);
             requestUserInput.actionAfterIntsWithInts += Fem.SelectNode;
             requestUserInput.Start();
         }
         internal void SelectElem()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestInts(Properties.Resource.SelectElementNumber);
+            requestUserInput.RequestInts(Resource.SelectElementNumber);
             requestUserInput.actionAfterIntsWithInts += Fem.SelectElem;
             requestUserInput.Start();
         }
@@ -498,7 +501,7 @@ namespace BCK.SmrSimulator.Main
         {
             requestUserInput = new RequestUserInput(this);
             requestUserInput.viewType = SelectionWindow.ViewType.Line;
-            requestUserInput.RequestPoints(Properties.Resource.String7);
+            requestUserInput.RequestPoints(Resource.String7);
             requestUserInput.actionEveryLastTwoPointsWithPointPoint += AddFemLine;
             requestUserInput.actionEveryLastTwoPoints += RedrawFemModel;
             requestUserInput.Start();
@@ -517,8 +520,8 @@ namespace BCK.SmrSimulator.Main
         internal void DivideElem()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestElemSelection(Properties.Resource.String1);
-            requestUserInput.RequestInt(Properties.Resource.String3);
+            requestUserInput.RequestElemSelection(Resource.String1);
+            requestUserInput.RequestInt(Resource.String3);
             requestUserInput.actionAfterIntWithInt += Fem.DivideSelectedElems;
             requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
@@ -531,9 +534,9 @@ namespace BCK.SmrSimulator.Main
         internal void ExtrudeElem()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestElemSelection(Properties.Resource.String4);
-            requestUserInput.RequestVector(Properties.Resource.String5);
-            requestUserInput.RequestInt(Properties.Resource.String6);
+            requestUserInput.RequestElemSelection(Resource.String4);
+            requestUserInput.RequestVector(Resource.String5);
+            requestUserInput.RequestInt(Resource.String6);
             requestUserInput.actionAfterIntWithVecInt += Fem.ExtrudeWoReturn;
             requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
@@ -543,7 +546,7 @@ namespace BCK.SmrSimulator.Main
         internal void BoundaryFixRx()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
+            requestUserInput.RequestNodeSelection(Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 0, 1, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += Fem.Selection.Clear;
@@ -553,7 +556,7 @@ namespace BCK.SmrSimulator.Main
         internal void BoundaryFixRy()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
+            requestUserInput.RequestNodeSelection(Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 1, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += Fem.Selection.Clear;
@@ -563,7 +566,7 @@ namespace BCK.SmrSimulator.Main
         internal void BoundaryRemove()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
+            requestUserInput.RequestNodeSelection(Resource.String10);
             requestUserInput.actionEnd += BoundaryRemoveAll;
             requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
@@ -575,7 +578,7 @@ namespace BCK.SmrSimulator.Main
         internal void BoundaryFixRz()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
+            requestUserInput.RequestNodeSelection(Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 0, 1 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += Fem.Selection.Clear;
@@ -585,7 +588,7 @@ namespace BCK.SmrSimulator.Main
         internal void BoundaryFixDz()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
+            requestUserInput.RequestNodeSelection(Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 1, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += Fem.Selection.Clear;
@@ -595,7 +598,7 @@ namespace BCK.SmrSimulator.Main
         internal void BoundaryFixDy()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
+            requestUserInput.RequestNodeSelection(Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 1, 0, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += Fem.Selection.Clear;
@@ -605,7 +608,7 @@ namespace BCK.SmrSimulator.Main
         internal void BoundaryFixDx()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
+            requestUserInput.RequestNodeSelection(Resource.String10);
             boundaryFixFreeCondition = new int[] { 1, 0, 0, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += Fem.Selection.Clear;
@@ -615,7 +618,7 @@ namespace BCK.SmrSimulator.Main
         internal void BoundaryFixDXYZ()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
+            requestUserInput.RequestNodeSelection(Resource.String10);
             boundaryFixFreeCondition = new int[] { 1, 1, 1, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += Fem.Selection.Clear;
@@ -625,7 +628,7 @@ namespace BCK.SmrSimulator.Main
         internal void BoundaryFixAll()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.RequestNodeSelection(Properties.Resource.String10);
+            requestUserInput.RequestNodeSelection(Resource.String10);
             boundaryFixFreeCondition = new int[] { 1, 1, 1, 1, 1, 1 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
             requestUserInput.actionEnd += Fem.Selection.Clear;
@@ -708,7 +711,7 @@ namespace BCK.SmrSimulator.Main
         private void AfterViewChanged()
         {
             GetCameraInfo();
-            RedrawShapesWoGeneration();
+            RedrawShapesWo3dGeneration();
         }
         private void GetCameraInfo()
         {
@@ -864,9 +867,7 @@ namespace BCK.SmrSimulator.Main
             bool showUndeformedShape = true;
             bool showSection = true;
 
-            double maxLoadLength = 2;
-            double maxLoadSize = Fem.Loads.GetMaxLoadLength();
-            double loadViewScale = maxLoadLength / maxLoadSize;
+            double loadViewScale = GetLoadViewScale();
 
             Draw.Shapes.Clear();
             Draw.Texts.Clear();
@@ -896,13 +897,6 @@ namespace BCK.SmrSimulator.Main
                     {
                         Draw.Shapes.AddSphere(node.C1, diaNode, rlsNode);
                         Draw.Shapes.RecentShape.Color(colorNode);
-                    }
-                }
-                if (Properties.Settings.Default.isFemViewNode)
-                {
-                    foreach (FemNode node in Fem.Model.Nodes)
-                    {
-                        Draw.Texts.Add(node.Num.ToString(), node.C1, 8);
                     }
                 }
                 if (Fem.Model.Elems.show)
@@ -940,14 +934,6 @@ namespace BCK.SmrSimulator.Main
                         }
                     }
                 }
-                if (Fem.Model.Elems.showNumber)
-                {
-                    foreach (FemElement elem in Fem.Model.Elems)
-                    {
-                        Draw.Texts.Add(elem.Num.ToString(), elem.Center, 8);
-                    }
-                }
-
                 foreach (FemLoad load in Fem.Loads)
                 {
                     foreach (FemNodalLoad nodalLoad in load.nodalLoads)
@@ -1004,14 +990,6 @@ namespace BCK.SmrSimulator.Main
                             Draw.Shapes.RecentShape.Opacity(opacity);
                         }
                     }
-                    if (Properties.Settings.Default.isFemViewNode)
-                    {
-                        foreach (FemNode node in Fem.Model.Nodes)
-                        {
-                            Draw.Texts.Add(node.Num.ToString(), node.C0, 8);
-                        }
-                    }
-
                 }
                 if (Fem.Model.Elems.show)
                 {
@@ -1080,6 +1058,15 @@ namespace BCK.SmrSimulator.Main
 
             RedrawShapes();
         }
+
+        private double GetLoadViewScale()
+        {
+            double maxLoadLength = 2;
+            double maxLoadSize = Fem.Loads.GetMaxLoadSize();
+            double loadViewScale = maxLoadLength / maxLoadSize;
+            return loadViewScale;
+        }
+
         public void RedrawShapes(object sender, RoutedEventArgs e)
         {
             RedrawShapes();
@@ -1087,17 +1074,15 @@ namespace BCK.SmrSimulator.Main
         public void RedrawShapes()
         {
             Draw.RegenerateShapesModelVisual3ds();
-            RedrawShapesWoGeneration();
+            RedrawShapesWo3dGeneration();
         }
-        public void RedrawShapesWoGeneration()
+        public void RedrawShapesWo3dGeneration()
         {
             Draw.RedrawShapes();
             Redraw3dRelated2dShapes();
             draw2d.RedrawShapes();
         }
 
-        //ToString()에 밑줄 쳐지길래 alt+enter 눌렀더니 뭘 추가라고 해서 자동생성된 줄 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "<Pending>")]
         private void Redraw3dRelated2dShapes()
         {
             if (grdMain.ActualHeight == 0) return;
@@ -1107,21 +1092,49 @@ namespace BCK.SmrSimulator.Main
                 foreach (FemBoundary boundary in Fem.Model.Boundaries)
                 {
                     Point3D p0 = boundary.node.C0;
-                    Point p = Draw.GetPoint2D_FromPoint3D(p0);
+                    Point p = Draw.GetPoint2DFromPoint3D(p0);
                     draw2d.boundaryConditionMarks.Add(p, boundary.condition);
                 }
             }
 
+
             draw2d.texts.Clear();
-            if (Properties.Settings.Default.isFemViewNode)
+            if (Settings.Default.isFemViewNodeNumber)
             {
                 foreach (FemNode node in Fem.Model.Nodes)
                 {
-                    Point3D p0 = node.C0;
-                    Point p = Draw.GetPoint2D_FromPoint3D(p0);
-                    draw2d.texts.Add(p, node.Num.ToString());
+                    Point3D p0 = node.C1;
+                    Point p = Draw.GetPoint2DFromPoint3D(p0);
+                    Text2D t = draw2d.texts.Add(p, node.Num.ToString(cultureInfo));
+                    t.Color = Brushes.Brown;
                 }
             }
+            if (Settings.Default.isFemViewElemNumber)
+            {
+                foreach (FemElement element in Fem.Model.Elems)
+                {
+                    Point3D p0 = element.CenterC1;
+                    Point p = draw.GetPoint2DFromPoint3D(p0);
+                    Text2D t = draw2d.texts.Add(p, element.Num.ToString(cultureInfo),Settings.Default.nodeNumberSize);
+                    t.Color = Brushes.Blue;
+                    t.Allignment = Text2D.Allignments.bottomCenter;
+                }
+            }
+
+            double loadViewScale = GetLoadViewScale();
+            foreach (FemLoad load in fem.Loads)
+            {
+                foreach (FemNodalLoad nodalLoad in load.nodalLoads)
+                {
+                    Point3D p0 = nodalLoad.node.C1 - nodalLoad.force * loadViewScale;
+                    Point p = draw.GetPoint2DFromPoint3D(p0);
+                    Text2D t = draw2d.texts.Add(p, nodalLoad.force.Length.ToString(cultureInfo)
+                        + " " + Settings.Default.forceUnit, Settings.Default.nodeNumberSize);
+                    t.Color = Brushes.Red;
+                    t.Allignment = Text2D.Allignments.middleCenter;
+                }
+            }
+
         }
     } // 패널, 격자배경, 좌표계, Redraw 등
     public partial class MainWindow : Window
@@ -1438,7 +1451,7 @@ namespace BCK.SmrSimulator.Main
             Draw.OrbitEnd();
             this.MouseMove -= new System.Windows.Input.MouseEventHandler(Orbit_MouseMove);
             Draw.RedrawShapes();
-            RedrawShapesWoGeneration();
+            RedrawShapesWo3dGeneration();
 
         }
         private void TurnOffOrbit_Esc(object sender, System.Windows.Input.KeyEventArgs e)
@@ -1467,8 +1480,8 @@ namespace BCK.SmrSimulator.Main
         private void ViewNodeNumber(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            Properties.Settings.Default.isFemViewNode = sd.IsChecked;
-            Properties.Settings.Default.Save();
+            Settings.Default.isFemViewNodeNumber = sd.IsChecked;
+            Settings.Default.Save();
             RedrawFemModel();
         }
         private void ViewElement(object sender, RoutedEventArgs e)
@@ -1480,8 +1493,9 @@ namespace BCK.SmrSimulator.Main
         private void ViewElementNumber(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            Fem.Model.Elems.showNumber = sd.IsChecked;
-            RedrawFemModel();
+            Settings.Default.isFemViewElemNumber = sd.IsChecked;
+            Settings.Default.Save();
+            RedrawShapesWo3dGeneration();
         }
     } // View 관련
 }

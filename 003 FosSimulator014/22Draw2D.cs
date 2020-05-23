@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BCK.SmrSimulation.GeneralFunctions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
@@ -10,7 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 
-namespace BCK.SmrSimulator.Draw2D
+namespace BCK.SmrSimulation.Draw2D
 {
     class Draw2D
     {
@@ -270,7 +271,13 @@ namespace BCK.SmrSimulator.Draw2D
     {
         internal Text2D Add(Point p0, String text)
         {
-            Text2D textObj = new Text2D(p0, text);
+            Text2D textObj = new Text2D(p0, text, 12);
+            base.Add(textObj);
+            return textObj;
+        }
+        internal Text2D Add(Point p0, String text, int size)
+        {
+            Text2D textObj = new Text2D(p0, text, size);
             base.Add(textObj);
             return textObj;
         }
@@ -279,17 +286,26 @@ namespace BCK.SmrSimulator.Draw2D
     {
         internal TextBlock textObj; //TextBlock이 Label보다 훨씬 가볍다. ref. https://m.blog.naver.com/PostView.nhn?blogId=inasie&logNo=70025582628&proxyReferer=http:%2F%2Fwww.google.com%2Furl%3Fsa%3Dt%26rct%3Dj%26q%3D%26esrc%3Ds%26source%3Dweb%26cd%3D%26ved%3D2ahUKEwjT5b7E8cTpAhVryosBHTHRC5YQFjAJegQIDBAB%26url%3Dhttp%253A%252F%252Fm.blog.naver.com%252Finasie%252F70025582628%26usg%3DAOvVaw3TmFXvkGjN0Y_VDPh11e20
 
-        Point point;
+        public Point Point { get => point; 
+            set
+            {
+                point = value;
+                drawingPoint = value;
+            }
+        }
+        private Point point;
+        Point drawingPoint;
         String text;
-        public Text2D(Point point, String text)
+        public Text2D(Point point, String text, int size)
         {
-            this.point = point;
+            this.Point = point;
             this.text = text;
             textObj = new TextBlock();
-            textObj.FontSize = 12;
+            textObj.FontSize = size;
             textObj.Text = text;
             textObj.HorizontalAlignment = HorizontalAlignment.Left;
             textObj.VerticalAlignment = VerticalAlignment.Top;
+            textObj.Foreground = Brushes.Black;
 
             try
             {
@@ -301,21 +317,105 @@ namespace BCK.SmrSimulator.Draw2D
                 {
                     
                 }
-                throw;
             }
         }
+
+        internal enum Allignments
+        {
+            topLeft,
+            topCenter,
+            topRight,
+            middleLeft,
+            middleCenter,
+            middleRight,
+            bottomLeft,
+            bottomCenter,
+            bottomRight,
+        }
+        private Allignments allignment = Allignments.topLeft;
+        internal Allignments Allignment
+        {
+            get
+            {
+                return allignment;
+            }
+            set
+            {
+                if(value != allignment)
+                {
+                    allignment = value;
+                    Size size = GF.MeasureString(text, textObj);
+                    double h = size.Height;
+                    double w = size.Width;
+
+                    switch (value)
+                    {
+                        case Allignments.topLeft:
+                            drawingPoint.Y = Point.Y;
+                            drawingPoint.X = Point.X;
+                            break;
+                        case Allignments.topCenter:
+                            drawingPoint.Y = Point.Y;
+                            drawingPoint.X = Point.X - w / 2;
+                            break;
+                        case Allignments.topRight:
+                            drawingPoint.Y = Point.Y;
+                            drawingPoint.X = Point.X - w;
+                            break;
+                        case Allignments.middleLeft:
+                            drawingPoint.Y = Point.Y - h / 2;
+                            drawingPoint.X = Point.X;
+                            break;
+                        case Allignments.middleCenter:
+                            drawingPoint.Y = Point.Y - h / 2;
+                            drawingPoint.X = Point.X - w / 2;
+                            break;
+                        case Allignments.middleRight:
+                            drawingPoint.Y = Point.Y - h / 2;
+                            drawingPoint.X = Point.X - w;
+                            break;
+                        case Allignments.bottomLeft:
+                            drawingPoint.Y = Point.Y - h;
+                            drawingPoint.X = Point.X;
+                            break;
+                        case Allignments.bottomCenter:
+                            drawingPoint.Y = Point.Y - h;
+                            drawingPoint.X = Point.X - w / 2;
+                            break;
+                        case Allignments.bottomRight:
+                            drawingPoint.Y = Point.Y - h;
+                            drawingPoint.X = Point.X - w;
+                            break;
+                        default:
+                            break;
+                    }
+                    textObj.Margin = new Thickness(drawingPoint.X, drawingPoint.Y, 0, 0);
+                }
+            }
+        }
+
+
+        public Brush Color { get => color;
+            internal set
+            {
+                color = value;
+                textObj.Foreground = value;
+            }
+        }
+        private Brush color = Brushes.Black;
 
         internal bool IsOnGrid
         {
             get
             {
-                if(point.X<0 | point.Y < 0)
+                if(Point.X<0 | Point.Y < 0)
                 {
                     return false;
                 }
                 return true;
             }
         }
+
     }
 
     class SelectionWindow
@@ -588,4 +688,5 @@ namespace BCK.SmrSimulator.Draw2D
             rectangle.Height = height;
         }
     }
+
 }

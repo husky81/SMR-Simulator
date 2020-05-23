@@ -1,5 +1,5 @@
-﻿using BCK.SmrSimulator.Draw2D;
-using BCK.SmrSimulator.GeneralFunctions;
+﻿using BCK.SmrSimulation.Draw2D;
+using BCK.SmrSimulation.GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -11,7 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-namespace BCK.SmrSimulator.Draw3D
+namespace BCK.SmrSimulation.Draw3D
 {
     public partial class BckDraw3D // 기본
     {
@@ -306,7 +306,7 @@ namespace BCK.SmrSimulator.Draw3D
         /// </summary>
         /// <param name="p0"></param>
         /// <returns></returns>
-        public Point GetPoint2D_FromPoint3D(Point3D p0)
+        public Point GetPoint2DFromPoint3D(Point3D p0)
         {
             Point3D pos = PCamera.Position;
             Vector3D dir = PCamera.LookDirection;
@@ -337,6 +337,11 @@ namespace BCK.SmrSimulator.Draw3D
 
             double x = width / 2 + Math.Tan(angX) * resolution;
             double y = height / 2 + Math.Tan(angY) * resolution;
+
+            if (double.IsNaN(x))
+            {
+
+            }
 
             Point outP = new Point(x, y);
             return outP;

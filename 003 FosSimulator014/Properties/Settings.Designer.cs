@@ -26,24 +26,48 @@ namespace BCK.SmrSimulator.Main.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool isFemViewNode {
+        public bool isFemViewNodeNumber {
             get {
-                return ((bool)(this["isFemViewNode"]));
+                return ((bool)(this["isFemViewNodeNumber"]));
             }
             set {
-                this["isFemViewNode"] = value;
+                this["isFemViewNodeNumber"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string Setting {
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool isFemViewElemNumber {
             get {
-                return ((string)(this["Setting"]));
+                return ((bool)(this["isFemViewElemNumber"]));
             }
             set {
-                this["Setting"] = value;
+                this["isFemViewElemNumber"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("12")]
+        public int nodeNumberSize {
+            get {
+                return ((int)(this["nodeNumberSize"]));
+            }
+            set {
+                this["nodeNumberSize"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("kN")]
+        public string forceUnit {
+            get {
+                return ((string)(this["forceUnit"]));
+            }
+            set {
+                this["forceUnit"] = value;
             }
         }
     }

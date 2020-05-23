@@ -2,11 +2,17 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="bck.SMR_simulator.main.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="isFemViewNode" Type="System.Boolean" Scope="User">
+    <Setting Name="isFemViewNodeNumber" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
-    <Setting Name="Setting" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+    <Setting Name="isFemViewElemNumber" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="nodeNumberSize" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">12</Value>
+    </Setting>
+    <Setting Name="forceUnit" Type="System.String" Scope="User">
+      <Value Profile="(Default)">kN</Value>
     </Setting>
   </Settings>
 </SettingsFile>
