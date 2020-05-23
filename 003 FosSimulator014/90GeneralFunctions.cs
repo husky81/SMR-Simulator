@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Media3D;
 
-namespace bck.SMR_simulator.general_functions
+namespace BCK.SmrSimulator.general_functions
 {
     public static class GF
     {

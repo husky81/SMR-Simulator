@@ -1,5 +1,5 @@
-﻿using bck.SMR_simulator.draw2d;
-using bck.SMR_simulator.draw3d;
+﻿using BCK.SmrSimulator.draw2d;
+using BCK.SmrSimulator.Draw3D;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 
-namespace bck.SMR_simulator.main
+namespace BCK.SmrSimulator.main
 {
     /// <summary>
     /// 사용자가 요청한 하나하나의 실행 단위.
@@ -278,16 +278,16 @@ namespace bck.SMR_simulator.main
                 case UserInputAction.RequestInputType.TwoPoints:
                     break;
                 case UserInputAction.RequestInputType.Points:
-                    main.cmd.viewType = viewType;
-                    main.cmd.RequestInput_Points(userInputType.message, userInputType.numPointRequested);
+                    main.Cmd.viewType = viewType;
+                    main.Cmd.RequestInput_Points(userInputType.message, userInputType.numPointRequested);
                     numContinuousPoint = 0;
-                    main.cmd.actionAfterPointWithPoint += Put_ContinuousPoint;
-                    main.cmd.actionAfterPoints += Put;
+                    main.Cmd.actionAfterPointWithPoint += Put_ContinuousPoint;
+                    main.Cmd.actionAfterPoints += Put;
                     return;
                 case UserInputAction.RequestInputType.ElemSelection:
-                    if (main.fem.selection.elems.Count == 0)
+                    if (main.Fem.selection.elems.Count == 0)
                     {
-                        main.cmd.SendRequestMessage(userInputType.message);
+                        main.Cmd.SendRequestMessage(userInputType.message);
                         End();
                     }
                     else
@@ -296,9 +296,9 @@ namespace bck.SMR_simulator.main
                     }
                     return;
                 case UserInputAction.RequestInputType.NodeSelection:
-                    if (main.fem.selection.nodes.Count == 0)
+                    if (main.Fem.selection.nodes.Count == 0)
                     {
-                        main.cmd.SendRequestMessage(userInputType.message);
+                        main.Cmd.SendRequestMessage(userInputType.message);
                         End();
                     }
                     else
@@ -307,9 +307,9 @@ namespace bck.SMR_simulator.main
                     }
                     return;
                 case UserInputAction.RequestInputType.Selection:
-                    if (main.fem.selection.nodes.Count + main.fem.selection.elems.Count == 0)
+                    if (main.Fem.selection.nodes.Count + main.Fem.selection.elems.Count == 0)
                     {
-                        main.cmd.SendRequestMessage(userInputType.message);
+                        main.Cmd.SendRequestMessage(userInputType.message);
                         End();
                     }
                     else
@@ -318,12 +318,12 @@ namespace bck.SMR_simulator.main
                     }
                     return;
                 case UserInputAction.RequestInputType.Int:
-                    main.cmd.RequestInput_Int(userInputType.message);
-                    main.cmd.actionAfterIntWithInt += Put;
+                    main.Cmd.RequestInput_Int(userInputType.message);
+                    main.Cmd.actionAfterIntWithInt += Put;
                     return;
                 case UserInputAction.RequestInputType.Ints:
-                    main.cmd.RequestInput_Ints(userInputType.message);
-                    main.cmd.actionAfterIntsWithInts += Put;
+                    main.Cmd.RequestInput_Ints(userInputType.message);
+                    main.Cmd.actionAfterIntsWithInts += Put;
                     return;
                 case UserInputAction.RequestInputType.Double:
                     break;
@@ -332,17 +332,17 @@ namespace bck.SMR_simulator.main
                 case UserInputAction.RequestInputType.Vector:
                     //main.cmd.SendRequestMessage(userInputAction.message);
                     //main.MouseDown += GetDirection;
-                    main.cmd.RequestInputVector(userInputType.message);
-                    main.cmd.actionAfterVecWithVec += Put;
+                    main.Cmd.RequestInputVector(userInputType.message);
+                    main.Cmd.actionAfterVecWithVec += Put;
                     return;
                 case UserInputAction.RequestInputType.VectorValue:
-                    main.cmd.RequestInputVectorValue(userInputType.message);
-                    main.cmd.actionAfterVecWithVec += Put;
+                    main.Cmd.RequestInputVectorValue(userInputType.message);
+                    main.Cmd.actionAfterVecWithVec += Put;
                     return;
                 default:
                     break;
             }
-            main.cmd.ErrorMessage(Properties.Resource.String9);
+            main.Cmd.ErrorMessage(Properties.Resource.String9);
             End();
             return;
         } //Command에 요청하거나 액션 수행.
@@ -398,11 +398,11 @@ namespace bck.SMR_simulator.main
 
         private Point3D GetPoint3dFromPoint2D(Point p0)
         {
-            return main.draw.GetPoint3dOnBasePlane_FromPoint2D(p0);
+            return main.Draw.GetPoint3dOnBasePlane_FromPoint2D(p0);
         }
         private Point GetPointFromPoint3D(Point3D p3d)
         {
-            return main.draw.GetPoint2D_FromPoint3D(p3d);
+            return main.Draw.GetPoint2D_FromPoint3D(p3d);
         }
 
     }

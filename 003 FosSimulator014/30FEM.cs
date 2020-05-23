@@ -1,5 +1,5 @@
-﻿using bck.SMR_simulator.general_functions;
-using bck.SMR_simulator.main;
+﻿using BCK.SmrSimulator.general_functions;
+using BCK.SmrSimulator.main;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -12,7 +12,7 @@ using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Media.Media3D;
 
-namespace bck.SMR_simulator.finiteElementMethod
+namespace BCK.SmrSimulator.finiteElementMethod
 {
     public class FEM
     {

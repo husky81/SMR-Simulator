@@ -1,5 +1,5 @@
-﻿using bck.SMR_simulator.draw2d;
-using bck.SMR_simulator.general_functions;
+﻿using BCK.SmrSimulator.draw2d;
+using BCK.SmrSimulator.general_functions;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -11,13 +11,14 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-namespace bck.SMR_simulator.draw3d
+namespace BCK.SmrSimulator.Draw3D
 {
-    public partial class Draw3D // 기본
+    public partial class BckDraw3D // 기본
     {
-        public readonly Grid grid;
+        private readonly Grid grid;
+        public Grid Grid => grid;
 
-        public Shapes3D shapes;
+        public Shape3dCollection shapes;
         public TextShapes3D texts = new TextShapes3D();
         private ModelVisual3D modelVisual3d_Shapes;
         private ModelVisual3D modelVisual3d_Texts;
@@ -132,7 +133,7 @@ namespace bck.SMR_simulator.draw3d
             //ss.recentShape.Color(Colors.Blue);
 
             //Cylinder
-            Shapes3D ss = new Shapes3D();
+            Shape3dCollection ss = new Shape3dCollection();
             double dia = 0.1;
             int resolution = 16;
             Cylinder3D xAxis = ss.AddCylinder(p0, pX - p0, dia, resolution);
@@ -170,12 +171,13 @@ namespace bck.SMR_simulator.draw3d
             Direction = new Vector3D(3, 4, -5)
         };
 
-        public Draw3D(Grid grid)
+
+        public BckDraw3D(Grid grid)
         {
             //생성자
             this.grid = grid;
             
-            shapes = new Shapes3D();
+            shapes = new Shape3dCollection();
             viewport.Camera = PCamera;
 
             SetCoordinateSystem();
@@ -199,10 +201,10 @@ namespace bck.SMR_simulator.draw3d
             viewport.Children.Add(modelVisual3d_Texts);
             if (showBasePlaneGrid) viewport.Children.Add(modelVisual_BasePlaneGrid);
             if (showCoordinateSystem) viewport.Children.Add(modelVisual_CoordinateSystem);
-            if (pointMarker.visibility) viewport.Children.Add(pointMarker.modelVisual3D);
+            if (pointMarker.visibility) viewport.Children.Add(pointMarker.ModelVisual3D);
 
-            grid.Children.Clear();
-            grid.Children.Add(viewport);
+            Grid.Children.Clear();
+            Grid.Children.Add(viewport);
         }
         public void RegenerateShapes_ModelVisual3ds()
         {
@@ -219,8 +221,8 @@ namespace bck.SMR_simulator.draw3d
         public Point3D GetPoint3dOnBasePlane_FromPoint2D(Point p0)
         {
             //Grid의 마우스 포인트
-            double gridHeight = grid.ActualHeight;
-            double gridWidth = grid.ActualWidth;
+            double gridHeight = Grid.ActualHeight;
+            double gridWidth = Grid.ActualWidth;
             Point gridCenter = new Point(gridWidth / 2, gridHeight / 2);
             Vector p = p0 - gridCenter;
 
@@ -269,8 +271,8 @@ namespace bck.SMR_simulator.draw3d
         public Point3D GetPoint3d_FromPoint2D(Point p0)
         {
             //Grid의 마우스 포인트
-            double gridHeight = grid.ActualHeight;
-            double gridWidth = grid.ActualWidth;
+            double gridHeight = Grid.ActualHeight;
+            double gridWidth = Grid.ActualWidth;
             Point gridCenter = new Point(gridWidth / 2, gridHeight / 2);
             Vector p = p0 - gridCenter;
 
@@ -316,8 +318,8 @@ namespace bck.SMR_simulator.draw3d
             up.Normalize();
             camY.Normalize();
 
-            double width = grid.ActualWidth;
-            double height = grid.ActualHeight;
+            double width = Grid.ActualWidth;
+            double height = Grid.ActualHeight;
 
             double fovW = PCamera.FieldOfView;
             //double fovH = Math.Atan(Math.Tan(fovW / 2 / 180 * Math.PI) / width * height) * 2 * 180 / Math.PI;
@@ -470,7 +472,7 @@ namespace bck.SMR_simulator.draw3d
 
             // Apply the viewport to the page so it will be rendered.
             //this.Content = myViewport3D;
-            grid.Children.Add(myViewport3D);
+            Grid.Children.Add(myViewport3D);
 
             //grdBackground.Visibility = Visibility.Hidden;
 
@@ -496,8 +498,8 @@ namespace bck.SMR_simulator.draw3d
             viewport.Children.Add(model);
             viewport.Camera = PCamera;
 
-            grid.Children.Clear();
-            grid.Children.Add(viewport);
+            Grid.Children.Clear();
+            Grid.Children.Add(viewport);
         }
         internal void Example_DrawRectangle2D()
         {
@@ -509,7 +511,7 @@ namespace bck.SMR_simulator.draw3d
             r.Stroke = Brushes.Black;
             r.HorizontalAlignment = HorizontalAlignment.Left;
             r.VerticalAlignment = VerticalAlignment.Top;
-            grid.Children.Add(r);
+            Grid.Children.Add(r);
             //grid.Children.Remove(r);
         }
 
@@ -673,20 +675,21 @@ namespace bck.SMR_simulator.draw3d
     }
     public class PointMarker3D
     {
-        readonly Draw3D instance;
+        readonly BckDraw3D instance;
 
-        public ModelVisual3D modelVisual3D = new ModelVisual3D();
+        public ModelVisual3D ModelVisual3D { get => modelVisual3D; set => modelVisual3D = value; }
+        private ModelVisual3D modelVisual3D = new ModelVisual3D();
 
         internal bool visibility = false;
-        double dia = 0.2;
-        int resolution = 12;
-        Shapes3D markerShapes = new Shapes3D();
+        readonly double dia = 0.2;
+        readonly int resolution = 12;
+        readonly Shape3dCollection markerShapes = new Shape3dCollection();
 
         internal void Hide()
         {
             visibility = false;
             //markerShapes.Clear();
-            modelVisual3D.Children.Clear();
+            ModelVisual3D.Children.Clear();
         }
         internal void Show()
         {
@@ -696,23 +699,24 @@ namespace bck.SMR_simulator.draw3d
         Point3D position = new Point3D(0, 0, 0);
         Color color = Colors.Red;
 
+
         internal Point3D Position(Point point)
         {
             position = instance.GetPoint3dOnBasePlane_FromPoint2D(point);
 
-            markerShapes.transform = new TranslateTransform3D(position.X, position.Y, position.Z);
-            modelVisual3D.Content = markerShapes.Model3DGroup();
+            markerShapes.Transform = new TranslateTransform3D(position.X, position.Y, position.Z);
+            ModelVisual3D.Content = markerShapes.Model3DGroup();
             return position;
         }
 
-        public PointMarker3D(Draw3D instance)
+        public PointMarker3D(BckDraw3D instance)
         {
             this.instance = instance;
             markerShapes.AddSphere(position, dia, resolution);
             markerShapes.RecentShape.Color(color);
         }
     } //
-    partial class Draw3D // Orbit & View
+    partial class BckDraw3D // Orbit & View
     {
         public PerspectiveCamera PCamera { get; set; } = new PerspectiveCamera
         {
@@ -793,7 +797,7 @@ namespace bck.SMR_simulator.draw3d
             up.Normalize();
             camY.Normalize();
 
-            double width = grid.ActualWidth;
+            double width = Grid.ActualWidth;
             //double height = grid.ActualHeight;
 
             double fovW = PCamera.FieldOfView;
@@ -921,8 +925,8 @@ namespace bck.SMR_simulator.draw3d
             up.Normalize();
             camY.Normalize();
 
-            double width = grid.ActualWidth;
-            double height = grid.ActualHeight;
+            double width = Grid.ActualWidth;
+            double height = Grid.ActualHeight;
 
             double fovW = PCamera.FieldOfView;
             double fovH = Math.Atan(Math.Tan(fovW / 2 / 180 * Math.PI) / width * height) * 2 * 180 / Math.PI;
@@ -1026,16 +1030,16 @@ namespace bck.SMR_simulator.draw3d
             {
                 if (value)
                 {
-                    grid.MouseWheel += new MouseWheelEventHandler(Zoom_MouseWheelScroll);
-                    grid.MouseDown += PanOn_MouseWheelDown;
-                    grid.MouseUp += PanOff_MouseWheelUp;
+                    Grid.MouseWheel += new MouseWheelEventHandler(Zoom_MouseWheelScroll);
+                    Grid.MouseDown += PanOn_MouseWheelDown;
+                    Grid.MouseUp += PanOff_MouseWheelUp;
                 }
                 else
                 {
-                    grid.MouseWheel -= new MouseWheelEventHandler(Zoom_MouseWheelScroll);
-                    grid.MouseDown -= PanOn_MouseWheelDown;
-                    grid.MouseUp -= PanOff_MouseWheelUp;
-                    grid.MouseMove -= Pan_MouseWheelDownMove;
+                    Grid.MouseWheel -= new MouseWheelEventHandler(Zoom_MouseWheelScroll);
+                    Grid.MouseDown -= PanOn_MouseWheelDown;
+                    Grid.MouseUp -= PanOff_MouseWheelUp;
+                    Grid.MouseMove -= Pan_MouseWheelDownMove;
                 }
                 isOnZoomPan_WheelScroll = value;
             }
@@ -1048,16 +1052,16 @@ namespace bck.SMR_simulator.draw3d
         {
             if (e.MiddleButton == MouseButtonState.Pressed)
             {
-                pointMouseDown = e.GetPosition(grid);
+                pointMouseDown = e.GetPosition(Grid);
                 OrbitStart();
-                grid.MouseMove += Pan_MouseWheelDownMove;
+                Grid.MouseMove += Pan_MouseWheelDownMove;
             }
         }
         private void Pan_MouseWheelDownMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (e.MiddleButton == MouseButtonState.Pressed)
             {
-                Point p = e.GetPosition(grid);
+                Point p = e.GetPosition(Grid);
                 Vector mov = p - pointMouseDown;
                 //bckD.OrbitMoveX(mov.X / 2); //MoveX와 MoveY중 처음 실행된 것 하나만 동작함.
                 //bckD.OrbitMoveY(mov.Y / 2);
@@ -1067,7 +1071,7 @@ namespace bck.SMR_simulator.draw3d
         private void PanOff_MouseWheelUp(object sender, MouseButtonEventArgs e)
         {
             OrbitEnd();
-            grid.MouseMove -= Pan_MouseWheelDownMove;
+            Grid.MouseMove -= Pan_MouseWheelDownMove;
         }
 
         public void ViewTop()
@@ -1243,16 +1247,16 @@ namespace bck.SMR_simulator.draw3d
         }
     }
 
-    public class Shapes3D : List<Shape3D>
+    public class Shape3dCollection : List<Shape3D>
     {
-        public Model3DGroup modelGroup = new Model3DGroup();
-        private Shape3D recentShape;
-
-        public TranslateTransform3D transform;
-
+        public Model3DGroup ModelGroup { get => modelGroup; set => modelGroup = value; }
+        private Model3DGroup modelGroup = new Model3DGroup();
         internal Shape3D RecentShape { get => recentShape; set => recentShape = value; }
+        private Shape3D recentShape;
+        public TranslateTransform3D Transform { get => transform; set => transform = value; }
+        private TranslateTransform3D transform;
 
-        public Shapes3D()
+        public Shape3dCollection()
         {
 
         }
@@ -1361,7 +1365,7 @@ namespace bck.SMR_simulator.draw3d
             {
                 model3DGroup.Children.Add(shape.GeoModel());
             }
-            model3DGroup.Transform = transform;
+            model3DGroup.Transform = Transform;
             return model3DGroup;
         }
 
@@ -1781,7 +1785,7 @@ namespace bck.SMR_simulator.draw3d
         internal new GeometryModel3D GeoModel()
         {
             GeometryModel3D geo3D;
-            geo3D = Draw3D.CreateTextLabel3D(caption, Brushes.Red, true, 1, position,
+            geo3D = BckDraw3D.CreateTextLabel3D(caption, Brushes.Red, true, 1, position,
                 new Vector3D(0, 0.2, 0), new Vector3D(0, 0, 0.5));
             return geo3D;
         }

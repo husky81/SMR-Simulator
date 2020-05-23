@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace bck.SMR_simulator.main.Properties {
+namespace BCK.SmrSimulator.main.Properties {
     using System;
     
     

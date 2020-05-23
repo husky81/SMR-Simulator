@@ -1,6 +1,6 @@
-﻿using bck.SMR_simulator.draw2d;
-using bck.SMR_simulator.draw3d;
-using bck.SMR_simulator.general_functions;
+﻿using BCK.SmrSimulator.draw2d;
+using BCK.SmrSimulator.Draw3D;
+using BCK.SmrSimulator.general_functions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,7 +11,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 
-namespace bck.SMR_simulator.main
+namespace BCK.SmrSimulator.main
 {
     public class CommandWindow
     {
@@ -40,21 +40,26 @@ namespace bck.SMR_simulator.main
             Clear();
             SetCommandStructure();
 
+            //textBox가 non인 경우가 발생할 수 있으므로 경고 옵션을 꺼둠.
+            #pragma warning disable CA1062 // Validate arguments of public methods
             textBox.PreviewKeyDown += Tbx_PreviewKeyDown; //space, enter, backspace 처리
+            #pragma warning restore CA1062 // Validate arguments of public methods
+            
             textBox.KeyDown += Tbx_KeyDown; //esc 처리
             textBox.KeyUp += Tbx_KeyUp; //space, enter 후처리
         }
         internal class Command
         {
             internal static MainWindow main;
-            internal Run run; //하위 Command가 있든 없든 무조건 실행
             internal delegate void Run();
+            internal Run run; //하위 Command가 있든 없든 무조건 실행
             /// <summary>
             /// 이미 선택된 개체가 있는 경우 실행
             /// </summary>
             internal Run runSelected;
-            internal RunMouse runMouseDown; //하위명령 커리 중 마우스를 클릭하는 경우 실행
+
             internal delegate void RunMouse(Point p0);
+            internal RunMouse runAfterMouseDown; //하위명령 커리 중 마우스를 클릭하는 경우 실행
             internal string name; //ex. _zoom , _line
             internal string shortName = "";
 
@@ -81,7 +86,7 @@ namespace bck.SMR_simulator.main
                 foreach (Command cmd in commands)
                 {
                     quary += cmd.name;
-                    if (cmd.runMouseDown != null)
+                    if (cmd.runAfterMouseDown != null)
                     {
                         //main.MouseDown += Main_MouseDown;
                         mouseDownSubCommand = cmd;
@@ -99,7 +104,7 @@ namespace bck.SMR_simulator.main
                 if (e.LeftButton == MouseButtonState.Pressed)
                 {
                     Point p0 = e.GetPosition(main.grdMain);
-                    mouseDownSubCommand.runMouseDown(p0);
+                    mouseDownSubCommand.runAfterMouseDown(p0);
                 }
             }
         }
@@ -156,10 +161,11 @@ namespace bck.SMR_simulator.main
         {
             //명령창에서 사용자가 입력한 명령어 반환
             string userInput = GetCommandTextFromCommandWindowText();
-            userInput = userInput.ToUpper(); //대문자로 변경
+
+            userInput = userInput.ToUpper(main.CultureInfo); //대문자로 변경
 
             //사용자가 명령어 없이 스페이스만 누른 경우 처리
-            if (userInput.Equals(""))
+            if (userInput.Length==0)
             {
                 if (lastCommand == null)
                 {
@@ -521,7 +527,7 @@ namespace bck.SMR_simulator.main
 
             if (main.orbiting) main.TurnOnOrbit(false);
 
-            if (main.fem.selection.Count > 0 & cmd.runSelected != null) //선택된 개체가 있고, cmd.runSelected를 지정한 경우.
+            if (main.Fem.selection.Count > 0 & cmd.runSelected != null) //선택된 개체가 있고, cmd.runSelected를 지정한 경우.
             {
                 WriteText("선택된 개체의 " + cmd.name + "을(를) 실행합니다.");
                 Enter();
@@ -767,7 +773,7 @@ namespace bck.SMR_simulator.main
             {
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
-                main.cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
+                main.Cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
         internal void PutPoints_Point(Point3D userInputPoint3D)
@@ -823,7 +829,7 @@ namespace bck.SMR_simulator.main
                 Point p = e.GetPosition(main.grdMain);
                 Point3D p3 = GetPoint3dFromPoint2D(p);
 
-                main.cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
+                main.Cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
         private void PutPoints_End()
@@ -869,7 +875,7 @@ namespace bck.SMR_simulator.main
                 Point3D p3 = GetPoint3dFromPoint2D(p);
                 main.MouseDown -= GetVector;
                 isMouseInput = true;
-                main.cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
+                main.Cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
         private Point3D vectorFirstPoint;
@@ -924,11 +930,11 @@ namespace bck.SMR_simulator.main
 
         private Point3D GetPoint3dFromPoint2D(Point p0)
         {
-            return main.draw.GetPoint3dOnBasePlane_FromPoint2D(p0);
+            return main.Draw.GetPoint3dOnBasePlane_FromPoint2D(p0);
         }
         private Point GetPointFromPoint3D(Point3D p3d)
         {
-            return main.draw.GetPoint2D_FromPoint3D(p3d);
+            return main.Draw.GetPoint2D_FromPoint3D(p3d);
         }
         enum InputTypes
         {

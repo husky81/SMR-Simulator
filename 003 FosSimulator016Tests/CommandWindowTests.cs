@@ -1,20 +1,21 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using BCK.SmrSimulator.finiteElementMethod;
+using BCK.SmrSimulator.main;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _FosSimulator.Tests
 {
     [TestClass()]
     public class CommandWindowTests
     {
-        string initialCommandLineText = "Command: ";
-
-        MainWindow main = new MainWindow();
-        CommandWindow cmd;
-        FEM fem;
+        readonly string initialCommandLineText = "Command: ";
+        readonly MainWindow main = new MainWindow();
+        readonly CommandWindow cmd;
+        readonly FEM fem;
 
         public CommandWindowTests()
         {
-            cmd = main.cmd;
-            fem = main.fem;
+            cmd = main.Cmd;
+            fem = main.Fem;
         }
 
         public void EraseAll()
@@ -27,8 +28,8 @@ namespace _FosSimulator.Tests
         public void EraseAllTest()
         {
             EraseAll();
-            Assert.AreEqual(0, main.fem.model.nodes.Count);
-            Assert.AreEqual(0, main.fem.model.elems.Count);
+            Assert.AreEqual(0, main.Fem.model.nodes.Count);
+            Assert.AreEqual(0, main.Fem.model.elems.Count);
         }
 
         [TestMethod()]
