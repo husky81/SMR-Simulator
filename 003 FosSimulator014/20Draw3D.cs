@@ -1,5 +1,5 @@
-﻿using BCK.SmrSimulator.draw2d;
-using BCK.SmrSimulator.general_functions;
+﻿using BCK.SmrSimulator.Draw2D;
+using BCK.SmrSimulator.GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -15,18 +15,18 @@ namespace BCK.SmrSimulator.Draw3D
 {
     public partial class BckDraw3D // 기본
     {
-        private readonly Grid grid;
-        public Grid Grid => grid;
+        public Grid Grid { get; }
 
-        public Shape3dCollection shapes;
-        public TextShapes3D texts = new TextShapes3D();
+        public Shape3dCollection Shapes { get; }
+        public TextShapes3D Texts { get; } = new TextShapes3D();
+
         private ModelVisual3D modelVisual3d_Shapes;
         private ModelVisual3D modelVisual3d_Texts;
 
         /// <summary>
         /// 노드 추가할 때 졸졸 따라다니는 sphere.
         /// </summary>
-        public PointMarker3D pointMarker;
+        public PointMarker3D PointMarker { get; set; }
 
         internal void SetBasePlaneGrid()
         {
@@ -175,16 +175,16 @@ namespace BCK.SmrSimulator.Draw3D
         public BckDraw3D(Grid grid)
         {
             //생성자
-            this.grid = grid;
+            this.Grid = grid;
             
-            shapes = new Shape3dCollection();
+            Shapes = new Shape3dCollection();
             viewport.Camera = PCamera;
 
             SetCoordinateSystem();
             SetBasePlaneGrid();
-            pointMarker = new PointMarker3D(this);
+            PointMarker = new PointMarker3D(this);
 
-            RegenerateShapes_ModelVisual3ds();
+            RegenerateShapesModelVisual3ds();
             RedrawShapes();
         }
         public void RedrawShapes()
@@ -201,15 +201,15 @@ namespace BCK.SmrSimulator.Draw3D
             viewport.Children.Add(modelVisual3d_Texts);
             if (showBasePlaneGrid) viewport.Children.Add(modelVisual_BasePlaneGrid);
             if (showCoordinateSystem) viewport.Children.Add(modelVisual_CoordinateSystem);
-            if (pointMarker.visibility) viewport.Children.Add(pointMarker.ModelVisual3D);
+            if (PointMarker.visibility) viewport.Children.Add(PointMarker.ModelVisual3D);
 
             Grid.Children.Clear();
             Grid.Children.Add(viewport);
         }
-        public void RegenerateShapes_ModelVisual3ds()
+        public void RegenerateShapesModelVisual3ds()
         {
-            modelVisual3d_Shapes = shapes.ModelVisual3D();
-            modelVisual3d_Texts = texts.ModelVisual3D();
+            modelVisual3d_Shapes = Shapes.ModelVisual3D();
+            modelVisual3d_Texts = Texts.ModelVisual3D();
         }
 
         /// <summary>
@@ -218,7 +218,7 @@ namespace BCK.SmrSimulator.Draw3D
         /// </summary>
         /// <param name="p0"></param>
         /// <returns></returns>
-        public Point3D GetPoint3dOnBasePlane_FromPoint2D(Point p0)
+        public Point3D GetPoint3dOnBasePlaneFromPoint2D(Point p0)
         {
             //Grid의 마우스 포인트
             double gridHeight = Grid.ActualHeight;
@@ -702,7 +702,7 @@ namespace BCK.SmrSimulator.Draw3D
 
         internal Point3D Position(Point point)
         {
-            position = instance.GetPoint3dOnBasePlane_FromPoint2D(point);
+            position = instance.GetPoint3dOnBasePlaneFromPoint2D(point);
 
             markerShapes.Transform = new TranslateTransform3D(position.X, position.Y, position.Z);
             ModelVisual3D.Content = markerShapes.Model3DGroup();
@@ -748,7 +748,7 @@ namespace BCK.SmrSimulator.Draw3D
             Vector3D dir = pCamera.LookDirection;
             dir.Normalize();
 
-            Point3D shapesCenter = shapes.Center();
+            Point3D shapesCenter = Shapes.Center();
             Vector3D cv = shapesCenter - pos;
             Point3D cvp = new Point3D(cv.X, cv.Y, cv.Z);
             double focalDist = GF.PlanePosition(dir, cvp);
@@ -807,7 +807,7 @@ namespace BCK.SmrSimulator.Draw3D
             //마우스로 pan을 하려면 어차피 카메라와의 특정거리를 선정해야함
             //Shapes의 center 속성으로부터 특정 거리 선정함
             //그 특정거리에 있는 점을 마우스로 잡고 움직이는 것으로 가정.
-            Point3D shapesCenter = shapes.Center();
+            Point3D shapesCenter = Shapes.Center();
             Vector3D cv = shapesCenter - pos;
             Point3D cvp = cv + new Point3D(0, 0, 0);
             double targetDist = GF.PlanePosition(dir, cvp);
@@ -994,7 +994,7 @@ namespace BCK.SmrSimulator.Draw3D
         internal void ViewZoomExtend()
         {
             List<Point3D> points = new List<Point3D>();
-            foreach (Shape3D shape in shapes)
+            foreach (Shape3D shape in Shapes)
             {
                 points.Add(shape.BasePoint);
             }
@@ -1002,8 +1002,8 @@ namespace BCK.SmrSimulator.Draw3D
         }
         internal void ViewZoomWindow(Point inpP0, Point inpP1)
         {
-            Point3D p0 = GetPoint3dOnBasePlane_FromPoint2D(inpP0);
-            Point3D p1 = GetPoint3dOnBasePlane_FromPoint2D(inpP1);
+            Point3D p0 = GetPoint3dOnBasePlaneFromPoint2D(inpP0);
+            Point3D p1 = GetPoint3dOnBasePlaneFromPoint2D(inpP1);
             ViewZoomWindow(p0, p1);
         }
         internal void ViewZoomWindow(Point3D p0, Point3D p1)

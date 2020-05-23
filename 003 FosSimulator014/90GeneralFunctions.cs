@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -7,10 +8,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Media3D;
 
-namespace BCK.SmrSimulator.general_functions
+namespace BCK.SmrSimulator.GeneralFunctions
 {
     public static class GF
     {
+        public static CultureInfo CultureInfo => cultureInfo;
+        private static readonly CultureInfo cultureInfo = new CultureInfo("ko-KR", false);
+
         internal static double Determinant(double[,] mat)
         {
             int size = mat.GetLength(0);
@@ -544,10 +548,10 @@ namespace BCK.SmrSimulator.general_functions
             //radian으로 반환
             double v1v2overv1lv2l = Vector3D.DotProduct(v1, v2) / (v1.Length * v2.Length);
             double rad = Math.Acos(v1v2overv1lv2l);
-            //if (double.IsNaN(rad))
-            //{
-            //
-            //}
+            if (double.IsNaN(rad))
+            {
+                return 0;
+            }
             return rad;
         }
         /// <summary>
@@ -577,8 +581,12 @@ namespace BCK.SmrSimulator.general_functions
     }
     public class SectionPolyPoint
     {
-        public double X;
-        public double Y;
+        private double x;
+        private double y;
+
+        public double X { get => x; set => x = value; }
+        public double Y { get => y; set => y = value; }
+
         public SectionPolyPoint(double x, double y)
         {
             this.X = x;
@@ -594,8 +602,8 @@ namespace BCK.SmrSimulator.general_functions
             {
                 //get the order of determinant from the user
                 Console.WriteLine("Enter the order of determinant: ");
-                int n = int.Parse(Console.ReadLine().ToString());
-                Console.WriteLine("Order of determinant entered: " + n.ToString());
+                int n = int.Parse(Console.ReadLine().ToString(GF.CultureInfo),GF.CultureInfo);
+                Console.WriteLine("Order of determinant entered: " + n.ToString(GF.CultureInfo));
                 if (n > 0)
                 {
                     double[,] myMatrix = new double[n, n];
@@ -605,7 +613,7 @@ namespace BCK.SmrSimulator.general_functions
                         for (int j = 0; j < n; j++)
                         {
                             Console.WriteLine("Enter element [" + (i + 1) + "]" + "[" + (j + 1) + "]: ");
-                            myMatrix[i, j] = double.Parse(Console.ReadLine().ToString());
+                            myMatrix[i, j] = double.Parse(Console.ReadLine().ToString(GF.CultureInfo), GF.CultureInfo);
                         }
                     }
                     //display the entered matrix
@@ -614,7 +622,7 @@ namespace BCK.SmrSimulator.general_functions
                     {
                         for (int j = 0; j < n; j++)
                         {
-                            Console.Write(myMatrix[i, j].ToString() + " ");
+                            Console.Write(myMatrix[i, j].ToString(GF.CultureInfo) + " ");
                         }
                         Console.WriteLine();
                     }
@@ -627,7 +635,7 @@ namespace BCK.SmrSimulator.general_functions
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message.ToString());
+                Console.WriteLine(e.Message.ToString(GF.CultureInfo));
             }
         }
         //this method determines the sign of the elements

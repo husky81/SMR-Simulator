@@ -10,7 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 
-namespace BCK.SmrSimulator.draw2d
+namespace BCK.SmrSimulator.Draw2D
 {
     class Draw2D
     {

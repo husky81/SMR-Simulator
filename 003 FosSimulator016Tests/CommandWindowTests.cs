@@ -1,5 +1,5 @@
 ﻿using BCK.SmrSimulator.finiteElementMethod;
-using BCK.SmrSimulator.main;
+using BCK.SmrSimulator.Main;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _FosSimulator.Tests
@@ -28,8 +28,8 @@ namespace _FosSimulator.Tests
         public void EraseAllTest()
         {
             EraseAll();
-            Assert.AreEqual(0, main.Fem.model.nodes.Count);
-            Assert.AreEqual(0, main.Fem.model.elems.Count);
+            Assert.AreEqual(0, main.Fem.Model.Nodes.Count);
+            Assert.AreEqual(0, main.Fem.Model.Elems.Count);
         }
 
         [TestMethod()]
@@ -41,8 +41,8 @@ namespace _FosSimulator.Tests
             cmd.Call("10,0");
             cmd.Call(" ");
 
-            Assert.AreEqual(2, fem.model.nodes.Count);
-            Assert.AreEqual(1, fem.model.elems.Count);
+            Assert.AreEqual(2, fem.Model.Nodes.Count);
+            Assert.AreEqual(1, fem.Model.Elems.Count);
             Assert.IsTrue(cmd.GetLastLine().Equals(initialCommandLineText));
         }
 
@@ -59,8 +59,8 @@ namespace _FosSimulator.Tests
             cmd.Call("1");
             cmd.Call("Divide");
             cmd.Call("10");
-            Assert.AreEqual(11, fem.model.nodes.Count);
-            Assert.AreEqual(10, fem.model.elems.Count);
+            Assert.AreEqual(11, fem.Model.Nodes.Count);
+            Assert.AreEqual(10, fem.Model.Elems.Count);
             Assert.IsTrue(cmd.GetLastLine().Equals(initialCommandLineText));
         }
 
@@ -81,8 +81,8 @@ namespace _FosSimulator.Tests
                 cmd.Call("Extrude");
                 cmd.Call("@0,1");
                 cmd.Call("5");
-                Assert.AreEqual(12, fem.model.nodes.Count);
-                Assert.AreEqual(5, fem.model.elems.plates.Count);
+                Assert.AreEqual(12, fem.Model.Nodes.Count);
+                Assert.AreEqual(5, fem.Model.Elems.Plates.Count);
                 Assert.IsTrue(cmd.GetLastLine().Equals(initialCommandLineText));
             }
         }

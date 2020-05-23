@@ -1,6 +1,6 @@
-﻿using BCK.SmrSimulator.draw2d;
+﻿using BCK.SmrSimulator.Draw2D;
 using BCK.SmrSimulator.Draw3D;
-using BCK.SmrSimulator.general_functions;
+using BCK.SmrSimulator.GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,7 +11,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 
-namespace BCK.SmrSimulator.main
+namespace BCK.SmrSimulator.Main
 {
     public class CommandWindow
     {
@@ -429,7 +429,7 @@ namespace BCK.SmrSimulator.main
         {
             int falseResult = -1;
             //인풋 텍스트에 쉼표가 1-2개 있고 그 사이값이 전부 double인 경우 true 반환
-            int firstCommaLocation = userInput.IndexOf(",");
+            int firstCommaLocation = userInput.IndexOf(",", StringComparison.CurrentCultureIgnoreCase);
             double doubleValue;
             int intValue;
             if (firstCommaLocation == -1)
@@ -460,9 +460,10 @@ namespace BCK.SmrSimulator.main
             {
                 return falseResult;
             }
+            
             try
             {
-                firstValue = double.Parse(firstString);
+                firstValue = double.Parse(firstString, main.CultureInfo.NumberFormat);
             }
             catch (Exception)
             {
@@ -471,7 +472,7 @@ namespace BCK.SmrSimulator.main
 
             string restString = userInput.Substring(firstCommaLocation + 1);
 
-            int secondCommaLocation = restString.IndexOf(",");
+            int secondCommaLocation = restString.IndexOf(",", StringComparison.CurrentCultureIgnoreCase);
             string secondString;
             double secondValue = 0;
             if (secondCommaLocation < 0)
@@ -527,7 +528,7 @@ namespace BCK.SmrSimulator.main
 
             if (main.orbiting) main.TurnOnOrbit(false);
 
-            if (main.Fem.selection.Count > 0 & cmd.runSelected != null) //선택된 개체가 있고, cmd.runSelected를 지정한 경우.
+            if (main.Fem.Selection.Count > 0 & cmd.runSelected != null) //선택된 개체가 있고, cmd.runSelected를 지정한 경우.
             {
                 WriteText("선택된 개체의 " + cmd.name + "을(를) 실행합니다.");
                 Enter();
@@ -930,7 +931,7 @@ namespace BCK.SmrSimulator.main
 
         private Point3D GetPoint3dFromPoint2D(Point p0)
         {
-            return main.Draw.GetPoint3dOnBasePlane_FromPoint2D(p0);
+            return main.Draw.GetPoint3dOnBasePlaneFromPoint2D(p0);
         }
         private Point GetPointFromPoint3D(Point3D p3d)
         {

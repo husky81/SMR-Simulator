@@ -1,4 +1,4 @@
-﻿using BCK.SmrSimulator.draw2d;
+﻿using BCK.SmrSimulator.Draw2D;
 using BCK.SmrSimulator.Draw3D;
 using BCK.SmrSimulator.finiteElementMethod;
 using System;
@@ -24,7 +24,7 @@ using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace BCK.SmrSimulator.main
+namespace BCK.SmrSimulator.Main
 {
     partial class MainWindow : Window
     {
@@ -34,7 +34,7 @@ namespace BCK.SmrSimulator.main
 
         public Draw3D.BckDraw3D Draw => draw;
         private readonly Draw3D.BckDraw3D draw;
-        internal readonly Draw2D draw2d;
+        internal readonly Draw2D.Draw2D draw2d;
         internal SelectionWindow selectionWindow;
 
         public CommandWindow Cmd => cmd;
@@ -42,8 +42,6 @@ namespace BCK.SmrSimulator.main
         internal RequestUserInput requestUserInput;
 
         public CultureInfo CultureInfo => cultureInfo;
-
-
         private readonly CultureInfo cultureInfo = new CultureInfo("ko-KR", false);
 
 
@@ -57,7 +55,7 @@ namespace BCK.SmrSimulator.main
             fem.cmd = cmd; //fem에서 메시지를 보내기위한 용도로만 사용함.
 
             draw = new Draw3D.BckDraw3D(grdMain);
-            draw2d = new Draw2D(grdMain);
+            draw2d = new Draw2D.Draw2D(grdMain);
 
             selectionWindow = new SelectionWindow(grdMain);
             requestUserInput = new RequestUserInput(this);
@@ -160,7 +158,7 @@ namespace BCK.SmrSimulator.main
             Cmd.Call("@0,1");
             Cmd.Call("5");
 
-            if (Fem.model.elems.Count != 5) return false;
+            if (Fem.Model.Elems.Count != 5) return false;
 
             Cmd.Call("Erase");
             Cmd.Call("All");
@@ -175,19 +173,19 @@ namespace BCK.SmrSimulator.main
             Cmd.Call("@0,1");
             Cmd.Call("5");
 
-            if (Fem.model.elems.Count != 5) return false;
+            if (Fem.Model.Elems.Count != 5) return false;
 
             return true;
         }
         private void TestExtrude()
         {
             Fem.Initialize();
-            FemMaterial matl1 = Fem.model.materials.AddConcrete("C30");
-            FemSection sect1 = Fem.model.sections.AddRectangle(1, 0.2);
+            FemMaterial matl1 = Fem.Model.Materials.AddConcrete("C30");
+            FemSection sect1 = Fem.Model.Sections.AddRectangle(1, 0.2);
 
-            FemNode n1 = Fem.model.nodes.Add(0, 0, 0);
-            FemNode n2 = Fem.model.nodes.Add(10, 0, 0);
-            FemFrame f = Fem.model.elems.AddFrame(n1, n2);
+            FemNode n1 = Fem.Model.Nodes.Add(0, 0, 0);
+            FemNode n2 = Fem.Model.Nodes.Add(10, 0, 0);
+            FemFrame f = Fem.Model.Elems.AddFrame(n1, n2);
             f.Material = matl1;
             f.Section = sect1;
             Fem.Select(f);
@@ -216,7 +214,7 @@ namespace BCK.SmrSimulator.main
                 {
                     Point3D p0 = new Point3D(i, j, 0);
 
-                    Fem.model.nodes.Add(i, j, 0);
+                    Fem.Model.Nodes.Add(i, j, 0);
                 }
             }
         }
@@ -224,12 +222,12 @@ namespace BCK.SmrSimulator.main
         private void FemTest_Solid003(object sender, RoutedEventArgs e)
         {
             Fem.Initialize();
-            FemMaterial matl1 = Fem.model.materials.AddConcrete("C30");
-            FemSection sect1 = Fem.model.sections.AddRectangle(1, 0.2);
+            FemMaterial matl1 = Fem.Model.Materials.AddConcrete("C30");
+            FemSection sect1 = Fem.Model.Sections.AddRectangle(1, 0.2);
 
-            FemNode n1 = Fem.model.nodes.Add(0, 0, 0);
-            FemNode n2 = Fem.model.nodes.Add(2, 0, 0);
-            FemFrame f = Fem.model.elems.AddFrame(n1, n2);
+            FemNode n1 = Fem.Model.Nodes.Add(0, 0, 0);
+            FemNode n2 = Fem.Model.Nodes.Add(2, 0, 0);
+            FemFrame f = Fem.Model.Elems.AddFrame(n1, n2);
             f.Material = matl1;
             f.Section = sect1;
             Fem.Select(f);
@@ -237,28 +235,28 @@ namespace BCK.SmrSimulator.main
 
             Fem.SelectElemAll();
             Vector3D dir = new Vector3D(0, 1, 0);
-            FemElementCollections ee = Fem.ExtrudeSelectedElems(dir, 2);
+            FemElementCollection ee = Fem.ExtrudeSelectedElems(dir, 2);
             
             dir = new Vector3D(0, 0, 0.5);
             Fem.Extrude(ee, dir, 20);
             
-            Fem.model.boundaries.AddBoundary(Fem.model.nodes[0], 1, 1, 1, 1, 1, 1);
-            Fem.model.boundaries.AddBoundary(Fem.model.nodes[1], 1, 1, 1, 1, 1, 1);
-            Fem.model.boundaries.AddBoundary(Fem.model.nodes[2], 1, 1, 1, 1, 1, 1);
-            Fem.model.boundaries.AddBoundary(Fem.model.nodes[3], 1, 1, 1, 1, 1, 1);
-            Fem.model.boundaries.AddBoundary(Fem.model.nodes[4], 1, 1, 1, 1, 1, 1);
-            Fem.model.boundaries.AddBoundary(Fem.model.nodes[5], 1, 1, 1, 1, 1, 1);
-            Fem.model.boundaries.AddBoundary(Fem.model.nodes[6], 1, 1, 1, 1, 1, 1);
-            Fem.model.boundaries.AddBoundary(Fem.model.nodes[7], 1, 1, 1, 1, 1, 1);
-            Fem.model.boundaries.AddBoundary(Fem.model.nodes[8], 1, 1, 1, 1, 1, 1);
+            Fem.Model.Boundaries.AddBoundary(Fem.Model.Nodes[0], 1, 1, 1, 1, 1, 1);
+            Fem.Model.Boundaries.AddBoundary(Fem.Model.Nodes[1], 1, 1, 1, 1, 1, 1);
+            Fem.Model.Boundaries.AddBoundary(Fem.Model.Nodes[2], 1, 1, 1, 1, 1, 1);
+            Fem.Model.Boundaries.AddBoundary(Fem.Model.Nodes[3], 1, 1, 1, 1, 1, 1);
+            Fem.Model.Boundaries.AddBoundary(Fem.Model.Nodes[4], 1, 1, 1, 1, 1, 1);
+            Fem.Model.Boundaries.AddBoundary(Fem.Model.Nodes[5], 1, 1, 1, 1, 1, 1);
+            Fem.Model.Boundaries.AddBoundary(Fem.Model.Nodes[6], 1, 1, 1, 1, 1, 1);
+            Fem.Model.Boundaries.AddBoundary(Fem.Model.Nodes[7], 1, 1, 1, 1, 1, 1);
+            Fem.Model.Boundaries.AddBoundary(Fem.Model.Nodes[8], 1, 1, 1, 1, 1, 1);
             
             Vector3D force = new Vector3D(1000, 0, 0);
             Vector3D moment = new Vector3D(0, 0, 0);
             
-            FemNode np = Fem.model.nodes.GetNode(188);
+            FemNode np = Fem.Model.Nodes.GetNode(188);
             if (np != null)
             {
-                Fem.loads.AddNodal(np, force, moment);
+                Fem.Loads.AddNodal(np, force, moment);
             }
 
 
@@ -278,29 +276,29 @@ namespace BCK.SmrSimulator.main
         private void FemTest_SimpleBeamLoadZ(object sender, RoutedEventArgs e)
         {
             Fem.Initialize();
-            FemMaterial matl1 = Fem.model.materials.AddConcrete("C30");
+            FemMaterial matl1 = Fem.Model.Materials.AddConcrete("C30");
 
             double width = 1;
             double height = 0.2;
-            FemSection sect1 = Fem.model.sections.AddRectangle(width, height);
+            FemSection sect1 = Fem.Model.Sections.AddRectangle(width, height);
 
-            FemNode n1 = Fem.model.nodes.Add(0, 0, 0);
-            FemNode n2 = Fem.model.nodes.Add(10, 0, 0);
-            FemFrame f = Fem.model.elems.AddFrame(n1, n2);
+            FemNode n1 = Fem.Model.Nodes.Add(0, 0, 0);
+            FemNode n2 = Fem.Model.Nodes.Add(10, 0, 0);
+            FemFrame f = Fem.Model.Elems.AddFrame(n1, n2);
             f.Material = matl1;
             f.Section = sect1;
             
             Fem.Select(f);
             Fem.DivideSelectedElems(10);
 
-            Fem.model.boundaries.AddBoundary(n1, 1, 1, 1, 1, 0, 0);
-            Fem.model.boundaries.AddBoundary(n2, 0, 1, 1, 0, 0, 0);
+            Fem.Model.Boundaries.AddBoundary(n1, 1, 1, 1, 1, 0, 0);
+            Fem.Model.Boundaries.AddBoundary(n2, 0, 1, 1, 0, 0, 0);
 
             Vector3D force = new Vector3D(0, 0, -50);
             Vector3D moment = new Vector3D(0, 0, 0);
 
-            FemNode np = Fem.model.nodes.GetNode(4);
-            Fem.loads.AddNodal(np, force, moment);
+            FemNode np = Fem.Model.Nodes.GetNode(4);
+            Fem.Loads.AddNodal(np, force, moment);
 
             Fem.Solve();
 
@@ -309,29 +307,29 @@ namespace BCK.SmrSimulator.main
         private void FemTest_SimpleBeamLoadY(object sender, RoutedEventArgs e)
         {
             Fem.Initialize();
-            FemMaterial matl1 = Fem.model.materials.AddConcrete("C30");
+            FemMaterial matl1 = Fem.Model.Materials.AddConcrete("C30");
 
             double width = 1;
             double height = 0.2;
-            FemSection sect1 = Fem.model.sections.AddRectangle(width, height);
+            FemSection sect1 = Fem.Model.Sections.AddRectangle(width, height);
 
-            FemNode n1 = Fem.model.nodes.Add(0, 0, 0);
-            FemNode n2 = Fem.model.nodes.Add(10, 0, 0);
-            FemFrame f = Fem.model.elems.AddFrame(n1, n2);
+            FemNode n1 = Fem.Model.Nodes.Add(0, 0, 0);
+            FemNode n2 = Fem.Model.Nodes.Add(10, 0, 0);
+            FemFrame f = Fem.Model.Elems.AddFrame(n1, n2);
             f.Material = matl1;
             f.Section = sect1;
 
             Fem.Select(f);
             Fem.DivideSelectedElems(10);
 
-            Fem.model.boundaries.AddBoundary(n1, 1, 1, 1, 1, 0, 0);
-            Fem.model.boundaries.AddBoundary(n2, 0, 1, 1, 0, 0, 0);
+            Fem.Model.Boundaries.AddBoundary(n1, 1, 1, 1, 1, 0, 0);
+            Fem.Model.Boundaries.AddBoundary(n2, 0, 1, 1, 0, 0, 0);
 
             Vector3D force = new Vector3D(0, 600, 0);
             Vector3D moment = new Vector3D(0, 0, 0);
 
-            FemNode np = Fem.model.nodes.GetNode(7);
-            Fem.loads.AddNodal(np, force, moment);
+            FemNode np = Fem.Model.Nodes.GetNode(7);
+            Fem.Loads.AddNodal(np, force, moment);
 
             Fem.Solve();
 
@@ -353,8 +351,8 @@ namespace BCK.SmrSimulator.main
             Point3D center = new Point3D(-1, -1, -1);
             Vector3D heightVector = new Vector3D(10,0, 0);
             //bckD.DrawCone(center, radius, heightVector, resolution, Colors.AliceBlue);
-            Draw.shapes.AddCone(radius, heightVector, center, 6);
-            Draw.RegenerateShapes_ModelVisual3ds();
+            Draw.Shapes.AddCone(radius, heightVector, center, 6);
+            Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
         }
         private void DrawCoordinationMark(object sender, RoutedEventArgs e)
@@ -367,20 +365,20 @@ namespace BCK.SmrSimulator.main
             Vector3D dir = new Vector3D(len, 0, 0);
             
             //bckD.DrawCylinderClosed(str, dir, dia, resolution, Colors.Red);
-            Draw.shapes.AddCylinderClosed(str, dir, dia, resolution);
-            Draw.shapes.RecentShape.Color(Colors.Red);
+            Draw.Shapes.AddCylinderClosed(str, dir, dia, resolution);
+            Draw.Shapes.RecentShape.Color(Colors.Red);
 
 
             dir = new Vector3D(0, len, 0);
-            Draw.shapes.AddCylinderClosed(str, dir, dia, resolution);
-            Draw.shapes.RecentShape.Color(Colors.Green);
+            Draw.Shapes.AddCylinderClosed(str, dir, dia, resolution);
+            Draw.Shapes.RecentShape.Color(Colors.Green);
 
             dir = new Vector3D(0, 0, len);
             //bckD.DrawCylinderClosed(str, dir, dia, resolution, Colors.Black);
-            Draw.shapes.AddCylinderClosed(str, dir, dia, resolution);
-            Draw.shapes.RecentShape.Color(Colors.Black);
+            Draw.Shapes.AddCylinderClosed(str, dir, dia, resolution);
+            Draw.Shapes.RecentShape.Color(Colors.Black);
             //bckD.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(10, 10, 10));
-            Draw.RegenerateShapes_ModelVisual3ds();
+            Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
         }
         private void DrawSphere(object sender, RoutedEventArgs e)
@@ -389,9 +387,9 @@ namespace BCK.SmrSimulator.main
             double diameter = 5;
             int resolution = 48;
 
-            Draw.shapes.AddSphere(point, diameter, resolution);
-            Draw.shapes.RecentShape.Color(Colors.Red);
-            Draw.RegenerateShapes_ModelVisual3ds();
+            Draw.Shapes.AddSphere(point, diameter, resolution);
+            Draw.Shapes.RecentShape.Color(Colors.Red);
+            Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
         }
         private void DrawPerformanceTest(object sender, RoutedEventArgs e)
@@ -402,12 +400,12 @@ namespace BCK.SmrSimulator.main
                 {
                     for (int k = 1; k < 20; k++)
                     {
-                        Draw.shapes.AddCylinderClosed(new Point3D(i, j, k), new Vector3D(0.5, 0, 0), 0.2, 16);
-                        Draw.shapes.RecentShape.Color(Colors.Magenta);
+                        Draw.Shapes.AddCylinderClosed(new Point3D(i, j, k), new Vector3D(0.5, 0, 0), 0.2, 16);
+                        Draw.Shapes.RecentShape.Color(Colors.Magenta);
                     }
                 }
             }
-            Draw.RegenerateShapes_ModelVisual3ds();
+            Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
         }
 
@@ -487,7 +485,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput = new RequestUserInput(this);
             requestUserInput.viewType = SelectionWindow.ViewType.Cross;
             requestUserInput.RequestPoints(-1);
-            requestUserInput.actionAfterEveryLastPointWithPoint += Fem.model.nodes.Add_NoReturn;
+            requestUserInput.actionAfterEveryLastPointWithPoint += Fem.Model.Nodes.Add_NoReturn;
             requestUserInput.actionAfterEveryPoint += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -507,9 +505,9 @@ namespace BCK.SmrSimulator.main
         }
         internal void AddFemLine(Point3D p0, Point3D p1)
         {
-            FemNode n1 = Fem.model.nodes.Add(p0);
-            FemNode n2 = Fem.model.nodes.Add(p1);
-            Fem.model.elems.AddFrame(n1, n2);
+            FemNode n1 = Fem.Model.Nodes.Add(p0);
+            FemNode n2 = Fem.Model.Nodes.Add(p1);
+            Fem.Model.Elems.AddFrame(n1, n2);
         }
 
         private void FemDivide(object sender, RoutedEventArgs e)
@@ -522,7 +520,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestElemSelection(Properties.Resource.String1);
             requestUserInput.RequestInt(Properties.Resource.String3);
             requestUserInput.actionAfterIntWithInt += Fem.DivideSelectedElems;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -537,7 +535,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestVector(Properties.Resource.String5);
             requestUserInput.RequestInt(Properties.Resource.String6);
             requestUserInput.actionAfterIntWithVecInt += Fem.ExtrudeWoReturn;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -548,7 +546,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 0, 1, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -558,7 +556,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 1, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -567,7 +565,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput = new RequestUserInput(this);
             requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             requestUserInput.actionEnd += BoundaryRemoveAll;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -580,7 +578,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 0, 0, 0, 1 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -590,7 +588,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 0, 1, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -600,7 +598,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 0, 1, 0, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -610,7 +608,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 1, 0, 0, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -620,7 +618,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 1, 1, 1, 0, 0, 0 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -630,7 +628,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestNodeSelection(Properties.Resource.String10);
             boundaryFixFreeCondition = new int[] { 1, 1, 1, 1, 1, 1 };
             requestUserInput.actionEnd += BoundaryAdd_SelectedNode;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -643,9 +641,9 @@ namespace BCK.SmrSimulator.main
             int rx = boundaryFixFreeCondition[3];
             int ry = boundaryFixFreeCondition[4];
             int rz = boundaryFixFreeCondition[5];
-            foreach (FemNode node in Fem.selection.nodes)
+            foreach (FemNode node in Fem.Selection.nodes)
             {
-                Fem.model.boundaries.AddBoundary(node, dx, dy, dz, rx, ry, rz);
+                Fem.Model.Boundaries.AddBoundary(node, dx, dy, dz, rx, ry, rz);
             }
         }
 
@@ -659,7 +657,7 @@ namespace BCK.SmrSimulator.main
             requestUserInput.RequestNodeSelection("하중을 재하할 노드를 선택하세요.");
             requestUserInput.RequestVectorValue("하중의 크기를 지정하세요. (ex. 10,0,0)");
             requestUserInput.actionAfterVecWithVec += Fem.AddForceSelectedNodes;
-            requestUserInput.actionEnd += Fem.selection.Clear;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();
         }
@@ -768,8 +766,8 @@ namespace BCK.SmrSimulator.main
             smr.structure.height = Convert.ToDouble(tbxHeight.Text);
             smr.structure.length = Convert.ToDouble(tbxLength.Text);
             smr.structure.width = Convert.ToDouble(tbxWidth.Text);
-            Draw.shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(smr.structure.length, smr.structure.width, smr.structure.height));
-            Draw.RegenerateShapes_ModelVisual3ds();
+            Draw.Shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(smr.structure.length, smr.structure.width, smr.structure.height));
+            Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
 
     
@@ -790,52 +788,52 @@ namespace BCK.SmrSimulator.main
             treeViewFemWorks.Items.Clear();
 
             TreeViewItem item = new TreeViewItem();
-            item.Header = "Materials(" + Fem.model.materials.Count + ")";
+            item.Header = "Materials(" + Fem.Model.Materials.Count + ")";
             item.IsExpanded = false;
-            foreach (FemMaterial material in Fem.model.materials)
+            foreach (FemMaterial material in Fem.Model.Materials)
             {
                 item.Items.Add(new TreeViewItem() { Header = material.name });
             }
             treeViewFemWorks.Items.Add(item);
 
             item = new TreeViewItem();
-            item.Header = "Sections(" + Fem.model.sections.Count + ")";
+            item.Header = "Sections(" + Fem.Model.Sections.Count + ")";
             item.IsExpanded = false;
-            foreach (FemSection section in Fem.model.sections)
+            foreach (FemSection section in Fem.Model.Sections)
             {
                 item.Items.Add(new TreeViewItem() { Header = section.num });
             }
             treeViewFemWorks.Items.Add(item);
 
             item = new TreeViewItem();
-            item.Header = "Nodes(" + Fem.model.nodes.Count + ")";
+            item.Header = "Nodes(" + Fem.Model.Nodes.Count + ")";
             item.IsExpanded = true;
             treeViewFemWorks.Items.Add(item);
 
             item = new TreeViewItem();
-            FemElementCollections elems = Fem.model.elems;
+            FemElementCollection elems = Fem.Model.Elems;
             item.Header = "Elements(" + elems.Count + ")";
             item.IsExpanded = true;
-            if (elems.frames.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Frame(" + elems.frames.Count + ")" });
-            if (elems.plates.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Plate(" + elems.plates.Count + ")" });
-            if (elems.solids.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Solid(" + elems.solids.Count + ")" });
+            if (elems.Frames.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Frame(" + elems.Frames.Count + ")" });
+            if (elems.Plates.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Plate(" + elems.Plates.Count + ")" });
+            if (elems.Solids.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Solid(" + elems.Solids.Count + ")" });
             treeViewFemWorks.Items.Add(item);
 
             item = new TreeViewItem();
-            item.Header = "Boundaries(" + Fem.model.boundaries.Count + ")";
+            item.Header = "Boundaries(" + Fem.Model.Boundaries.Count + ")";
             item.IsExpanded = false;
-            foreach (FemBoundary boundary in Fem.model.boundaries)
+            foreach (FemBoundary boundary in Fem.Model.Boundaries)
             {
-                item.Items.Add(new TreeViewItem() { Header = boundary.node.num });
+                item.Items.Add(new TreeViewItem() { Header = boundary.node.Num });
             }
             treeViewFemWorks.Items.Add(item);
 
             item = new TreeViewItem();
-            item.Header = "Loads(" + Fem.loads.Count + ")";
+            item.Header = "Loads(" + Fem.Loads.Count + ")";
             item.IsExpanded = false;
-            foreach (FemBoundary boundary in Fem.model.boundaries)
+            foreach (FemBoundary boundary in Fem.Model.Boundaries)
             {
-                item.Items.Add(new TreeViewItem() { Header = boundary.node.num });
+                item.Items.Add(new TreeViewItem() { Header = boundary.node.Num });
             }
             treeViewFemWorks.Items.Add(item);
         }
@@ -844,14 +842,14 @@ namespace BCK.SmrSimulator.main
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
             Draw.showCoordinateSystem = sd.IsChecked;
-            Draw.RegenerateShapes_ModelVisual3ds();
+            Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
         }
         private void ViewBasePlaneGrid(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
             Draw.showBasePlaneGrid = sd.IsChecked;
-            Draw.RegenerateShapes_ModelVisual3ds();
+            Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
         }
 
@@ -867,11 +865,11 @@ namespace BCK.SmrSimulator.main
             bool showSection = true;
 
             double maxLoadLength = 2;
-            double maxLoadSize = Fem.loads.GetMaxLoadLength();
+            double maxLoadSize = Fem.Loads.GetMaxLoadLength();
             double loadViewScale = maxLoadLength / maxLoadSize;
 
-            Draw.shapes.Clear();
-            Draw.texts.Clear();
+            Draw.Shapes.Clear();
+            Draw.Texts.Clear();
 
             double diaNode;
             double diaElem;
@@ -892,79 +890,79 @@ namespace BCK.SmrSimulator.main
             //Deformation
             if (Fem.solved)
             {
-                if (Fem.model.nodes.visibility)
+                if (Fem.Model.Nodes.visibility)
                 {
-                    foreach (FemNode node in Fem.model.nodes)
+                    foreach (FemNode node in Fem.Model.Nodes)
                     {
-                        Draw.shapes.AddSphere(node.c1, diaNode, rlsNode);
-                        Draw.shapes.RecentShape.Color(colorNode);
+                        Draw.Shapes.AddSphere(node.C1, diaNode, rlsNode);
+                        Draw.Shapes.RecentShape.Color(colorNode);
                     }
                 }
                 if (Properties.Settings.Default.isFemViewNode)
                 {
-                    foreach (FemNode node in Fem.model.nodes)
+                    foreach (FemNode node in Fem.Model.Nodes)
                     {
-                        Draw.texts.Add(node.num.ToString(), node.c1, 8);
+                        Draw.Texts.Add(node.Num.ToString(), node.C1, 8);
                     }
                 }
-                if (Fem.model.elems.show)
+                if (Fem.Model.Elems.show)
                 {
-                    foreach (FemElement e in Fem.model.elems)
+                    foreach (FemElement e in Fem.Model.Elems)
                     {
                         switch (e.type)
                         {
                             case 21:
                                 FemFrame frame = (FemFrame)e;
-                                Point3D str = frame.nodes[0].c1;
-                                Point3D end = frame.nodes[1].c1;
+                                Point3D str = frame.nodes[0].C1;
+                                Point3D end = frame.nodes[1].C1;
                                 Vector3D dir = end - str;
                                 if (showSection)
                                 {
-                                    Draw.shapes.AddPolygon(str, dir, frame.Section.poly);
+                                    Draw.Shapes.AddPolygon(str, dir, frame.Section.Poly);
                                 }
                                 else
                                 {
-                                    Draw.shapes.AddCylinder(str, dir, diaElem, rlsElem);
+                                    Draw.Shapes.AddCylinder(str, dir, diaElem, rlsElem);
                                 }
                                 break;
                             case 40:
                                 FemPlate p = (FemPlate)e;
-                                Draw.shapes.AddBox(p.nodes[0].c1, p.nodes[2].c1 - p.nodes[0].c1);
+                                Draw.Shapes.AddBox(p.nodes[0].C1, p.nodes[2].C1 - p.nodes[0].C1);
 
                                 break;
                             case 80:
                                 FemSolid s = (FemSolid)e;
-                                Draw.shapes.AddHexahedron(s.nodes[0].c1, s.nodes[1].c1, s.nodes[2].c1, s.nodes[3].c1, s.nodes[4].c1, s.nodes[5].c1, s.nodes[6].c1, s.nodes[7].c1);
+                                Draw.Shapes.AddHexahedron(s.nodes[0].C1, s.nodes[1].C1, s.nodes[2].C1, s.nodes[3].C1, s.nodes[4].C1, s.nodes[5].C1, s.nodes[6].C1, s.nodes[7].C1);
                                 break;
                             default:
-                                Draw.shapes.RecentShape.Color(colorElem);
+                                Draw.Shapes.RecentShape.Color(colorElem);
                                 break;
                         }
                     }
                 }
-                if (Fem.model.elems.showNumber)
+                if (Fem.Model.Elems.showNumber)
                 {
-                    foreach (FemElement elem in Fem.model.elems)
+                    foreach (FemElement elem in Fem.Model.Elems)
                     {
-                        Draw.texts.Add(elem.Num.ToString(), elem.Center, 8);
+                        Draw.Texts.Add(elem.Num.ToString(), elem.Center, 8);
                     }
                 }
 
-                foreach (FemLoad load in Fem.loads)
+                foreach (FemLoad load in Fem.Loads)
                 {
                     foreach (FemNodalLoad nodalLoad in load.nodalLoads)
                     {
-                        Draw.shapes.AddForce(nodalLoad.node.c1, nodalLoad.force * loadViewScale);
-                        Draw.shapes.RecentShape.Color(colorLoad);
+                        Draw.Shapes.AddForce(nodalLoad.node.C1, nodalLoad.force * loadViewScale);
+                        Draw.Shapes.RecentShape.Color(colorLoad);
                     }
                 }
 
                 //Reaction Force
-                foreach (FemNode node in Fem.model.nodes)
+                foreach (FemNode node in Fem.Model.Nodes)
                 {
                     Vector3D dir = new Vector3D(node.reactionForce[0], node.reactionForce[1], node.reactionForce[2]);
-                    Draw.shapes.AddForce(node.c1, dir * loadViewScale);
-                    Draw.shapes.RecentShape.Color(colorReaction);
+                    Draw.Shapes.AddForce(node.C1, dir * loadViewScale);
+                    Draw.Shapes.RecentShape.Color(colorReaction);
                 }
             }
 
@@ -990,91 +988,91 @@ namespace BCK.SmrSimulator.main
 
                 if (!Fem.solved)
                 {
-                    if (Fem.model.nodes.visibility)
+                    if (Fem.Model.Nodes.visibility)
                     {
-                        foreach (FemNode node in Fem.model.nodes)
+                        foreach (FemNode node in Fem.Model.Nodes)
                         {
-                            Draw.shapes.AddSphere(node.c0, diaNode, rlsNode);
+                            Draw.Shapes.AddSphere(node.C0, diaNode, rlsNode);
                             if (node.selected)
                             {
-                                Draw.shapes.RecentShape.Color(colorSelectedNode);
+                                Draw.Shapes.RecentShape.Color(colorSelectedNode);
                             }
                             else
                             {
-                                Draw.shapes.RecentShape.Color(colorNode);
+                                Draw.Shapes.RecentShape.Color(colorNode);
                             }
-                            Draw.shapes.RecentShape.Opacity(opacity);
+                            Draw.Shapes.RecentShape.Opacity(opacity);
                         }
                     }
                     if (Properties.Settings.Default.isFemViewNode)
                     {
-                        foreach (FemNode node in Fem.model.nodes)
+                        foreach (FemNode node in Fem.Model.Nodes)
                         {
-                            Draw.texts.Add(node.num.ToString(), node.c0, 8);
+                            Draw.Texts.Add(node.Num.ToString(), node.C0, 8);
                         }
                     }
 
                 }
-                if (Fem.model.elems.show)
+                if (Fem.Model.Elems.show)
                 {
-                    foreach (FemElement e in Fem.model.elems)
+                    foreach (FemElement e in Fem.Model.Elems)
                     {
                         switch (e.type)
                         {
                             case 21:
                                 FemFrame frame = (FemFrame)e;
-                                Point3D str = frame.nodes[0].c0;
-                                Point3D end = frame.nodes[1].c0;
+                                Point3D str = frame.nodes[0].C0;
+                                Point3D end = frame.nodes[1].C0;
                                 Vector3D dir = end - str;
 
                                 if(frame.Section == null)
                                 {
-                                    Draw.shapes.AddCylinder(str, dir, diaElem, rlsElem);
+                                    Draw.Shapes.AddCylinder(str, dir, diaElem, rlsElem);
                                 }
                                 else
                                 {
                                     if(showSection & frame.Section.hasSectionPoly)
                                     {
-                                        Draw.shapes.AddPolygon(str, dir, frame.Section.poly);
+                                        Draw.Shapes.AddPolygon(str, dir, frame.Section.Poly);
                                     }
                                     else
                                     {
-                                        Draw.shapes.AddCylinder(str, dir, diaElem, rlsElem);
+                                        Draw.Shapes.AddCylinder(str, dir, diaElem, rlsElem);
                                     }
                                 }
                                 break;
                             case 40:
                                 FemPlate p = (FemPlate)e;
                                 //draw.shapes.AddBox(p.nodes[0].c0, p.nodes[2].c0 - p.nodes[0].c0);
-                                Draw.shapes.AddRectangle(p.nodes[0].c0, p.nodes[1].c0, p.nodes[2].c0, p.nodes[3].c0);
+                                Draw.Shapes.AddRectangle(p.nodes[0].C0, p.nodes[1].C0, p.nodes[2].C0, p.nodes[3].C0);
                                 break;
                             case 80:
                                 FemSolid s = (FemSolid)e;
-                                Draw.shapes.AddHexahedron(s.nodes[0].c0, s.nodes[1].c0, s.nodes[2].c0, s.nodes[3].c0, s.nodes[4].c0, s.nodes[5].c0, s.nodes[6].c0, s.nodes[7].c0);
+                                Draw.Shapes.AddHexahedron(s.nodes[0].C0, s.nodes[1].C0, s.nodes[2].C0, s.nodes[3].C0, s.nodes[4].C0, s.nodes[5].C0, s.nodes[6].C0, s.nodes[7].C0);
                                 break;
                             default:
                                 break;
                         }
                         if (e.selected)
                         {
-                            Draw.shapes.RecentShape.Color(colorSelectedElem);
+                            Draw.Shapes.RecentShape.Color(colorSelectedElem);
                         }
                         else
                         {
-                            Draw.shapes.RecentShape.Color(colorElem);
+                            Draw.Shapes.RecentShape.Color(colorElem);
                         }
-                        Draw.shapes.RecentShape.Opacity(opacity);
+                        Draw.Shapes.RecentShape.Opacity(opacity);
                     }
                 }
                 if (showUndeformedForce)
                 {
-                    foreach (FemLoad load in Fem.loads)
+                    foreach (FemLoad load in Fem.Loads)
                     {
                         foreach (FemNodalLoad nodalLoad in load.nodalLoads)
                         {
-                            Draw.shapes.AddForce(load.nodalLoads[0].node.c0, nodalLoad.force * loadViewScale);
-                            Draw.shapes.RecentShape.Color(colorLoad);
-                            Draw.shapes.RecentShape.Opacity(opacity);
+                            Draw.Shapes.AddForce(load.nodalLoads[0].node.C0, nodalLoad.force * loadViewScale);
+                            Draw.Shapes.RecentShape.Color(colorLoad);
+                            Draw.Shapes.RecentShape.Opacity(opacity);
                         }
                     }
                 }
@@ -1088,7 +1086,7 @@ namespace BCK.SmrSimulator.main
         }
         public void RedrawShapes()
         {
-            Draw.RegenerateShapes_ModelVisual3ds();
+            Draw.RegenerateShapesModelVisual3ds();
             RedrawShapesWoGeneration();
         }
         public void RedrawShapesWoGeneration()
@@ -1103,12 +1101,12 @@ namespace BCK.SmrSimulator.main
         private void Redraw3dRelated2dShapes()
         {
             if (grdMain.ActualHeight == 0) return;
-            if (Fem.model.boundaries.visibility)
+            if (Fem.Model.Boundaries.visibility)
             {
                 draw2d.boundaryConditionMarks.Clear();
-                foreach (FemBoundary boundary in Fem.model.boundaries)
+                foreach (FemBoundary boundary in Fem.Model.Boundaries)
                 {
-                    Point3D p0 = boundary.node.c0;
+                    Point3D p0 = boundary.node.C0;
                     Point p = Draw.GetPoint2D_FromPoint3D(p0);
                     draw2d.boundaryConditionMarks.Add(p, boundary.condition);
                 }
@@ -1117,11 +1115,11 @@ namespace BCK.SmrSimulator.main
             draw2d.texts.Clear();
             if (Properties.Settings.Default.isFemViewNode)
             {
-                foreach (FemNode node in Fem.model.nodes)
+                foreach (FemNode node in Fem.Model.Nodes)
                 {
-                    Point3D p0 = node.c0;
+                    Point3D p0 = node.C0;
                     Point p = Draw.GetPoint2D_FromPoint3D(p0);
-                    draw2d.texts.Add(p, node.num.ToString());
+                    draw2d.texts.Add(p, node.Num.ToString());
                 }
             }
         }
@@ -1197,7 +1195,7 @@ namespace BCK.SmrSimulator.main
         {
             if (e.Key == Key.Escape)
             {
-                Fem.selection.DeselectAll();
+                Fem.Selection.DeselectAll();
                 RedrawFemModel();
             }
         }
@@ -1205,7 +1203,7 @@ namespace BCK.SmrSimulator.main
         {
             if (e.Key == Key.Delete)
             {
-                Fem.selection.Delete();
+                Fem.Selection.Delete();
                 RedrawFemModel();
             }
         }
@@ -1231,7 +1229,7 @@ namespace BCK.SmrSimulator.main
                     WindowState = System.Windows.WindowState.Normal;
                     break;
             }
-            Draw.RegenerateShapes_ModelVisual3ds();
+            Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
         }
 
@@ -1463,7 +1461,7 @@ namespace BCK.SmrSimulator.main
         private void ViewNode(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            Fem.model.nodes.visibility = sd.IsChecked;
+            Fem.Model.Nodes.visibility = sd.IsChecked;
             RedrawFemModel();
         }
         private void ViewNodeNumber(object sender, RoutedEventArgs e)
@@ -1476,13 +1474,13 @@ namespace BCK.SmrSimulator.main
         private void ViewElement(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            Fem.model.elems.show = sd.IsChecked;
+            Fem.Model.Elems.show = sd.IsChecked;
             RedrawFemModel();
         }
         private void ViewElementNumber(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            Fem.model.elems.showNumber = sd.IsChecked;
+            Fem.Model.Elems.showNumber = sd.IsChecked;
             RedrawFemModel();
         }
     } // View 관련

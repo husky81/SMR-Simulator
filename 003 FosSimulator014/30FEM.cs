@@ -1,5 +1,5 @@
-﻿using BCK.SmrSimulator.general_functions;
-using BCK.SmrSimulator.main;
+﻿using BCK.SmrSimulator.GeneralFunctions;
+using BCK.SmrSimulator.Main;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -16,38 +16,43 @@ namespace BCK.SmrSimulator.finiteElementMethod
 {
     public class FEM
     {
-        public readonly FemModel model = new FemModel();
-        public readonly FemLoadCollection loads = new FemLoadCollection();
+        public FemModel Model => model;
+        private readonly FemModel model = new FemModel();
+
+        public FemLoadCollection Loads => loads;
+        private readonly FemLoadCollection loads = new FemLoadCollection();
+
+        public FemSelection Selection { get => selection; set => selection = value; }
+        private FemSelection selection;
+
+
         internal bool solved = false;
-
-        public FemSelection selection;
-
 
         public FEM()
         {
-            selection = new FemSelection(this);
+            Selection = new FemSelection(this);
         }
         internal void Initialize()
         {
             DeleteAllNode();
 
-            model.materials.Clear();
-            model.materials.maxNum = 1;
-            model.sections.Clear();
-            model.sections.maxNum = 1;
+            Model.Materials.Clear();
+            Model.Materials.MaxNum = 1;
+            Model.Sections.Clear();
+            Model.Sections.maxNum = 1;
         }
 
         internal void Select(FemNode node)
         {
-            selection.AddNode(node);
+            Selection.AddNode(node);
         }
         internal void SelectNode(int n)
         {
-            foreach (FemNode node in model.nodes)
+            foreach (FemNode node in Model.Nodes)
             {
-                if (node.num == n)
+                if (node.Num == n)
                 {
-                    selection.AddNode(node);
+                    Selection.AddNode(node);
                 }
             }
         }
@@ -60,11 +65,11 @@ namespace BCK.SmrSimulator.finiteElementMethod
         }
         internal void SelectElem(int elemNumber)
         {
-            foreach (FemElement elem in model.elems)
+            foreach (FemElement elem in Model.Elems)
             {
                 if (elem.Num == elemNumber)
                 {
-                    selection.AddElement(elem);
+                    Selection.AddElement(elem);
                     break;
                 }
             }
@@ -78,22 +83,22 @@ namespace BCK.SmrSimulator.finiteElementMethod
         }
         internal void Select(FemElement element)
         {
-            selection.AddElement(element);
+            Selection.AddElement(element);
         }
         internal void SelectElems(int strElemNum, int endElemNum)
         {
-            foreach (FemElement elem in model.elems)
+            foreach (FemElement elem in Model.Elems)
             {
                 if (strElemNum <= elem.Num & elem.Num <= endElemNum)
                 {
-                    selection.AddElement(elem);
+                    Selection.AddElement(elem);
                 }
             }
         }
         internal void SelectElemAll()
         {
-            selection.Clear();
-            selection.AddElement(model.elems);
+            Selection.Clear();
+            Selection.AddElement(Model.Elems);
         }
         /// <summary>
         /// 꼭지점과 4개의 벡터로 표현되는 무한 피라미드의 내부에 있는 모든 요소를 선택합니다.
@@ -112,22 +117,22 @@ namespace BCK.SmrSimulator.finiteElementMethod
             bool isOn1;
             bool isOn2;
             bool isOn3;
-            foreach (FemNode node in model.nodes)
+            foreach (FemNode node in Model.Nodes)
             {
                 node.selectedAtThisTime = false;
             }
-            foreach (FemNode node in model.nodes)
+            foreach (FemNode node in Model.Nodes)
             {
                 if (IsNodeOn(node))
                 {
-                    selection.AddNode(node);
+                    Selection.AddNode(node);
                     node.selectedAtThisTime = true;
                 }
 
                 selectedNodes.Add(node);
             }
             bool flag;
-            foreach (FemElement element in model.elems)
+            foreach (FemElement element in Model.Elems)
             {
                 flag = true;
                 foreach (FemNode node in element.nodes)
@@ -136,19 +141,19 @@ namespace BCK.SmrSimulator.finiteElementMethod
                 }
                 if (flag)
                 {
-                    selection.AddElement(element);
+                    Selection.AddElement(element);
                 }
             }
 
             //중복제거
-            selection.nodes.Distinct();
-            selection.elems.Distinct();
+            Selection.nodes.Distinct();
+            Selection.elems.Distinct();
 
             return;
 
             bool IsNodeOn(FemNode node)
             {
-                p = node.c0;
+                p = node.C0;
                 isOn0 = GF.IsPointUpperPlane(p, p0, plane0);
                 isOn1 = GF.IsPointUpperPlane(p, p0, plane1);
                 isOn2 = GF.IsPointUpperPlane(p, p0, plane2);
@@ -177,17 +182,17 @@ namespace BCK.SmrSimulator.finiteElementMethod
         /// </summary>
         internal void SelectByInfiniteTriangle(Point3D p0, Vector3D v0, Vector3D v1)
         {
-            FemElementCollections selected1 = new FemElementCollections();
+            FemElementCollection selected1 = new FemElementCollection();
             Vector3D plane = Vector3D.CrossProduct(v0, v1);
 
             //절점 하나라도 평면에 걸리면 선택
-            foreach (FemElement element in model.elems)
+            foreach (FemElement element in Model.Elems)
             {
-                bool firstFlag = GF.IsPointUpperPlane(element.nodes[0].c0, p0, plane);
+                bool firstFlag = GF.IsPointUpperPlane(element.nodes[0].C0, p0, plane);
                 bool flag;
                 for (int i = 1; i < element.nodes.Count; i++)
                 {
-                    flag = GF.IsPointUpperPlane(element.nodes[i].c0, p0, plane);
+                    flag = GF.IsPointUpperPlane(element.nodes[i].C0, p0, plane);
                     if (flag != firstFlag)
                     {
                         selected1.Add(element);
@@ -196,7 +201,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
                 }
             }
 
-            FemElementCollections selected2 = new FemElementCollections();
+            FemElementCollection selected2 = new FemElementCollection();
             Point3D n0;
             Point3D n1;
             Point3D crossPoint;
@@ -208,8 +213,8 @@ namespace BCK.SmrSimulator.finiteElementMethod
             {
                 for (int i = 0; i < elem.nodes.Count - 1; i++)
                 {
-                    n0 = elem.nodes[i].c0;
-                    n1 = elem.nodes[i + 1].c0;
+                    n0 = elem.nodes[i].C0;
+                    n1 = elem.nodes[i + 1].C0;
                     crossPoint = GF.CrossPointBetweenPlaneAndLine(plane, p0, n0, n1);
                     if (crossPoint.X == 0 & crossPoint.Y == 0 & crossPoint.Z == 0)
                     {
@@ -227,35 +232,35 @@ namespace BCK.SmrSimulator.finiteElementMethod
                 }
             }
 
-            selection.AddElement(selected2);
+            Selection.AddElement(selected2);
             selected1.Clear();
             selected2.Clear();
         }
         internal void DeselectAll()
         {
-            selection.DeselectAll();
+            Selection.DeselectAll();
         }
 
         internal void DeleteSelectedNodes()
         {
-            foreach (FemNode node in selection.nodes)
+            foreach (FemNode node in Selection.nodes)
             {
                 foreach (FemElement elem in node.connectedElements)
                 {
-                    model.elems.Remove(elem);
-                    selection.elems.Remove(elem);
+                    Model.Elems.Remove(elem);
+                    Selection.elems.Remove(elem);
                 }
-                model.nodes.Remove(node);
+                Model.Nodes.Remove(node);
             }
-            selection.nodes.Clear();
+            Selection.nodes.Clear();
         }
         internal void DeleteSelectedElems()
         {
-            foreach (FemElement e in selection.elems)
+            foreach (FemElement e in Selection.elems)
             {
-                model.elems.Remove(e);
+                Model.Elems.Remove(e);
             }
-            selection.elems.Clear();
+            Selection.elems.Clear();
 
         }
         internal void DeleteSelection()
@@ -265,24 +270,24 @@ namespace BCK.SmrSimulator.finiteElementMethod
         }
         internal void DeleteAllNode()
         {
-            model.nodes.Clear();
-            model.nodes.maxNum = 1;
-            model.elems.Clear();
-            model.elems.maxNum = 1;
-            model.elems.frames.Clear();
-            model.elems.plates.Clear();
-            model.elems.solids.Clear();
-            model.boundaries.Clear();
+            Model.Nodes.Clear();
+            Model.Nodes.maxNum = 1;
+            Model.Elems.Clear();
+            Model.Elems.MaxNum = 1;
+            Model.Elems.Frames.Clear();
+            Model.Elems.Plates.Clear();
+            Model.Elems.Solids.Clear();
+            Model.Boundaries.Clear();
 
-            loads.Clear();
-            loads.maxNum = 1;
+            Loads.Clear();
+            Loads.maxNum = 1;
 
             solved = false;
         }
 
         internal void Solve()
         {
-            double[,] gloK = model.GloK();
+            double[,] gloK = Model.GloK();
             double[] gloF = GloF();
 
             //double[,] testMatrix = new double[3, 3] { { 2, -1, 0 }, { 1, 0, -1 },{ 1, 0, 1 } };
@@ -292,7 +297,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
             double[,] gloKinv = GF.InverseMatrix_GaussSolver(gloK);
             double[] gloD = GF.Multiply(gloKinv, gloF);
 
-            model.GloD(gloD);
+            Model.GloD(gloD);
 
             solved = true;
         }
@@ -300,32 +305,32 @@ namespace BCK.SmrSimulator.finiteElementMethod
         internal void Check(CommandWindow cmd)
         {
             //재료와 단면이 설정되지 않은경우 아무거나 입력.
-            if(model.materials.Count == 0)
+            if(Model.Materials.Count == 0)
             {
                 WarningMessage("재료 모델이 설정되지 않아 임의 모델을 추가합니다.");
-                model.materials.AddConcrete("C30");
+                Model.Materials.AddConcrete("C30");
             }
-            if (model.sections.Count == 0)
+            if (Model.Sections.Count == 0)
             {
                 WarningMessage("단면 정보가 설정되지 않아 임의 단면을 추가합니다.");
-                model.sections.AddRectangle(0.2, 0.2);
+                Model.Sections.AddRectangle(0.2, 0.2);
             }
 
             //Material이 하나뿐인 경우 그냥 다 1번으로 지정
-            if (model.materials.Count == 1)
+            if (Model.Materials.Count == 1)
             {
-                FemMaterial material = model.materials[0];
-                foreach (FemElement element in model.elems)
+                FemMaterial material = Model.Materials[0];
+                foreach (FemElement element in Model.Elems)
                 {
                     element.Material = material;
                 }
             }
 
             //Section이 하나뿐인 경우 그냥 다 1번으로 지정
-            if (model.sections.Count == 1)
+            if (Model.Sections.Count == 1)
             {
-                FemSection section = model.sections[0];
-                foreach (FemElement element in model.elems)
+                FemSection section = Model.Sections[0];
+                foreach (FemElement element in Model.Elems)
                 {
                     element.Section = section;
                 }
@@ -333,6 +338,8 @@ namespace BCK.SmrSimulator.finiteElementMethod
         }
 
         internal CommandWindow cmd; //FEM 메시지를 보내기위한 용도로만 활용.
+
+
         private void ErrorMessage(string message)
         {
             cmd.ErrorMessage(message);
@@ -344,18 +351,18 @@ namespace BCK.SmrSimulator.finiteElementMethod
 
         internal double[] GloF()
         {
-            double[] gloF = new double[model.dof];
-            foreach (FemLoad load in loads)
+            double[] gloF = new double[Model.dof];
+            foreach (FemLoad load in Loads)
             {
                 foreach (FemNodalLoad nodalLoad in load.nodalLoads)
                 {
                     FemNode node = nodalLoad.node;
-                    gloF[node.id[0]] += nodalLoad.force.X;
-                    gloF[node.id[1]] += nodalLoad.force.Y;
-                    gloF[node.id[2]] += nodalLoad.force.Z;
-                    if (node.id[3] != -1) gloF[node.id[3]] += nodalLoad.moment.X;
-                    if (node.id[4] != -1) gloF[node.id[4]] += nodalLoad.moment.Y;
-                    if (node.id[5] != -1) gloF[node.id[5]] += nodalLoad.moment.Z;
+                    gloF[node.Id[0]] += nodalLoad.force.X;
+                    gloF[node.Id[1]] += nodalLoad.force.Y;
+                    gloF[node.Id[2]] += nodalLoad.force.Z;
+                    if (node.Id[3] != -1) gloF[node.Id[3]] += nodalLoad.moment.X;
+                    if (node.Id[4] != -1) gloF[node.Id[4]] += nodalLoad.moment.Y;
+                    if (node.Id[5] != -1) gloF[node.Id[5]] += nodalLoad.moment.Z;
                 }
             }
             return gloF;
@@ -373,85 +380,85 @@ namespace BCK.SmrSimulator.finiteElementMethod
         }
         internal void AddNodalLoadSelectedNodes(Vector3D force, Vector3D moment)
         {
-            foreach (FemNode node in selection.nodes)
+            foreach (FemNode node in Selection.nodes)
             {
-                loads.AddNodal(node, force, moment);
+                Loads.AddNodal(node, force, moment);
             }
         }
 
         internal void DivideSelectedElems(int numDivide)
         {
-            selection.Deduplicate();
-            foreach (FemElement elem in selection.elems)
+            Selection.Deduplicate();
+            foreach (FemElement elem in Selection.elems)
             {
                 switch (elem.type)
                 {
                     case 21:
                         FemFrame f = (FemFrame)elem;
-                        Vector3D dir = f.nodes[1].c0 - f.nodes[0].c0;
+                        Vector3D dir = f.nodes[1].C0 - f.nodes[0].C0;
                         Vector3D ndir = dir / numDivide;
                         FemNode[] n = new FemNode[numDivide + 1];
                         n[0] = f.nodes[0];
                         n[numDivide] = f.nodes[1];
                         for (int i = 1; i < numDivide; i++)
                         {
-                            Point3D nP = f.nodes[0].c0 + ndir * i;
-                            n[i] = model.nodes.Add(nP);
+                            Point3D nP = f.nodes[0].C0 + ndir * i;
+                            n[i] = Model.Nodes.Add(nP);
                         }
 
                         FemFrame[] fs = new FemFrame[numDivide];
                         for (int i = 0; i < numDivide; i++)
                         {
-                            fs[i] = model.elems.AddFrame(n[i], n[i + 1]);
+                            fs[i] = Model.Elems.AddFrame(n[i], n[i + 1]);
                             fs[i].type = f.type;
                             fs[i].Material = f.Material;
                             fs[i].Section = f.Section;
                         }
-                        model.elems.Remove(f);
+                        Model.Elems.Remove(f);
 
                         break;
                     default:
                         break;
                 }
             }
-            selection.elems.Clear();
+            Selection.elems.Clear();
         }
 
-        internal FemElementCollections Extrude(FemElementCollections elems, Vector3D dir, int iter)
+        internal FemElementCollection Extrude(FemElementCollection elems, Vector3D dir, int iter)
         {
-            FemElementCollections extrudedElems = new FemElementCollections();
+            FemElementCollection extrudedElems = new FemElementCollection();
 
-            FemFrames frames = elems.frames;
+            FemFrames frames = elems.Frames;
             if (frames.Count > 0)
             {
-                FemElementCollections extrudedFrames = Extrude_Frame(frames, dir, iter);
+                FemElementCollection extrudedFrames = Extrude_Frame(frames, dir, iter);
                 extrudedElems.Add(extrudedFrames);
             }
 
-            FemPlates plates = elems.plates;
+            FemPlates plates = elems.Plates;
             if (plates.Count > 0)
             {
-                FemElementCollections extrudedPlates = Extrude_Plate(plates, dir, iter);
+                FemElementCollection extrudedPlates = Extrude_Plate(plates, dir, iter);
                 extrudedElems.Add(extrudedPlates);
             }
 
             foreach (FemElement e in elems)
             {
-                model.elems.Remove(e);
+                Model.Elems.Remove(e);
             }
             return extrudedElems;
         }
-        internal FemElementCollections ExtrudeSelectedElems(Vector3D dir, int iter)
+        internal FemElementCollection ExtrudeSelectedElems(Vector3D dir, int iter)
         {
-            return Extrude(selection.elems, dir, iter);
+            return Extrude(Selection.elems, dir, iter);
         }
         internal void ExtrudeWoReturn(Vector3D dir, int iter)
         {
-            Extrude(selection.elems, dir, iter);
+            Extrude(Selection.elems, dir, iter);
         }
-        private FemElementCollections Extrude_Frame(FemFrames frames, Vector3D dir, int iter)
+        private FemElementCollection Extrude_Frame(FemFrames frames, Vector3D dir, int iter)
         {
-            FemElementCollections extrudedElems = new FemElementCollections();
+            FemElementCollection extrudedElems = new FemElementCollection();
 
             FemNodeCollection nodes = frames.ConnectedNodes();
             FemNodeCollection nodesDdp = nodes.Copy(); //de-duplicated
@@ -465,14 +472,14 @@ namespace BCK.SmrSimulator.finiteElementMethod
             {
                 for (int j = 0; j < frames.Count * 2; j += 2)
                 {
-                    FemPlate p = model.elems.AddPlate(nodeMatrix[i, nodesNumber[j]], nodeMatrix[i, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j]]);
+                    FemPlate p = Model.Elems.AddPlate(nodeMatrix[i, nodesNumber[j]], nodeMatrix[i, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j + 1]], nodeMatrix[i + 1, nodesNumber[j]]);
                     p.Material = frames[j / 2].Material;
                     extrudedElems.Add(p);
                 }
             }
             return extrudedElems;
         }
-        private FemElementCollections Extrude_Plate(FemPlates plates, Vector3D dir, int iter)
+        private FemElementCollection Extrude_Plate(FemPlates plates, Vector3D dir, int iter)
         {
             FemNodeCollection nodes = plates.ConnectedNodes();
             FemNodeCollection nodesDdp = nodes.Copy(); //de-duplicated
@@ -485,7 +492,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
             //중복을 제거한 노드리스트를 dir 방향으로 iter번 반복해서 절점 생성.
             FemNode[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
 
-            FemElementCollections extrudedElems = new FemElementCollections();
+            FemElementCollection extrudedElems = new FemElementCollection();
             for (int i = 0; i < iter; i++)
             {
                 for (int j = 0; j < plates.Count * 4; j += 4)
@@ -498,7 +505,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
                     FemNode n5 = nodeMatrix[i + 1, nodesNumber[j + 1]];
                     FemNode n6 = nodeMatrix[i + 1, nodesNumber[j + 2]];
                     FemNode n7 = nodeMatrix[i + 1, nodesNumber[j + 3]];
-                    FemSolid s = model.elems.AddSolid(n0,n1,n2,n3,n4,n5,n6,n7);
+                    FemSolid s = Model.Elems.AddSolid(n0,n1,n2,n3,n4,n5,n6,n7);
                     s.Material = plates[j / 4].Material;
                     extrudedElems.Add(s);
                 }
@@ -576,7 +583,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
             {
                 for (int n = 0; n < nodesDdp.Count; n++)
                 {
-                    FemNode newNode = model.nodes.Add(nodesDdp[n].c0 + dir * i);
+                    FemNode newNode = Model.Nodes.Add(nodesDdp[n].C0 + dir * i);
                     nodeMatrix[i, n] = newNode;
                 }
             }
@@ -588,7 +595,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
     {
         private readonly FEM fem;
         internal FemNodeCollection nodes = new FemNodeCollection();
-        internal FemElementCollections elems = new FemElementCollections();
+        internal FemElementCollection elems = new FemElementCollection();
         public int Count
         {
             get
@@ -612,7 +619,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
             element.selected = true;
             elems.Add(element);
         }
-        internal void AddElement(FemElementCollections elements)
+        internal void AddElement(FemElementCollection elements)
         {
             foreach (FemElement element in elements)
             {
@@ -650,11 +657,16 @@ namespace BCK.SmrSimulator.finiteElementMethod
 
     public class FemModel
     {
-        public readonly FemNodeCollection nodes = new FemNodeCollection();
-        public readonly FemElementCollections elems = new FemElementCollections();
-        public readonly FemSectionCollection sections = new FemSectionCollection();
-        public readonly FemMaterialCollection materials = new FemMaterialCollection();
-        public readonly FemBoundarieCollection boundaries = new FemBoundarieCollection();
+        public FemNodeCollection Nodes => nodes;
+        private readonly FemNodeCollection nodes = new FemNodeCollection();
+        public FemElementCollection Elems => elems;
+        private readonly FemElementCollection elems = new FemElementCollection();
+        public FemSectionCollection Sections => sections;
+        private readonly FemSectionCollection sections = new FemSectionCollection();
+        public FemMaterialCollection Materials => materials;
+        private readonly FemMaterialCollection materials = new FemMaterialCollection();
+        public FemBoundarieCollection Boundaries => boundaries;
+        private readonly FemBoundarieCollection boundaries = new FemBoundarieCollection();
 
         internal int dof;
 
@@ -665,8 +677,8 @@ namespace BCK.SmrSimulator.finiteElementMethod
 
         internal void GloD(double[] gloD)
         {
-            nodes.UpdateGloD(gloD);
-            elems.UpdateGloD();
+            Nodes.UpdateGloD(gloD);
+            Elems.UpdateGloD();
             UpdateReactionForce();
         }
 
@@ -676,7 +688,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
 
             double[,] glok = new double[dof, dof];
 
-            foreach (FemElement e in elems)
+            foreach (FemElement e in Elems)
             {
                 double[,] elemGloK = e.GloK();
                 for (int i = 0; i < e.dof; i++)
@@ -699,18 +711,18 @@ namespace BCK.SmrSimulator.finiteElementMethod
 
         private void SetNodeElemID()
         {
-            foreach (FemNode node in nodes)
+            foreach (FemNode node in Nodes)
             {
-                node.id = new int[6] { -1, -1, -1, -1, -1, -1 };
+                node.Id = new int[6] { -1, -1, -1, -1, -1, -1 };
             } // 모든 노드에 -1을 배정
-            foreach (FemElement elem in elems)
+            foreach (FemElement elem in Elems)
             {
                 switch (elem.type)
                 {
                     case 21: //Frame
                         foreach (FemNode node in elem.nodes)
                         {
-                            node.id = new int[6] { 1, 1, 1, 1, 1, 1 };
+                            node.Id = new int[6] { 1, 1, 1, 1, 1, 1 };
                         }
                         break;
                     case 40: //Plate
@@ -718,7 +730,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
                         {
                             for (int i = 0; i < 3; i++)
                             {
-                                node.id[i] = 1;
+                                node.Id[i] = 1;
                             }
                         }
                         break;
@@ -727,7 +739,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
                         {
                             for (int i = 0; i < 3; i++)
                             {
-                                node.id[i] = 1;
+                                node.Id[i] = 1;
                             }
                         }
                         break;
@@ -735,42 +747,42 @@ namespace BCK.SmrSimulator.finiteElementMethod
                         break;
                 }
             } // 요소에 포함되는 절점만 1을 배정.
-            foreach (FemBoundary boundary in boundaries)
+            foreach (FemBoundary boundary in Boundaries)
             {
                 FemNode node = boundary.node;
                 for (int i = 0; i < 6; i++)
                 {
                     if (boundary.condition[i] == 1)
                     {
-                        node.id[i] = -1;
+                        node.Id[i] = -1;
                     }
                 }
             } // 경계조건은 다시 -1로 배정
             int id = 0;
-            foreach (FemNode n in nodes)
+            foreach (FemNode n in Nodes)
             {
                 for (int i = 0; i < 6; i++)
                 {
-                    if (n.id[i] >= 0)
+                    if (n.Id[i] >= 0)
                     {
-                        n.id[i] = id;
+                        n.Id[i] = id;
                         id++;
                     }
                 }
             } // 1로 배정된 모든 노드의 ID를 0부터 순차적으로 ID 배급
             dof = id; // 전체 fem의 자유도 설정
-            foreach (FemElement elem in elems)
+            foreach (FemElement elem in Elems)
             {
                 elem.SetID();
             }
         }
         internal void UpdateReactionForce()
         {
-            foreach (FemNode node in nodes)
+            foreach (FemNode node in Nodes)
             {
                 node.reactionForce = new double[6];
             }
-            foreach (FemElement elem in this.elems)
+            foreach (FemElement elem in this.Elems)
             {
                 for (int n = 0; n < elem.NumNode; n++)
                 {
@@ -798,8 +810,10 @@ namespace BCK.SmrSimulator.finiteElementMethod
     }
     public class FemMaterialCollection : List<FemMaterial>
     {
-        public int maxNum = 1;
+        public int MaxNum { get => maxNum; set => maxNum = value; }
+        private int maxNum = 1;
         FemMaterial activeMaterial;
+
         internal FemMaterial AddConcrete(string materialName)
         {
             FemMaterial m;
@@ -808,8 +822,8 @@ namespace BCK.SmrSimulator.finiteElementMethod
             {
                 m = new FemMaterial(2e5, 1.5e5);
                 m.name = "C30";
-                m.num = maxNum;
-                maxNum++;
+                m.num = MaxNum;
+                MaxNum++;
 
             }
             else
@@ -856,9 +870,22 @@ namespace BCK.SmrSimulator.finiteElementMethod
     public class FemSection
     {
         internal int num;
-        public double Iy, Iz, J, A, Asy, Asz;
-        public SectionPoly poly = new SectionPoly();
+        private double asz;
+        private SectionPoly poly = new SectionPoly();
         internal bool hasSectionPoly = false;
+        private double iy;
+        private double iz;
+        private double j;
+        private double a;
+        private double asy;
+
+        public double Iy { get => iy; set => iy = value; }
+        public double Iz { get => iz; set => iz = value; }
+        public double J { get => j; set => j = value; }
+        public double A { get => a; set => a = value; }
+        public double Asy { get => asy; set => asy = value; }
+        public double Asz { get => asz; set => asz = value; }
+        public SectionPoly Poly { get => poly; set => poly = value; }
 
         public FemSection()
         {
@@ -882,10 +909,10 @@ namespace BCK.SmrSimulator.finiteElementMethod
             Asz = A;
 
             hasSectionPoly = true;
-            poly.Add(-b / 2, -h / 2);
-            poly.Add(b / 2, -h / 2);
-            poly.Add(b / 2, h / 2);
-            poly.Add(-b / 2, h / 2);
+            Poly.Add(-b / 2, -h / 2);
+            Poly.Add(b / 2, -h / 2);
+            Poly.Add(b / 2, h / 2);
+            Poly.Add(-b / 2, h / 2);
         }
     }
 
@@ -916,7 +943,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
             //노드 생성
             FemNode node = new FemNode(p0)
             {
-                num = maxNum
+                Num = maxNum
             };
             maxNum += 1;
             base.Add(node);
@@ -927,7 +954,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
         {
             foreach (FemNode node in this)
             {
-                if ((node.c0 - p0).Length < positionTolerance)
+                if ((node.C0 - p0).Length < positionTolerance)
                 {
                     return node;
                 }
@@ -939,7 +966,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
         {
             foreach (FemNode node in this)
             {
-                if (node.num == nodeNumber)
+                if (node.Num == nodeNumber)
                 {
                     return node;
                 }
@@ -951,7 +978,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
         {
             foreach (FemNode n in this)
             {
-                n.gloF = new double[6] { 0, 0, 0, 0, 0, 0 };
+                n.GloF = new double[6] { 0, 0, 0, 0, 0, 0 };
             }
         }
 
@@ -962,9 +989,9 @@ namespace BCK.SmrSimulator.finiteElementMethod
                 node.gloD = new double[6];
                 for (int i = 0; i < 6; i++)
                 {
-                    if (node.id[i] >= 0)
+                    if (node.Id[i] >= 0)
                     {
-                        node.gloD[i] = gloD[node.id[i]];
+                        node.gloD[i] = gloD[node.Id[i]];
                     }
                 }
                 node.UpdateC1();
@@ -1004,55 +1031,66 @@ namespace BCK.SmrSimulator.finiteElementMethod
     }
     public class FemNode
     {
-        public int num;
+        private int num;
         /// <summary>
         /// 사용자가 입력한 절점의 좌표입니다. initialPoint.
         /// </summary>
-        public Point3D c0;
+        private Point3D c0;
         /// <summary>
         /// 해석결과로 나온 변위를 포함한 절점의 좌표입니다. initialPoint + disp;
         /// </summary>
-        public Point3D c1;
-        public int[] id;
-        public double[] gloF;
+        private Point3D c1;
+        private int[] id;
+        private double[] gloF;
         internal double[] gloD;
         internal double[] reactionForce = { 0, 0, 0, 0, 0, 0 };
         internal bool selected = false;
-        internal FemElementCollections connectedElements = new FemElementCollections();
+        internal FemElementCollection connectedElements = new FemElementCollection();
         internal bool selectedAtThisTime;
+
+        public int Num { get => num; set => num = value; }
+        public Point3D C0 { get => c0; set => c0 = value; }
+        public Point3D C1 { get => c1; set => c1 = value; }
+        public int[] Id { get => id; set => id = value; }
+        public double[] GloF { get => gloF; set => gloF = value; }
 
         public FemNode(Point3D point)
         {
-            c0 = point;
+            C0 = point;
         }
         public FemNode(double x, double y, double z)
         {
-            c0 = new Point3D(x, y, z);
+            C0 = new Point3D(x, y, z);
         }
         internal void UpdateC1()
         {
-            c1.X = c0.X + gloD[0];
-            c1.Y = c0.Y + gloD[1];
-            c1.Z = c0.Z + gloD[2];
+            c1.X = C0.X + gloD[0];
+            c1.Y = C0.Y + gloD[1];
+            c1.Z = C0.Z + gloD[2];
 
         }
 
     }
 
-    public class FemElementCollections : List<FemElement>
+    public class FemElementCollection : List<FemElement>
     {
-        public int maxNum = 1;
+        private int maxNum = 1;
         //internal int countTruss = 0;
         //internal int countFrame = 0;
         //internal int countCable = 0;
         //internal int countPlate = 0;
         //internal int countSolid = 0;
         //internal List<Frame> frames = new List<Frame>();
-        public FemFrames frames = new FemFrames();
-        public FemPlates plates = new FemPlates();
-        public List<FemSolid> solids = new List<FemSolid>();
+        private FemFrames frames = new FemFrames();
+        private FemPlates plates = new FemPlates();
+        private List<FemSolid> solids = new List<FemSolid>();
         internal bool show = true;
         internal bool showNumber = false;
+
+        public int MaxNum { get => maxNum; set => maxNum = value; }
+        public FemFrames Frames { get => frames; }
+        public FemPlates Plates { get => plates; }
+        public List<FemSolid> Solids { get => solids; }
 
         internal new void Add(FemElement elem)
         {
@@ -1060,22 +1098,22 @@ namespace BCK.SmrSimulator.finiteElementMethod
             {
                 case 21:
                     FemFrame f = (FemFrame)elem;
-                    frames.Add(f);
+                    Frames.Add(f);
                     break;
                 case 40:
                     FemPlate p = (FemPlate)elem;
-                    plates.Add(p);
+                    Plates.Add(p);
                     break;
                 case 80:
                     FemSolid s = (FemSolid)elem;
-                    solids.Add(s);
+                    Solids.Add(s);
                     break;
                 default:
                     break;
             }
             base.Add(elem);
         }
-        internal void Add(FemElementCollections elems)
+        internal void Add(FemElementCollection elems)
         {
             foreach (FemElement element in elems)
             {
@@ -1085,37 +1123,37 @@ namespace BCK.SmrSimulator.finiteElementMethod
         internal new void Clear()
         {
             base.Clear();
-            frames.Clear();
-            plates.Clear();
-            solids.Clear();
+            Frames.Clear();
+            Plates.Clear();
+            Solids.Clear();
         }
         internal FemFrame AddFrame(FemNode n1, FemNode n2)
         {
             FemFrame f = new FemFrame(n1, n2);
-            f.Num = maxNum;
-            maxNum++;
+            f.Num = MaxNum;
+            MaxNum++;
 
-            frames.Add(f);
+            Frames.Add(f);
             base.Add(f);
             return f;
         }
         internal FemPlate AddPlate(FemNode n1, FemNode n2, FemNode n3, FemNode n4)
         {
             FemPlate p = new FemPlate(n1, n2, n3, n4);
-            p.Num = maxNum;
-            maxNum += 1;
+            p.Num = MaxNum;
+            MaxNum += 1;
 
-            plates.Add(p);
+            Plates.Add(p);
             base.Add(p);
             return p;
         }
         internal FemSolid AddSolid(FemNode n1, FemNode n2, FemNode n3, FemNode n4, FemNode n5, FemNode n6, FemNode n7, FemNode n8)
         {
             FemSolid s = new FemSolid(n1, n2, n3, n4, n5, n6, n7, n8);
-            s.Num = maxNum;
-            maxNum += 1;
+            s.Num = MaxNum;
+            MaxNum += 1;
 
-            solids.Add(s);
+            Solids.Add(s);
             base.Add(s);
             return s;
         }
@@ -1125,15 +1163,15 @@ namespace BCK.SmrSimulator.finiteElementMethod
             {
                 case 21:
                     FemFrame e = (FemFrame)elem;
-                    frames.Remove(e);
+                    Frames.Remove(e);
                     break;
                 case 40:
                     FemPlate p = (FemPlate)elem;
-                    plates.Remove(p);
+                    Plates.Remove(p);
                     break;
                 case 80:
                     FemSolid s = (FemSolid)elem;
-                    solids.Remove(s);
+                    Solids.Remove(s);
                     break;
                 default:
                     break;
@@ -1158,7 +1196,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
             connectedNodes.Deduplicate();
             return connectedNodes;
         } // Elements와 연결된 모든 노드 찾기
-        internal static FemNodeCollection ConnectedNodes(FemElementCollections elems)
+        internal static FemNodeCollection ConnectedNodes(FemElementCollection elems)
         {
             FemNodeCollection connectedNodes = new FemNodeCollection();
             foreach (FemElement element in elems)
@@ -1171,7 +1209,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
 
         internal void Deduplicate()
         {
-            FemElementCollections list = this;
+            FemElementCollection list = this;
             int count = list.Count;
             for (int i = 0; i < count - 1; i++)
             {
@@ -1245,9 +1283,9 @@ namespace BCK.SmrSimulator.finiteElementMethod
                 Point3D center = new Point3D();
                 foreach (FemNode node in nodes)
                 {
-                    center.X += node.c1.X;
-                    center.Y += node.c1.Y;
-                    center.Z += node.c1.Z;
+                    center.X += node.C1.X;
+                    center.Y += node.C1.Y;
+                    center.Z += node.C1.Z;
                 }
                 center.X /= NumNode;
                 center.Y /= NumNode;
@@ -1288,8 +1326,8 @@ namespace BCK.SmrSimulator.finiteElementMethod
                     f.id = new int[12];
                     for (int i = 0; i < 6; i++)
                     {
-                        f.id[i] = f.nodes[0].id[i];
-                        f.id[i + 6] = f.nodes[1].id[i];
+                        f.id[i] = f.nodes[0].Id[i];
+                        f.id[i + 6] = f.nodes[1].Id[i];
                     }
                     break;
                 case 40:
@@ -1297,10 +1335,10 @@ namespace BCK.SmrSimulator.finiteElementMethod
                     p.id = new int[12];
                     for (int i = 0; i < 3; i++)
                     {
-                        p.id[i] = p.nodes[0].id[i];
-                        p.id[i + 3] = p.nodes[1].id[i];
-                        p.id[i + 6] = p.nodes[2].id[i];
-                        p.id[i + 9] = p.nodes[3].id[i];
+                        p.id[i] = p.nodes[0].Id[i];
+                        p.id[i + 3] = p.nodes[1].Id[i];
+                        p.id[i + 6] = p.nodes[2].Id[i];
+                        p.id[i + 9] = p.nodes[3].Id[i];
                     }
                     break;
                 case 80:
@@ -1308,14 +1346,14 @@ namespace BCK.SmrSimulator.finiteElementMethod
                     s.id = new int[24];
                     for (int i = 0; i < 3; i++)
                     {
-                        s.id[i] = s.nodes[0].id[i];
-                        s.id[i + 3] = s.nodes[1].id[i];
-                        s.id[i + 6] = s.nodes[2].id[i];
-                        s.id[i + 9] = s.nodes[3].id[i];
-                        s.id[i + 12] = s.nodes[4].id[i];
-                        s.id[i + 15] = s.nodes[5].id[i];
-                        s.id[i + 18] = s.nodes[6].id[i];
-                        s.id[i + 21] = s.nodes[7].id[i];
+                        s.id[i] = s.nodes[0].Id[i];
+                        s.id[i + 3] = s.nodes[1].Id[i];
+                        s.id[i + 6] = s.nodes[2].Id[i];
+                        s.id[i + 9] = s.nodes[3].Id[i];
+                        s.id[i + 12] = s.nodes[4].Id[i];
+                        s.id[i + 15] = s.nodes[5].Id[i];
+                        s.id[i + 18] = s.nodes[6].Id[i];
+                        s.id[i + 21] = s.nodes[7].Id[i];
                     }
                     break;
                 default:
@@ -1404,7 +1442,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
 
             AddConnectedElementAtNodes(this);
 
-            L = (n2.c0 - n1.c0).Length;
+            L = (n2.C0 - n1.C0).Length;
             AxialDirectionAngle = 0;
         }
 
@@ -1412,7 +1450,7 @@ namespace BCK.SmrSimulator.finiteElementMethod
         {
             trans = new double[12, 12];
 
-            Vector3D dxyz = nodes[1].c0 - nodes[0].c0;
+            Vector3D dxyz = nodes[1].C0 - nodes[0].C0;
             double dx = dxyz.X;
             double dy = dxyz.Y;
             double dz = dxyz.Z;
@@ -1746,17 +1784,17 @@ namespace BCK.SmrSimulator.finiteElementMethod
                 for (int i = 1; i <= 8; i++)
                 {
                     double dnidr = dNidr(i, r, s, t);
-                    jacobianMatrix[0, 0] += dnidr * nodes[i - 1].c0.X; // dx/dr
-                    jacobianMatrix[0, 1] += dnidr * nodes[i - 1].c0.Y; // dy/dr
-                    jacobianMatrix[0, 2] += dnidr * nodes[i - 1].c0.Z; // dz/dr
+                    jacobianMatrix[0, 0] += dnidr * nodes[i - 1].C0.X; // dx/dr
+                    jacobianMatrix[0, 1] += dnidr * nodes[i - 1].C0.Y; // dy/dr
+                    jacobianMatrix[0, 2] += dnidr * nodes[i - 1].C0.Z; // dz/dr
                     double dnids = dNids(i, r, s, t);                  //
-                    jacobianMatrix[1, 0] += dnids * nodes[i - 1].c0.X; // dx/ds
-                    jacobianMatrix[1, 1] += dnids * nodes[i - 1].c0.Y; // dy/ds
-                    jacobianMatrix[1, 2] += dnids * nodes[i - 1].c0.Z; // dz/ds
+                    jacobianMatrix[1, 0] += dnids * nodes[i - 1].C0.X; // dx/ds
+                    jacobianMatrix[1, 1] += dnids * nodes[i - 1].C0.Y; // dy/ds
+                    jacobianMatrix[1, 2] += dnids * nodes[i - 1].C0.Z; // dz/ds
                     double dnidt = dNidt(i, r, s, t);                  //
-                    jacobianMatrix[2, 0] += dnidt * nodes[i - 1].c0.X; // dx/dt
-                    jacobianMatrix[2, 1] += dnidt * nodes[i - 1].c0.Y; // dy/dt
-                    jacobianMatrix[2, 2] += dnidt * nodes[i - 1].c0.Z; // dz/dt
+                    jacobianMatrix[2, 0] += dnidt * nodes[i - 1].C0.X; // dx/dt
+                    jacobianMatrix[2, 1] += dnidt * nodes[i - 1].C0.Y; // dy/dt
+                    jacobianMatrix[2, 2] += dnidt * nodes[i - 1].C0.Z; // dz/dt
                 }
                 return jacobianMatrix;
             }
@@ -1892,7 +1930,15 @@ namespace BCK.SmrSimulator.finiteElementMethod
         {
             this.node = node;
             this.gloF = locF;
-            force.X = locF[0];
+            try
+            {
+                force.X = locF[0];
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
             force.Y = locF[1];
             force.Z = locF[2];
             moment.X = locF[3];

@@ -1,4 +1,4 @@
-﻿using BCK.SmrSimulator.draw2d;
+﻿using BCK.SmrSimulator.Draw2D;
 using BCK.SmrSimulator.Draw3D;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 
-namespace BCK.SmrSimulator.main
+namespace BCK.SmrSimulator.Main
 {
     /// <summary>
     /// 사용자가 요청한 하나하나의 실행 단위.
@@ -34,7 +34,6 @@ namespace BCK.SmrSimulator.main
         }
         internal RequestInputType requestInputType;
         internal string message;
-        internal bool hasAction;
         internal int numPointRequested = -1;
         internal SelectionWindow.ViewType viewType;
     }
@@ -285,7 +284,7 @@ namespace BCK.SmrSimulator.main
                     main.Cmd.actionAfterPoints += Put;
                     return;
                 case UserInputAction.RequestInputType.ElemSelection:
-                    if (main.Fem.selection.elems.Count == 0)
+                    if (main.Fem.Selection.elems.Count == 0)
                     {
                         main.Cmd.SendRequestMessage(userInputType.message);
                         End();
@@ -296,7 +295,7 @@ namespace BCK.SmrSimulator.main
                     }
                     return;
                 case UserInputAction.RequestInputType.NodeSelection:
-                    if (main.Fem.selection.nodes.Count == 0)
+                    if (main.Fem.Selection.nodes.Count == 0)
                     {
                         main.Cmd.SendRequestMessage(userInputType.message);
                         End();
@@ -307,7 +306,7 @@ namespace BCK.SmrSimulator.main
                     }
                     return;
                 case UserInputAction.RequestInputType.Selection:
-                    if (main.Fem.selection.nodes.Count + main.Fem.selection.elems.Count == 0)
+                    if (main.Fem.Selection.nodes.Count + main.Fem.Selection.elems.Count == 0)
                     {
                         main.Cmd.SendRequestMessage(userInputType.message);
                         End();
@@ -398,7 +397,7 @@ namespace BCK.SmrSimulator.main
 
         private Point3D GetPoint3dFromPoint2D(Point p0)
         {
-            return main.Draw.GetPoint3dOnBasePlane_FromPoint2D(p0);
+            return main.Draw.GetPoint3dOnBasePlaneFromPoint2D(p0);
         }
         private Point GetPointFromPoint3D(Point3D p3d)
         {

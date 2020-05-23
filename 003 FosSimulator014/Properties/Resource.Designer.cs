@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace BCK.SmrSimulator.main.Properties {
+namespace BCK.SmrSimulator.Main.Properties {
     using System;
     
     
@@ -84,6 +84,15 @@ namespace BCK.SmrSimulator.main.Properties {
         internal static string String10 {
             get {
                 return ResourceManager.GetString("String10", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter the order of determinant: .
+        /// </summary>
+        internal static string String11 {
+            get {
+                return ResourceManager.GetString("String11", resourceCulture);
             }
         }
         

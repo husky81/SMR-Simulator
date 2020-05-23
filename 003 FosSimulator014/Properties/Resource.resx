@@ -126,6 +126,9 @@
   <data name="String10" xml:space="preserve">
     <value>경계조건을 추가할 절점을 선택하세요.</value>
   </data>
+  <data name="String11" xml:space="preserve">
+    <value>Enter the order of determinant: </value>
+  </data>
   <data name="String2" xml:space="preserve">
     <value>선택할 노드번호를 입력하세요. (ex. 1~10,15-20)</value>
   </data>
