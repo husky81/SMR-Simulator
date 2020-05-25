@@ -176,7 +176,7 @@ namespace BCK.SmrSimulation.Main
                 }
                 if (main.requestUserInput != null)
                 {
-                    if (main.requestUserInput.On) //이미 명령이 실행중인 경우 다시 실행
+                    if (main.requestUserInput.IsOn) //이미 명령이 실행중인 경우 다시 실행
                     {
                         if (requestedInputType == InputTypes.Points)
                         {
@@ -526,7 +526,7 @@ namespace BCK.SmrSimulation.Main
         {
             lastCommand = cmd;
 
-            if (main.orbiting) main.TurnOnOrbit(false);
+            main.IsOnOrbit = false;
 
             if (main.Fem.Selection.Count > 0 & cmd.runSelected != null) //선택된 개체가 있고, cmd.runSelected를 지정한 경우.
             {
@@ -561,7 +561,7 @@ namespace BCK.SmrSimulation.Main
                 SetForOtherCommand();
                 return;
             }
-            if (!main.requestUserInput.On)
+            if (!main.requestUserInput.IsOn)
             {
                 SetForOtherCommand();
             }

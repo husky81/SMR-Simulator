@@ -33,8 +33,8 @@ namespace BCK.SmrSimulation.Main
         public FEM Fem => fem;
         private readonly FEM fem;
 
-        public Draw3D.BckDraw3D Draw => draw;
-        private readonly Draw3D.BckDraw3D draw;
+        public BckDraw3D Draw => draw;
+        private readonly BckDraw3D draw;
         internal readonly Draw2D.Draw2D draw2d;
         internal SelectionWindow selectionWindow;
 
@@ -44,7 +44,6 @@ namespace BCK.SmrSimulation.Main
 
         public CultureInfo CultureInfo => cultureInfo;
         private readonly CultureInfo cultureInfo = new CultureInfo("ko-KR", false);
-
 
         public MainWindow()
         {
@@ -90,8 +89,8 @@ namespace BCK.SmrSimulation.Main
         {
             grdMain.SizeChanged += GrdMain_SizeChanged; // gird size가 변경된 경우 redraw3dRelated2dShapes 수행.
             TurnOnWheelPanZoom();
-            TurnOnWindowSelection(true);
-            TurnOnDeselectAll_Esc(true);
+            IsOnWindowSelect = true;
+            IsOnDeselectAll_Esc = true;
             TurnOnErase_Del(true);
             TurnOnFemAnalysis_F5(true);
         }
@@ -346,7 +345,7 @@ namespace BCK.SmrSimulation.Main
 
         private void DrawSampleGradient(object sender, RoutedEventArgs e)
         {
-            Draw.Example_DrawGradient3D();
+            Draw.ExampleDrawGradient3D();
         }
         private void DrawCone(object sender, RoutedEventArgs e)
         {
@@ -431,8 +430,7 @@ namespace BCK.SmrSimulation.Main
         }
 
     }
-
-    public partial class MainWindow : Window
+    partial class MainWindow : Window
     {
         internal void SelectNode()
         {
@@ -697,7 +695,7 @@ namespace BCK.SmrSimulation.Main
         }
 
     } // FEM
-    public partial class MainWindow : Window
+    partial class MainWindow : Window
     {
         private void OpenPannelCameraControl(object sender, RoutedEventArgs e)
         {
@@ -844,14 +842,14 @@ namespace BCK.SmrSimulation.Main
         private void ViewCoordinateSystem(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            Draw.showCoordinateSystem = sd.IsChecked;
+            Draw.ShowCoordinateSystem = sd.IsChecked;
             Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
         }
         private void ViewBasePlaneGrid(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.MenuItem sd = (System.Windows.Controls.MenuItem)sender;
-            Draw.showBasePlaneGrid = sd.IsChecked;
+            Draw.ShowBasePlaneGrid = sd.IsChecked;
             Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
         }
@@ -972,25 +970,6 @@ namespace BCK.SmrSimulation.Main
                     showUndeformedForce = true;
                 }
 
-                if (!Fem.solved)
-                {
-                    if (Fem.Model.Nodes.visibility)
-                    {
-                        foreach (FemNode node in Fem.Model.Nodes)
-                        {
-                            Draw.Shapes.AddSphere(node.C0, diaNode, rlsNode);
-                            if (node.selected)
-                            {
-                                Draw.Shapes.RecentShape.Color(colorSelectedNode);
-                            }
-                            else
-                            {
-                                Draw.Shapes.RecentShape.Color(colorNode);
-                            }
-                            Draw.Shapes.RecentShape.Opacity(opacity);
-                        }
-                    }
-                }
                 if (Fem.Model.Elems.show)
                 {
                     foreach (FemElement e in Fem.Model.Elems)
@@ -1003,13 +982,13 @@ namespace BCK.SmrSimulation.Main
                                 Point3D end = frame.nodes[1].C0;
                                 Vector3D dir = end - str;
 
-                                if(frame.Section == null)
+                                if (frame.Section == null)
                                 {
                                     Draw.Shapes.AddCylinder(str, dir, diaElem, rlsElem);
                                 }
                                 else
                                 {
-                                    if(showSection & frame.Section.hasSectionPoly)
+                                    if (showSection & frame.Section.hasSectionPoly)
                                     {
                                         Draw.Shapes.AddPolygon(str, dir, frame.Section.Poly);
                                     }
@@ -1042,6 +1021,25 @@ namespace BCK.SmrSimulation.Main
                         Draw.Shapes.RecentShape.Opacity(opacity);
                     }
                 }
+                if (!Fem.solved)
+                {
+                    if (Fem.Model.Nodes.visibility)
+                    {
+                        foreach (FemNode node in Fem.Model.Nodes)
+                        {
+                            Draw.Shapes.AddSphere(node.C0, diaNode, rlsNode);
+                            if (node.selected)
+                            {
+                                Draw.Shapes.RecentShape.Color(colorSelectedNode);
+                            }
+                            else
+                            {
+                                Draw.Shapes.RecentShape.Color(colorNode);
+                            }
+                            Draw.Shapes.RecentShape.Opacity(opacity);
+                        }
+                    }
+                }
                 if (showUndeformedForce)
                 {
                     foreach (FemLoad load in Fem.Loads)
@@ -1056,6 +1054,7 @@ namespace BCK.SmrSimulation.Main
                 }
             }
 
+            //나중에 추가한 개체가 앞에 표시됨.
             RedrawShapes();
         }
 
@@ -1097,7 +1096,6 @@ namespace BCK.SmrSimulation.Main
                 }
             }
 
-
             draw2d.texts.Clear();
             if (Settings.Default.isFemViewNodeNumber)
             {
@@ -1137,39 +1135,52 @@ namespace BCK.SmrSimulation.Main
 
         }
     } // 패널, 격자배경, 좌표계, Redraw 등
-    public partial class MainWindow : Window
+    partial class MainWindow : Window
     {
         private Point pointMouseDown;
-        internal bool orbiting = false;
 
-        private bool isOnwindowSelection = false;
-        internal void TurnOnWindowSelection(bool on)
+        internal bool IsOnWindowSelect
         {
-            if (orbiting) return;
-            if (on & !isOnwindowSelection) //이벤트 중복생성 방지
+            get
             {
-                MouseDown += WindowSelection_MouseLeftDown;
+                return isOnWindowSelect;
             }
-            else
+            set
             {
-                MouseDown -= WindowSelection_MouseLeftDown;
+                if (value)
+                {
+                    if (isOnWindowSelect) return; //이벤트 중복생성 방지
+                    MouseDown += WindowSelection_MouseLeftDown;
+                }
+                else
+                {
+                    MouseDown -= WindowSelection_MouseLeftDown;
+                }
+                isOnWindowSelect = value;
             }
-            isOnwindowSelection = on;
+        }
+        private bool isOnWindowSelect = false;
+        internal bool IsOnDeselectAll_Esc
+        {
+            get
+            {
+                return IsOnDeselectAll_Esc;
+            }
+            set
+            {
+                if (value)
+                {
+                    if (isOnDeselectAll_Esc) return;
+                    KeyDown += UnselectAll_OrbitEnd_Esc;
+                }
+                else
+                {
+                    KeyDown -= UnselectAll_OrbitEnd_Esc;
+                }
+                isOnDeselectAll_Esc = value;
+            }
         }
         private bool isOnDeselectAll_Esc = false;
-        internal void TurnOnDeselectAll_Esc(bool on)
-        {
-            if(on & !isOnDeselectAll_Esc) //이벤트 중복생성 방지
-            {
-                KeyDown += UnselectAll_Esc;
-                isOnDeselectAll_Esc = true;
-            }
-            else
-            {
-                KeyDown -= UnselectAll_Esc;
-                isOnDeselectAll_Esc = false;
-            }
-        }
         private void TurnOnErase_Del(bool on)
         {
             if (on)
@@ -1194,7 +1205,6 @@ namespace BCK.SmrSimulation.Main
         }
         private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            if (orbiting) return;
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
@@ -1204,10 +1214,16 @@ namespace BCK.SmrSimulation.Main
                 r.Start();
             }
         }
-        private void UnselectAll_Esc(object sender, System.Windows.Input.KeyEventArgs e)
+        private void UnselectAll_OrbitEnd_Esc(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Escape)
             {
+                if (IsOnOrbit)
+                {
+                    IsOnOrbit = false;
+                    return;
+                }
+
                 Fem.Selection.DeselectAll();
                 RedrawFemModel();
             }
@@ -1228,7 +1244,7 @@ namespace BCK.SmrSimulation.Main
             }
         }
     } // 마우스 이벤트 관련
-    public partial class MainWindow : Window
+    partial class MainWindow : Window
     {
         private void FullScreenWindow(object sender, RoutedEventArgs e)
         {
@@ -1337,7 +1353,7 @@ namespace BCK.SmrSimulation.Main
             {
                 pointMouseDown = e.GetPosition(grdMain);
                 Draw.OrbitStart();
-                if (requestUserInput.On)
+                if (requestUserInput.IsOn)
                 {
                     //requestUserInput.PanMoveStart();
                 }
@@ -1354,7 +1370,7 @@ namespace BCK.SmrSimulation.Main
                 //bckD.OrbitMoveX(mov.X / 2); //MoveX와 MoveY중 처음 실행된 것 하나만 동작함.
                 //bckD.OrbitMoveY(mov.Y / 2);
                 Draw.OrbitMove(mov);
-                if (requestUserInput.On)
+                if (requestUserInput.IsOn)
                 {
                     //requestUserInput.PanMove(mov);
                 }
@@ -1364,7 +1380,7 @@ namespace BCK.SmrSimulation.Main
         private void PanOff_MouseWheelUp(object sender, MouseButtonEventArgs e)
         {
             Draw.OrbitEnd();
-            if (requestUserInput.On)
+            if (requestUserInput.IsOn)
             {
                 //requestUserInput.PanMoveEnd();
             }
@@ -1373,25 +1389,36 @@ namespace BCK.SmrSimulation.Main
 
         private void TurnOnOrbit(object sender, RoutedEventArgs e)
         {
-            TurnOnOrbit(true);
+            IsOnOrbit = true;
         }
-        internal void TurnOnOrbit(bool on)
+        internal bool IsOnOrbit
         {
-            if (on)
+            get
             {
-                orbiting = true;
-                MouseDown += new MouseButtonEventHandler(OrbitStart_MouseDown);
-                MouseUp += new MouseButtonEventHandler(OrbitEnd_MouseUp);
-                grdMain.MouseLeave += new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
-                KeyDown += TurnOffOrbit_Esc;
-                TurnOnDeselectAll_Esc(false);
+                return isOnOrbit;
             }
-            else
+            set
             {
-                OritEnd();
+                if (value)
+                {
+                    if (isOnOrbit) return;
+                    MouseDown += new MouseButtonEventHandler(OrbitStart_MouseDown);
+                    MouseUp += new MouseButtonEventHandler(OrbitEnd_MouseUp);
+                    grdMain.MouseLeave += new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
+                    KeyDown += TurnOffOrbit_Esc;
+                }
+                else
+                {
+                    MouseDown -= new MouseButtonEventHandler(OrbitStart_MouseDown);
+                    MouseUp -= new MouseButtonEventHandler(OrbitEnd_MouseUp);
+                    grdMain.MouseLeave -= new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
+                    KeyDown -= TurnOffOrbit_Esc;
+                    IsOnWindowSelect = true;
+                }
+                isOnOrbit = value;
             }
-
         }
+        private bool isOnOrbit = false;
         private void OrbitStart_MouseDown(object sender, System.Windows.Input.MouseEventArgs e)
         {
             pointMouseDown = e.GetPosition(grdMain);
@@ -1403,6 +1430,7 @@ namespace BCK.SmrSimulation.Main
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
+                isOnOrbit = true;
                 Point p = e.GetPosition(grdMain);
                 Vector mov = p - pointMouseDown;
                 stbLabel.Content = mov.X + ", " + mov.Y;
@@ -1417,6 +1445,7 @@ namespace BCK.SmrSimulation.Main
             }
             if (e.RightButton == MouseButtonState.Pressed)
             {
+                isOnOrbit = true;
                 //Point strPoint_grdMain = grdMain.TransformToAncestor(baseDockPanel).Transform(new Point(0, 0));
                 Point strPoint_grdMain = new Point(0, 0);
                 Point center_gridMain = new Point(strPoint_grdMain.X + grdMain.ActualWidth / 2, strPoint_grdMain.Y + grdMain.ActualHeight / 2);
@@ -1458,17 +1487,8 @@ namespace BCK.SmrSimulation.Main
         {
             if (e.Key == Key.Escape)
             {
-                OritEnd();
+                IsOnOrbit = false;
             }
-        }
-        private void OritEnd()
-        {
-            orbiting = false;
-            MouseDown -= new MouseButtonEventHandler(OrbitStart_MouseDown);
-            MouseUp -= new MouseButtonEventHandler(OrbitEnd_MouseUp);
-            grdMain.MouseLeave -= new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
-            KeyDown -= TurnOffOrbit_Esc;
-            TurnOnDeselectAll_Esc(true);
         }
 
         private void ViewNode(object sender, RoutedEventArgs e)

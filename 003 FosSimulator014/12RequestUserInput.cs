@@ -50,44 +50,42 @@ namespace BCK.SmrSimulation.Main
             this.main = main;
         }
 
-        private bool on = false;
-        internal bool On
+        private bool isOn = false;
+        internal bool IsOn
         {
             get
             {
-                return on;
+                return isOn;
             }
             set
             {
-                if (value != on)
+                if (value)
                 {
-                    TurnOnMainWindowEvents(on);
+                    if (isOn) return;
+                    main.IsOnWindowSelect = false;
+                    main.IsOnDeselectAll_Esc = false;
                     main.KeyDown += ExitCommand_EscKey;
                 }
-                on = value;
+                else
+                {
+                    main.IsOnWindowSelect = true;
+                    main.IsOnDeselectAll_Esc = true;
+                    main.KeyDown -= ExitCommand_EscKey;
+                }
+                isOn = value;
             }
         }
         internal void End()
         {
             actionEnd?.Invoke();
-            End_Cancle();
-        }
-        internal void End_Cancle()
-        {
-            On = false;
-            ClearActions();
-            TurnOffAllEvents();
-            
-        }
-        private void TurnOffAllEvents()
-        {
-            main.KeyDown -= ExitCommand_EscKey;
+            IsOn = false;
         }
         private void ExitCommand_EscKey(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Escape)
             {
-                End_Cancle();
+                ClearActions();
+                IsOn = false;
             }
         }
 
@@ -95,12 +93,6 @@ namespace BCK.SmrSimulation.Main
         /// 본 RequestUserInput에서 처리하도록 지정된 Action에서 사용자에게 입력을 요구하는 InputType입니다. (int, real, 좌표 등)
         /// </summary>
         private UserInputAction.RequestInputType doingActionInputType;
-
-        private void TurnOnMainWindowEvents(bool on)
-        {
-            main.TurnOnWindowSelection(on);
-            main.TurnOnDeselectAll_Esc(on);
-        }
 
         /// <summary>
         /// 지정된 모든 action들을 null로 초기화합니다. 이전 명령에서 지정한 액션들이 모두 초기화 됩니다.
@@ -254,7 +246,7 @@ namespace BCK.SmrSimulation.Main
         internal void Start()
         {
             actionStep = -1;
-            On = true;
+            IsOn = true;
             NextAction();
         }
         private void NextAction()
@@ -442,13 +434,13 @@ namespace BCK.SmrSimulation.Main
         }
         internal void Start()
         {
-            main.TurnOnWindowSelection(false);
+            main.IsOnWindowSelect = false;
             main.selectionWindow.viewType = viewType;
 
             if (hasFirstPoint)
             {
                 // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
-                if (main.orbiting) return;
+                if (main.IsOnOrbit) return;
                 p0 = FirstPoint;
                 main.selectionWindow.Start(p0);
                 main.MouseMove += WindowSelection_MouseMove;
@@ -462,7 +454,7 @@ namespace BCK.SmrSimulation.Main
         }
         private void WindowSelection_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            if (main.orbiting) return;
+            if (main.IsOnOrbit) return;
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 p0 = e.GetPosition(main.grdMain);
@@ -497,7 +489,7 @@ namespace BCK.SmrSimulation.Main
             main.MouseLeave -= WindowSelectionEnd;
             main.MouseDown -= WindowSelection_MouseLeftDown;
 
-            main.TurnOnWindowSelection(true);
+            main.IsOnWindowSelect = true;
         }
     } // 개체 선택 사용자 입력
 }

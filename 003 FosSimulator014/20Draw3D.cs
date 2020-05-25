@@ -17,104 +17,41 @@ namespace BCK.SmrSimulation.Draw3D
     {
         public Grid Grid { get; }
 
-        public Shape3dCollection Shapes { get; }
-        public TextShapes3D Texts { get; } = new TextShapes3D();
+        internal LocalCoordinateSystem LocalCoordinateSystem
+        {
+            get
+            {
+                return localCoordinateSystem;
+            }
+            set
+            {
+                if(value != localCoordinateSystem)
+                {
+                    localCoordinateSystem = value;
+                    basePlaneGrid.LocalCoordinateSystem = localCoordinateSystem;
+                }
+            }
+        }
+        private LocalCoordinateSystem localCoordinateSystem;
+        BasePlaneGrid basePlaneGrid;
 
-        private ModelVisual3D modelVisual3d_Shapes;
+        public Shape3dCollection Shapes { get; }
+        public TextShape3dCollection Texts { get; } = new TextShape3dCollection();
+
         private ModelVisual3D modelVisual3d_Texts;
 
         /// <summary>
         /// 노드 추가할 때 졸졸 따라다니는 sphere.
         /// </summary>
         public PointMarker3D PointMarker { get; set; }
+        public bool ShowBasePlaneGrid { get => showBasePlaneGrid; set => showBasePlaneGrid = value; }
+        private bool showBasePlaneGrid = true;
+        public bool ShowCoordinateSystem { get => showCoordinateSystem; set => showCoordinateSystem = value; }
+        private bool showCoordinateSystem = true;
 
-        internal void SetBasePlaneGrid()
-        {
-            Vector3D normalVector = new Vector3D(0, 0, 1);
-            Vector3D localX = new Vector3D(1, 0, 0);
-            Point3D center = new Point3D(0, 0, 0);
+        //ModelVisual3D modelVisual_BasePlaneGrid = new ModelVisual3D();
 
-            double subGap = 1.0d;
-            int mainFrequent = 5;
-            int numSubbarHalf = 50;
-            double length = subGap * numSubbarHalf * 2;
-
-            double diaMain = 0.02;
-            double diaSub = 0.01;
-            //diaMain = 0.2;
-            //diaSub = 0.1;
-            int resolution = 2;
-            double opacityMain = 0.3;
-            double opacitySub = 0.15;
-
-            Color color = Colors.Gray;
-
-            //Shapes.Add 메서드를 사용하는 경우 동일한 메쉬를 반복해서 생성하게되므로 다시 만듦
-            MeshGeometry3D meshMain = MeshGenerator.Cylinder(diaMain, length, resolution);
-            MeshGeometry3D meshSub = MeshGenerator.Cylinder(diaSub, length, resolution);
-
-            Vector3D axisY = new Vector3D(0, 1, 0);
-            Vector3D axisZ = new Vector3D(0, 0, 1);
-
-            RotateTransform3D rotateTransform3dZ = new RotateTransform3D(new AxisAngleRotation3D(axisZ, 90));
-            RotateTransform3D rotateTransform3dY = new RotateTransform3D(new AxisAngleRotation3D(axisY, 90));
-            RotateTransform3D rotateTransform3dZ2 = new RotateTransform3D(new AxisAngleRotation3D(axisZ, 0));
-            Model3DGroup modelGroup = new Model3DGroup();
-            //modelGroup.Children.Add(myDirLight);
-            for (int i = -numSubbarHalf; i <= numSubbarHalf; i++)
-            {
-                Shape3D c = new Shape3D();
-                if (i % mainFrequent == 0)
-                {
-                    c.mesh = meshMain;
-                    c.Opacity(opacityMain);
-                }
-                else
-                {
-                    c.mesh = meshSub;
-                    c.Opacity(opacitySub);
-                }
-                c.RotateTransform3dZ = rotateTransform3dZ;
-                c.RotateTransform3dY = rotateTransform3dY;
-                c.RotateTransform3dZ2 = rotateTransform3dZ2;
-                c.TranslateTransform3D = new TranslateTransform3D(new Vector3D(-length / 2, subGap * i, 0));
-                c.Color(color);
-                modelGroup.Children.Add(c.GeoModel());
-            }
-
-            //rotateTransform3dZ = new RotateTransform3D(new AxisAngleRotation3D(axisZ, 90));
-            //rotateTransform3dY = new RotateTransform3D(new AxisAngleRotation3D(axisY, 90));
-            rotateTransform3dZ2 = new RotateTransform3D(new AxisAngleRotation3D(axisZ, 90));
-            for (int i = -numSubbarHalf; i <= numSubbarHalf; i++)
-            {
-                Shape3D c = new Shape3D();
-                if (i % mainFrequent == 0)
-                {
-                    c.mesh = meshMain;
-                    c.Opacity(opacityMain);
-                }
-                else
-                {
-                    c.mesh = meshSub;
-                    c.Opacity(opacitySub);
-                }
-                c.RotateTransform3dZ = rotateTransform3dZ;
-                c.RotateTransform3dY = rotateTransform3dY;
-                c.RotateTransform3dZ2 = rotateTransform3dZ2;
-                c.TranslateTransform3D = new TranslateTransform3D(new Vector3D(subGap * i, -length / 2, 0));
-                c.Color(color);
-                modelGroup.Children.Add(c.GeoModel());
-            }
-
-            modelVisual_BasePlaneGrid = new ModelVisual3D
-            {
-                Content = modelGroup
-            };
-        }
-        public bool showBasePlaneGrid = true;
-        ModelVisual3D modelVisual_BasePlaneGrid = new ModelVisual3D();
-
-        internal void SetCoordinateSystem()
+        internal void SetUniversalCoordinateSystemMark()
         {
             double length = 1;
 
@@ -159,7 +96,6 @@ namespace BCK.SmrSimulation.Draw3D
                 Content = modelGroup
             };
         }
-        public bool showCoordinateSystem = true;
         ModelVisual3D modelVisual_CoordinateSystem = new ModelVisual3D();
 
         private readonly Model3DGroup model3DGroup = new Model3DGroup();
@@ -180,13 +116,24 @@ namespace BCK.SmrSimulation.Draw3D
             Shapes = new Shape3dCollection();
             viewport.Camera = PCamera;
 
-            SetCoordinateSystem();
-            SetBasePlaneGrid();
+            SetUniversalCoordinateSystemMark();
+            SetLocalCoordinateSystem();
+            basePlaneGrid = new BasePlaneGrid(localCoordinateSystem);
+
             PointMarker = new PointMarker3D(this);
 
             RegenerateShapesModelVisual3ds();
             RedrawShapes();
         }
+
+        private void SetLocalCoordinateSystem()
+        {
+            localCoordinateSystem = new LocalCoordinateSystem();
+            localCoordinateSystem.basePoint = new Point3D(0, 0, 0);
+            localCoordinateSystem.xAxis = new Vector3D(1, 0, 0);
+            localCoordinateSystem.yAxis = new Vector3D(0, 1, 0);
+        }
+
         public void RedrawShapes()
         {
             model3DGroup.Children.Clear();
@@ -197,10 +144,10 @@ namespace BCK.SmrSimulation.Draw3D
             viewport.Children.Clear();
             viewport.Children.Add(modelVisual);
 
-            viewport.Children.Add(modelVisual3d_Shapes);
+            viewport.Children.Add(Shapes.ModelVisual3D);
             viewport.Children.Add(modelVisual3d_Texts);
-            if (showBasePlaneGrid) viewport.Children.Add(modelVisual_BasePlaneGrid);
-            if (showCoordinateSystem) viewport.Children.Add(modelVisual_CoordinateSystem);
+            if (ShowBasePlaneGrid) viewport.Children.Add(basePlaneGrid.ModelVisual3D);
+            if (ShowCoordinateSystem) viewport.Children.Add(modelVisual_CoordinateSystem);
             if (PointMarker.visibility) viewport.Children.Add(PointMarker.ModelVisual3D);
 
             Grid.Children.Clear();
@@ -208,7 +155,7 @@ namespace BCK.SmrSimulation.Draw3D
         }
         public void RegenerateShapesModelVisual3ds()
         {
-            modelVisual3d_Shapes = Shapes.ModelVisual3D();
+            Shapes.RegenerateModelVisual3D();
             modelVisual3d_Texts = Texts.ModelVisual3D();
         }
 
@@ -227,10 +174,10 @@ namespace BCK.SmrSimulation.Draw3D
             Vector p = p0 - gridCenter;
 
             //베이스평면 정보
-            Point3D ucsBasePoint = new Point3D(0, 0, 0);
-            Vector3D ucsX = new Vector3D(1, 0, 0);
-            Vector3D ucsY = new Vector3D(0, 1, 0);
-            Vector3D ucsNormal = Vector3D.CrossProduct(ucsX, ucsY);
+            Point3D ucsBasePoint = localCoordinateSystem.basePoint;
+            Vector3D ucsX = localCoordinateSystem.xAxis;
+            Vector3D ucsY = localCoordinateSystem.yAxis;
+            Vector3D ucsNormal = localCoordinateSystem.ZAxis;
 
             //카메라 정보
             double fov = PCamera.FieldOfView;
@@ -268,7 +215,7 @@ namespace BCK.SmrSimulation.Draw3D
         /// </summary>
         /// <param name="p0"></param>
         /// <returns></returns>
-        public Point3D GetPoint3d_FromPoint2D(Point p0)
+        public Point3D GetPoint3dFromPoint2D(Point p0)
         {
             //Grid의 마우스 포인트
             double gridHeight = Grid.ActualHeight;
@@ -327,8 +274,18 @@ namespace BCK.SmrSimulation.Draw3D
             Vector3D pointVector = p0 - pos;
             Point3D pV = pointVector + new Point3D(0, 0, 0);
             double dist = GF.PlanePosition(dir, pV);
-            double unitX = -GF.PlanePosition(camY, pV) / dist;
-            double unitY = -GF.PlanePosition(up, pV) / dist;
+
+            double unitX, unitY;
+            if (dist == 0)
+            {
+                unitX = 0;
+                unitY = 0;
+            }
+            else
+            {
+                unitX = -GF.PlanePosition(camY, pV) / dist;
+                unitY = -GF.PlanePosition(up, pV) / dist;
+            }
 
             double angX = Math.Atan2(unitX, 1);
             double angY = Math.Atan2(unitY, 1);
@@ -340,14 +297,14 @@ namespace BCK.SmrSimulation.Draw3D
 
             if (double.IsNaN(x))
             {
-
+                System.Diagnostics.Debugger.Break();
             }
 
             Point outP = new Point(x, y);
             return outP;
         }
 
-        public void Example_DrawGradient3D()
+        public void ExampleDrawGradient3D()
         {
             // Declare scene objects.
             Viewport3D myViewport3D = new Viewport3D();
@@ -482,7 +439,7 @@ namespace BCK.SmrSimulation.Draw3D
             //grdBackground.Visibility = Visibility.Hidden;
 
         }
-        internal void Example_DrawLine3D(Point3D p0, Point3D p1)
+        internal void ExampleDrawLine3D(Point3D p0, Point3D p1)
         {
             SolidColorBrush brush = new SolidColorBrush(Colors.Black);
             var material = new DiffuseMaterial(brush);
@@ -506,7 +463,7 @@ namespace BCK.SmrSimulation.Draw3D
             Grid.Children.Clear();
             Grid.Children.Add(viewport);
         }
-        internal void Example_DrawRectangle2D()
+        internal void ExampleDrawRectangle2D()
         {
             //ref. https://crynut84.tistory.com/75
             Rectangle r = new Rectangle();
@@ -649,10 +606,10 @@ namespace BCK.SmrSimulation.Draw3D
             Point wP2 = new Point(wx2, wy2);
             Point wP3 = new Point(wx1, wy2);
 
-            Point3D pyramidBottomP0 = GetPoint3d_FromPoint2D(wP0);
-            Point3D pyramidBottomP1 = GetPoint3d_FromPoint2D(wP1);
-            Point3D pyramidBottomP2 = GetPoint3d_FromPoint2D(wP2);
-            Point3D pyramidBottomP3 = GetPoint3d_FromPoint2D(wP3);
+            Point3D pyramidBottomP0 = GetPoint3dFromPoint2D(wP0);
+            Point3D pyramidBottomP1 = GetPoint3dFromPoint2D(wP1);
+            Point3D pyramidBottomP2 = GetPoint3dFromPoint2D(wP2);
+            Point3D pyramidBottomP3 = GetPoint3dFromPoint2D(wP3);
 
             v0 = pyramidBottomP0 - p0;
             v1 = pyramidBottomP1 - p0;
@@ -670,13 +627,141 @@ namespace BCK.SmrSimulation.Draw3D
         internal void GetInfiniteTriangleBySelectionFence(Point p0, Point p1,
             ref Point3D pos, ref Vector3D v0, ref Vector3D v1)
         {
-            Point3D pp0 = GetPoint3d_FromPoint2D(p0);
-            Point3D pp1 = GetPoint3d_FromPoint2D(p1);
+            Point3D pp0 = GetPoint3dFromPoint2D(p0);
+            Point3D pp1 = GetPoint3dFromPoint2D(p1);
             pos = PCamera.Position;
             v0 = pp0 - pos;
             v1 = pp1 - pos;
         }
 
+    }
+    class BasePlaneGrid
+    {
+        public LocalCoordinateSystem LocalCoordinateSystem
+        {
+            get
+            {
+                return localCoordinateSystem;
+            }
+            set
+            {
+                localCoordinateSystem = value;
+                isModelVisual3D = false;
+            }
+        }
+        private LocalCoordinateSystem localCoordinateSystem;
+
+        public ModelVisual3D ModelVisual3D
+        {
+            get
+            {
+                if (isModelVisual3D)
+                {
+                    return modelVisual3D;
+                }
+                else
+                {
+                    GenerateModelVisual3D001();
+                    return modelVisual3D;
+                }
+            }
+        }
+        private ModelVisual3D modelVisual3D;
+        private bool isModelVisual3D = false;
+
+        public BasePlaneGrid(LocalCoordinateSystem localCoordinateSystem)
+        {
+            this.localCoordinateSystem = localCoordinateSystem;
+            GenerateModelVisual3D001();
+        }
+        private void GenerateModelVisual3D001()
+        {
+
+            Point3D basePoint = localCoordinateSystem.basePoint;
+            Vector3D xAxis = localCoordinateSystem.xAxis;
+            Vector3D yAxis = localCoordinateSystem.yAxis;
+
+            double subGap = 1.0d;
+            int mainFrequent = 5; //굵은선이 몇개 간격으로 있는지
+            int numSubbarHalf = 50; //얇으선 개수 전체 개수는 x2
+            double length = subGap * numSubbarHalf * 2;
+
+            double widthMain = 0.02;
+            double widthSub = 0.01;
+            double opacityMain = 0.3;
+            double opacitySub = 0.15;
+
+            Color color = Colors.Gray;
+
+            //Shapes.Add 메서드를 사용하는 경우 동일한 메쉬를 반복해서 생성하게되므로 다시 만듦
+            Model3DGroup modelGroup = new Model3DGroup();
+            for (int i = -numSubbarHalf; i <= numSubbarHalf; i++)
+            {
+                Shape3D c = new Shape3D();
+                if (i % mainFrequent == 0)
+                {
+                    Point3D p0 = basePoint - length / 2 * xAxis - widthMain / 2 * yAxis + subGap * i * yAxis;
+                    Point3D p1 = basePoint + length / 2 * xAxis - widthMain / 2 * yAxis + subGap * i * yAxis;
+                    Point3D p2 = basePoint + length / 2 * xAxis + widthMain / 2 * yAxis + subGap * i * yAxis;
+                    Point3D p3 = basePoint - length / 2 * xAxis + widthMain / 2 * yAxis + subGap * i * yAxis;
+                    MeshGeometry3D meshMain = MeshGenerator.Rectangle(p0, p1, p2, p3);
+
+                    c.mesh = meshMain;
+                    c.Opacity(opacityMain);
+                }
+                else
+                {
+                    Point3D subP0 = basePoint - length / 2 * xAxis - widthSub / 2 * yAxis + subGap * i * yAxis;
+                    Point3D subP1 = basePoint + length / 2 * xAxis - widthSub / 2 * yAxis + subGap * i * yAxis;
+                    Point3D subP2 = basePoint + length / 2 * xAxis + widthSub / 2 * yAxis + subGap * i * yAxis;
+                    Point3D subP3 = basePoint - length / 2 * xAxis + widthSub / 2 * yAxis + subGap * i * yAxis;
+                    MeshGeometry3D meshSub = MeshGenerator.Rectangle(subP0, subP1, subP2, subP3);
+
+                    c.mesh = meshSub;
+                    c.Opacity(opacitySub);
+                }
+                c.Color(color);
+                modelGroup.Children.Add(c.GeoModel());
+            }
+            for (int i = -numSubbarHalf; i <= numSubbarHalf; i++)
+            {
+                Shape3D c = new Shape3D();
+                if (i % mainFrequent == 0)
+                {
+                    Point3D p0 = basePoint - length / 2 * yAxis - widthMain / 2 * xAxis + subGap * i * xAxis;
+                    Point3D p1 = basePoint + length / 2 * yAxis - widthMain / 2 * xAxis + subGap * i * xAxis;
+                    Point3D p2 = basePoint + length / 2 * yAxis + widthMain / 2 * xAxis + subGap * i * xAxis;
+                    Point3D p3 = basePoint - length / 2 * yAxis + widthMain / 2 * xAxis + subGap * i * xAxis;
+                    MeshGeometry3D meshMain = MeshGenerator.Rectangle(p0, p1, p2, p3);
+            
+                    c.mesh = meshMain;
+                    c.Opacity(opacityMain);
+                }
+                else
+                {
+                    Point3D subP0 = basePoint - length / 2 * yAxis - widthSub / 2 * xAxis + subGap * i * xAxis;
+                    Point3D subP1 = basePoint + length / 2 * yAxis - widthSub / 2 * xAxis + subGap * i * xAxis;
+                    Point3D subP2 = basePoint + length / 2 * yAxis + widthSub / 2 * xAxis + subGap * i * xAxis;
+                    Point3D subP3 = basePoint - length / 2 * yAxis + widthSub / 2 * xAxis + subGap * i * xAxis;
+                    MeshGeometry3D meshSub = MeshGenerator.Rectangle(subP0, subP1, subP2, subP3);
+            
+                    c.mesh = meshSub;
+                    c.Opacity(opacitySub);
+                }
+                c.Color(color);
+                modelGroup.Children.Add(c.GeoModel());
+            }
+
+            isModelVisual3D = true;
+            modelVisual3D = new ModelVisual3D
+            {
+                Content = modelGroup
+            };
+        }
+        internal void Regenerate()
+        {
+            GenerateModelVisual3D001();
+        }
     }
     public class PointMarker3D
     {
@@ -720,7 +805,61 @@ namespace BCK.SmrSimulation.Draw3D
             markerShapes.AddSphere(position, dia, resolution);
             markerShapes.RecentShape.Color(color);
         }
-    } //
+    }
+    class LocalCoordinateSystem
+    {
+        internal Point3D basePoint = new Point3D(0, 0, 0);
+        internal Vector3D xAxis = new Vector3D(1, 0, 0);
+        internal Vector3D yAxis = new Vector3D(0, 1, 0);
+        internal Vector3D ZAxis
+        {
+            get
+            {
+             return Vector3D.CrossProduct(xAxis, yAxis);
+            }
+        }
+
+        internal void SetForViewTop()
+        {
+            basePoint = new Point3D(0, 0, 0);
+            xAxis = new Vector3D(1, 0, 0);
+            yAxis = new Vector3D(0, 1, 0);
+        }
+        internal void SetForViewFront()
+        {
+            basePoint = new Point3D(0, 0, 0);
+            xAxis = new Vector3D(1, 0, 0);
+            yAxis = new Vector3D(0, 0, 1);
+        }
+
+        internal void SetForViewBack()
+        {
+            basePoint = new Point3D(0, 0, 0);
+            xAxis = new Vector3D(-1, 0, 0);
+            yAxis = new Vector3D(0, 0, 1);
+        }
+
+        internal void SetForViewRight()
+        {
+            basePoint = new Point3D(0, 0, 0);
+            xAxis = new Vector3D(0, -1, 0);
+            yAxis = new Vector3D(0, 0, 1);
+        }
+
+        internal void SetForViewLeft()
+        {
+            basePoint = new Point3D(0, 0, 0);
+            xAxis = new Vector3D(0, 1, 0);
+            yAxis = new Vector3D(0, 0, 1);
+        }
+
+        internal void SetForViewBottom()
+        {
+            basePoint = new Point3D(0, 0, 0);
+            xAxis = new Vector3D(1, 0, 0);
+            yAxis = new Vector3D(0, 1, 0);
+        }
+    }
     partial class BckDraw3D // Orbit & View
     {
         public PerspectiveCamera PCamera { get; set; } = new PerspectiveCamera
@@ -728,9 +867,9 @@ namespace BCK.SmrSimulation.Draw3D
             Position = new Point3D(-10, -10, 10),
             LookDirection = new Vector3D(10, 10, -10),
             FieldOfView = 70,
-            FarPlaneDistance = 200,
+            FarPlaneDistance = 10000,
             UpDirection = new Vector3D(0, 0, 1),
-            NearPlaneDistance = 1
+            NearPlaneDistance = 0
         };
         private PerspectiveCamera pCamera_init = new PerspectiveCamera();
         private OrthographicCamera oCamera = new OrthographicCamera
@@ -1023,13 +1162,13 @@ namespace BCK.SmrSimulation.Draw3D
         // Zoom, Pan 기능을 draw3d 클래스에 넣어보려고 했지만, Window에서 마우스 이벤트를 받아오지 않으면 뭔가 그려진 영역에서만 클릭이벤트를 발생시키는 문제가 있음.
         // 공백 부분에서 클릭 가능한 이벤트를 만들려면 window단에서 이벤트를 가져와야하므로 draw3d 클래스 안에 이벤트를 넣는 것은 복잡성을 키울 염려있음.
         // 만들어 놓기는 했는데 일단 사용하지 않는 것으로 진행.
-        private bool isOnZoomPan_WheelScroll = false;
+        private bool isOnZoomPanWheelScroll = false;
         private Point pointMouseDown;
-        public bool IsOnZoomPan_WheelScroll
+        public bool IsOnZoomPanWheelScroll
         {
             get
             {
-                return isOnZoomPan_WheelScroll;
+                return isOnZoomPanWheelScroll;
             }
             set
             {
@@ -1046,7 +1185,7 @@ namespace BCK.SmrSimulation.Draw3D
                     Grid.MouseUp -= PanOff_MouseWheelUp;
                     Grid.MouseMove -= Pan_MouseWheelDownMove;
                 }
-                isOnZoomPan_WheelScroll = value;
+                isOnZoomPanWheelScroll = value;
             }
         }
         private void Zoom_MouseWheelScroll(object sender, MouseWheelEventArgs e)
@@ -1089,6 +1228,9 @@ namespace BCK.SmrSimulation.Draw3D
             PCamera.Position = newPos;
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 1, 0);
+
+            localCoordinateSystem.SetForViewTop();
+            basePlaneGrid.Regenerate();
         }
         public void ViewFront()
         {
@@ -1100,6 +1242,9 @@ namespace BCK.SmrSimulation.Draw3D
             PCamera.Position = newPos;
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
+
+            localCoordinateSystem.SetForViewFront();
+            basePlaneGrid.Regenerate();
         }
         public void ViewBack()
         {
@@ -1111,6 +1256,9 @@ namespace BCK.SmrSimulation.Draw3D
             PCamera.Position = newPos;
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
+
+            localCoordinateSystem.SetForViewBack();
+            basePlaneGrid.Regenerate();
         }
         public void ViewRight()
         {
@@ -1122,6 +1270,9 @@ namespace BCK.SmrSimulation.Draw3D
             PCamera.Position = newPos;
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
+
+            localCoordinateSystem.SetForViewRight();
+            basePlaneGrid.Regenerate();
         }
         public void ViewLeft()
         {
@@ -1133,6 +1284,9 @@ namespace BCK.SmrSimulation.Draw3D
             PCamera.Position = newPos;
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 0, 1);
+
+            localCoordinateSystem.SetForViewLeft();
+            basePlaneGrid.Regenerate();
         }
         public void ViewBottom()
         {
@@ -1144,6 +1298,9 @@ namespace BCK.SmrSimulation.Draw3D
             PCamera.Position = newPos;
             PCamera.LookDirection = focalPoint - newPos;
             PCamera.UpDirection = new Vector3D(0, 1, 0);
+
+            localCoordinateSystem.SetForViewBottom();
+            basePlaneGrid.Regenerate();
         }
         public void ViewSE()
         {
@@ -1270,6 +1427,7 @@ namespace BCK.SmrSimulation.Draw3D
         {
             base.Add(shape);
             RecentShape = shape;
+            isModelChanged = true;
             return shape;
         }
 
@@ -1281,7 +1439,7 @@ namespace BCK.SmrSimulation.Draw3D
         }
         internal Rectangular3D AddRectangle(Point3D p0, Point3D p1, Point3D p2, Point3D p3)
         {
-            Rectangular3D t = new Rectangular3D(p0, p1, p3, p2);
+            Rectangular3D t = new Rectangular3D(p0, p1, p2, p3);
             Add(t);
             return t;
         }
@@ -1374,12 +1532,21 @@ namespace BCK.SmrSimulation.Draw3D
             return model3DGroup;
         }
 
-        internal ModelVisual3D ModelVisual3D()
+        internal ModelVisual3D ModelVisual3D
         {
-            ModelVisual3D modelVisual3D = new ModelVisual3D();
-            modelVisual3D.Content = this.Model3DGroup();
-            return modelVisual3D;
+            get
+            {
+                if(isModelChanged)
+                {
+                    RegenerateModelVisual3D();
+                    isModelChanged = false;
+                }
+                return modelVisual3D;
+            }
         }
+        private ModelVisual3D modelVisual3D;
+        private bool isModelChanged = true;
+
 
         internal Point3D Center()
         {
@@ -1397,6 +1564,11 @@ namespace BCK.SmrSimulation.Draw3D
             return cp;
         }
 
+        internal void RegenerateModelVisual3D()
+        {
+            modelVisual3D = new ModelVisual3D();
+            modelVisual3D.Content = Model3DGroup();
+        }
     }
     public class Shape3D
     {
@@ -1746,7 +1918,7 @@ namespace BCK.SmrSimulation.Draw3D
             SetTransforms(center, new Vector3D(1, 1, 1));
         }
     }
-    public class TextShapes3D : List<TextShape3D>
+    public class TextShape3dCollection : List<TextShape3D>
     {
         public TextShape3D Add(string caption, Point3D position, double size)
         {
@@ -2213,17 +2385,17 @@ namespace BCK.SmrSimulation.Draw3D
             mesh.TriangleIndices.Add(1);
             mesh.TriangleIndices.Add(2);
 
-            mesh.TriangleIndices.Add(1);
             mesh.TriangleIndices.Add(2);
             mesh.TriangleIndices.Add(3);
+            mesh.TriangleIndices.Add(0);
 
             mesh.TriangleIndices.Add(0);
             mesh.TriangleIndices.Add(2);
             mesh.TriangleIndices.Add(1);
 
-            mesh.TriangleIndices.Add(1);
-            mesh.TriangleIndices.Add(3);
             mesh.TriangleIndices.Add(2);
+            mesh.TriangleIndices.Add(0);
+            mesh.TriangleIndices.Add(3);
 
             Vector3D normal = new Vector3D(0, 0, 1);
             mesh.Normals.Add(normal);
