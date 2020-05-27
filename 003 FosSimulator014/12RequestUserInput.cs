@@ -36,7 +36,7 @@ namespace BCK.SmrSimulation.Main
         internal RequestInputType requestInputType;
         internal string message;
         internal int numPointRequested = -1;
-        internal SelectionWindow.ViewType viewType;
+        internal MouseInputGuideShapes.ViewType viewType;
     }
 
     /// <summary>
@@ -155,7 +155,7 @@ namespace BCK.SmrSimulation.Main
         }
         private readonly List<UserInputAction> userInputTypes = new List<UserInputAction>();
         private int actionStep = 0;
-        internal SelectionWindow.ViewType viewType;
+        internal MouseInputGuideShapes.ViewType viewType;
 
         private Vector3D userInputVector;
         private double userInputDouble;
@@ -218,7 +218,7 @@ namespace BCK.SmrSimulation.Main
             UserInputAction userInputAction = new UserInputAction
             {
                 requestInputType = UserInputAction.RequestInputType.Points,
-                message = Resource.String8,
+                message = Properties.Resource.String8,
                 numPointRequested = numPoint,
                 viewType = viewType
             };
@@ -334,7 +334,7 @@ namespace BCK.SmrSimulation.Main
                 default:
                     break;
             }
-            main.Cmd.ErrorMessage(Resource.String9);
+            main.Cmd.ErrorMessage(Properties.Resource.String9);
             End();
             return;
         } //Command에 요청하거나 액션 수행.
@@ -412,7 +412,7 @@ namespace BCK.SmrSimulation.Main
         internal Action action;
         private bool hasFirstPoint = false;
         private Point firstPoint;
-        internal SelectionWindow.ViewType viewType;
+        internal MouseInputGuideShapes.ViewType viewType;
 
         internal Point FirstPoint
         {
@@ -435,14 +435,14 @@ namespace BCK.SmrSimulation.Main
         internal void Start()
         {
             main.IsOnWindowSelect = false;
-            main.selectionWindow.viewType = viewType;
+            main.mouseInputGuideShapes.viewType = viewType;
 
             if (hasFirstPoint)
             {
                 // 사용자 입력 윈도우의 첫번째 포인트가 이미 입력된 경우.
                 if (main.IsOnOrbit) return;
                 p0 = FirstPoint;
-                main.selectionWindow.Start(p0);
+                main.mouseInputGuideShapes.Start(p0);
                 main.MouseMove += WindowSelection_MouseMove;
                 main.MouseUp += WindowSelection_MouseLeftUp;
                 main.MouseLeave += WindowSelectionEnd;
@@ -458,7 +458,7 @@ namespace BCK.SmrSimulation.Main
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 p0 = e.GetPosition(main.grdMain);
-                main.selectionWindow.Start(p0);
+                main.mouseInputGuideShapes.Start(p0);
                 main.MouseMove += WindowSelection_MouseMove;
                 main.MouseUp += WindowSelection_MouseLeftUp;
                 main.MouseLeave += WindowSelectionEnd;
@@ -467,7 +467,7 @@ namespace BCK.SmrSimulation.Main
         private void WindowSelection_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             p1 = e.GetPosition(main.grdMain);
-            main.selectionWindow.Move(p1);
+            main.mouseInputGuideShapes.Move(p1);
             //bckD.DrawSelectionWindow(selectWindowStart, selectWindowEnd);
         }
         private void WindowSelection_MouseLeftUp(object sender, MouseButtonEventArgs e)
@@ -483,7 +483,7 @@ namespace BCK.SmrSimulation.Main
         }
         private void WindowSelectionEnd(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            main.selectionWindow.End();
+            main.mouseInputGuideShapes.End();
             main.MouseMove -= WindowSelection_MouseMove;
             main.MouseUp -= WindowSelection_MouseLeftUp;
             main.MouseLeave -= WindowSelectionEnd;

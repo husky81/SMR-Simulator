@@ -1,4 +1,5 @@
-﻿using BCK.SmrSimulation.GeneralFunctions;
+﻿using BCK.SmrSimulation.Draw3D;
+using BCK.SmrSimulation.GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,25 +22,26 @@ namespace BCK.SmrSimulation.Draw2D
         internal Texts2D texts = new Texts2D();
 
         internal BoundaryConditionMarks boundaryConditionMarks;
-
+        internal ObjectSnapMark objectSnapMark;
         public Draw2D(Grid grid)
         {
             this.grid = grid;
             boundaryConditionMarks = new BoundaryConditionMarks(shapes);
+            objectSnapMark = new ObjectSnapMark(grid);
         }
 
         internal void RedrawShapes()
         {
             foreach (Line2D line in shapes.lines)
             {
-                if (line.IsOnGrid)
+                if (line.IsOnGridArea)
                 {
                     grid.Children.Add(line.lineObj);
                 }
             }
             foreach (Polygon2D polygon in shapes.polygons)
             {
-                if (polygon.IsOnGrid)
+                if (polygon.IsOnGridArea)
                 {
                     grid.Children.Add(polygon.polygonObj);
                 }
@@ -52,6 +54,7 @@ namespace BCK.SmrSimulation.Draw2D
                 }
             }
         }
+
     }
 
     class Shapes2D : List<Shape2D>
@@ -78,7 +81,7 @@ namespace BCK.SmrSimulation.Draw2D
         {
 
         }
-        internal bool IsOnGrid
+        internal bool IsOnGridArea
         {
             get
             {
@@ -92,10 +95,11 @@ namespace BCK.SmrSimulation.Draw2D
     }
     class Lines2D : List<Line2D>
     {
-        internal void Add(Point p0, Point p1)
+        internal Line2D Add(Point p0, Point p1)
         {
             Line2D line = new Line2D(p0, p1);
             base.Add(line);
+            return line;
         }
     }
     class Line2D : Shape2D
@@ -264,7 +268,45 @@ namespace BCK.SmrSimulation.Draw2D
                 }
             }
         }
+    }
+    class ObjectSnapMark
+    {
+        private Grid grid;
 
+        Line2D line;
+
+        internal Shapes2D shapes = new Shapes2D();
+        ObjectSnapPoint.Types snapType;
+        public ObjectSnapMark(Grid grid)
+        {
+            this.grid = grid;
+        }
+
+        internal void Clear()
+        {
+            grid.Children.Remove(line.lineObj);
+        }
+
+        internal void Draw(ObjectSnapPoint objectSnapPoint)
+        {
+            if (line!=null) Clear();
+            if (objectSnapPoint == null) return;
+            switch (objectSnapPoint.snapType)
+            {
+                case ObjectSnapPoint.Types.End:
+                case ObjectSnapPoint.Types.Node:
+                    Vector v = new Vector(10, 10);
+                    line = new Line2D(objectSnapPoint.point2d, objectSnapPoint.point2d + v);
+                    grid.Children.Add(line.lineObj);
+                    break;
+                case ObjectSnapPoint.Types.Mid:
+                    break;
+                case ObjectSnapPoint.Types.Center:
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     class Texts2D : List<Text2D>
@@ -394,7 +436,6 @@ namespace BCK.SmrSimulation.Draw2D
             }
         }
 
-
         public Brush Color { get => color;
             internal set
             {
@@ -418,7 +459,7 @@ namespace BCK.SmrSimulation.Draw2D
 
     }
 
-    class SelectionWindow
+    class MouseInputGuideShapes
     {
         private readonly Grid grid;
         internal bool enable = false;
@@ -446,7 +487,7 @@ namespace BCK.SmrSimulation.Draw2D
         private double crossRadius = 10;
         double crossLineStrokeThickness = 1;
 
-        public SelectionWindow(Grid grid)
+        public MouseInputGuideShapes(Grid grid)
         {
             this.grid = grid;
             //shapes.AddRectangle(strPoint, endPoint);

@@ -1,6 +1,4 @@
-﻿using BCK.SmrSimulation.finiteElementMethod;
-using BCK.SmrSimulation.Main;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _FosSimulator.Tests
 {

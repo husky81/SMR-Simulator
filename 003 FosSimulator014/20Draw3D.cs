@@ -2,7 +2,9 @@
 using BCK.SmrSimulation.GeneralFunctions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Dynamic;
+using System.Linq.Expressions;
 using System.Windows;
 using System.Windows.Annotations;
 using System.Windows.Controls;
@@ -36,6 +38,7 @@ namespace BCK.SmrSimulation.Draw3D
         BasePlaneGrid basePlaneGrid;
 
         public Shape3dCollection Shapes { get; }
+
         public TextShape3dCollection Texts { get; } = new TextShape3dCollection();
 
         private ModelVisual3D modelVisual3d_Texts;
@@ -501,6 +504,7 @@ namespace BCK.SmrSimulation.Draw3D
             DiffuseMaterial mat = new DiffuseMaterial();
             mat.Brush = new VisualBrush(tb);
 
+            if (text == null) text = "";
             // We just assume the characters are square
             double width = text.Length * height;
 
@@ -634,7 +638,60 @@ namespace BCK.SmrSimulation.Draw3D
             v1 = pp1 - pos;
         }
 
+        internal ObjectSnapPoint GetObjectSnapPoint(Point p0)
+        {
+            
+            double nearstDistance = ObjectSnapPoint.objectSnapDistance;
+            ObjectSnapPoint nearstSnapPoint = null;
+            foreach (Shape3D shape in Shapes)
+            {
+                foreach (ObjectSnapPoint snapPoint in shape.snapPoints)
+                {
+                    Point3D p3d = snapPoint.point;
+                    Point p = GetPoint2DFromPoint3D(p3d);
+                    snapPoint.point2d = p;
+                    Vector distVector = p - p0;
+                    double dist = distVector.Length;
+                    if (dist < nearstDistance)
+                    {
+                        nearstDistance = dist;
+                        nearstSnapPoint = snapPoint;
+                    }
+                }
+            }
+            if (nearstDistance == ObjectSnapPoint.objectSnapDistance) return null;
+            return nearstSnapPoint;
+        }
     }
+    class ObjectSnapPoint
+    {
+        internal readonly static double objectSnapDistance = 30;
+
+        internal Point3D point;
+        internal Point point2d;
+        internal Types snapType; 
+        public ObjectSnapPoint(Point3D point, Types snapType)
+        {
+            this.point = point;
+            this.snapType = snapType;
+        }
+        internal enum Types
+        {
+            End,
+            Mid,
+            Node,
+            Center
+        }
+    }
+    class ObjectSnapePointCollection : List<ObjectSnapPoint>
+    {
+        internal void Add(Point3D point, ObjectSnapPoint.Types snapType)
+        {
+            ObjectSnapPoint objectSnapePoint = new ObjectSnapPoint(point, snapType);
+            base.Add(objectSnapePoint);
+        }
+    }
+
     class BasePlaneGrid
     {
         public LocalCoordinateSystem LocalCoordinateSystem
@@ -1572,6 +1629,22 @@ namespace BCK.SmrSimulation.Draw3D
     }
     public class Shape3D
     {
+        internal enum Types
+        {
+            None,
+            Triangle,
+            Rectangular,
+            Line,
+            Hexahedron,
+            Cone,
+            Cylinder,
+            Polygon,
+            Arrow,
+            Sphere,
+            Circle,
+        }
+        internal Types type = Types.None;
+
         internal MeshGeometry3D mesh;
         private Color color;
         private double opacity;
@@ -1590,7 +1663,6 @@ namespace BCK.SmrSimulation.Draw3D
 
         private GeometryModel3D geoModel;
 
-        private Point3D basePoint;
         public Point3D BasePoint
         {
             get
@@ -1603,6 +1675,9 @@ namespace BCK.SmrSimulation.Draw3D
                 SetTransforms(basePoint, direction);
             }
         }
+        private Point3D basePoint;
+
+        internal ObjectSnapePointCollection snapPoints = new ObjectSnapePointCollection();
 
         private Vector3D direction;
         public Shape3D()
@@ -1675,6 +1750,8 @@ namespace BCK.SmrSimulation.Draw3D
         private Point3D p2;
         public Triangle3D(Point3D p0, Point3D p1, Point3D p2)
         {
+            type = Types.Triangle;
+
             this.p0 = p0;
             this.p1 = p1;
             this.p2 = p2;
@@ -1690,6 +1767,8 @@ namespace BCK.SmrSimulation.Draw3D
         private Point3D p3;
         public Rectangular3D(Point3D p0, Point3D p1, Point3D p2, Point3D p3)
         {
+            type = Types.Rectangular;
+
             this.p0 = p0;
             this.p1 = p1;
             this.p2 = p2;
@@ -1700,15 +1779,24 @@ namespace BCK.SmrSimulation.Draw3D
     }
     public class Line3D : Shape3D
     {
-        public Point3D p0;
-        public Point3D p1;
+        public Point3D P0 { get => p0; set => p0 = value; }
+        private Point3D p0;
+        public Point3D P1 { get => p1; set => p1 = value; }
+        private Point3D p1;
+
         public Line3D(Point3D p0, Point3D p1)
         {
-            this.p0 = p0;
-            this.p1 = p1;
+            type = Types.Line;
+
+            this.P0 = p0;
+            this.P1 = p1;
 
             Point3D str = p0;
             Vector3D dir = new Vector3D(p1.X - p0.X, p1.Y - p0.Y, p1.Z - p0.Z);
+
+            snapPoints.Add(p0, ObjectSnapPoint.Types.End);
+            snapPoints.Add(p1, ObjectSnapPoint.Types.End);
+            snapPoints.Add(new Point3D((p0.X + p1.X)/2, (p0.Y + p1.Y)/2, (p0.Z + p1.Z)/2), ObjectSnapPoint.Types.Mid);
 
             mesh = MeshGenerator.Line3D(dir.Length);
             SetTransforms(p0, dir);
@@ -1727,6 +1815,8 @@ namespace BCK.SmrSimulation.Draw3D
 
         public Hexahedron(Point3D point, Vector3D vector)
         {
+            type = Types.Hexahedron;
+
             double dx = vector.X;
             double dy = vector.Y;
             double dz = vector.Z;
@@ -1745,20 +1835,24 @@ namespace BCK.SmrSimulation.Draw3D
 
         public Hexahedron(Point3D point, double size)
         {
-            p0 = new Point3D(0, 0, 0);
-            p1 = new Point3D(size, 0, 0);
-            p2 = new Point3D(size, size, 0);
-            p3 = new Point3D(0, size, 0);
-            p4 = new Point3D(0, 0, size);
-            p5 = new Point3D(size, 0, size);
-            p6 = new Point3D(size, size, size);
-            p7 = new Point3D(0, size, size);
+            type = Types.Hexahedron;
+
+            p0 = new Point3D(point.X+0   , point.Y+0   ,point.Z+ 0);
+            p1 = new Point3D(point.X+size, point.Y+   0,point.Z+ 0);
+            p2 = new Point3D(point.X+size, point.Y+size,point.Z+ 0);
+            p3 = new Point3D(point.X+0   , point.Y+size,point.Z+ 0);
+            p4 = new Point3D(point.X+0   , point.Y+0   ,point.Z+ size);
+            p5 = new Point3D(point.X+size, point.Y+0   ,point.Z+ size);
+            p6 = new Point3D(point.X+size, point.Y+size,point.Z+ size);
+            p7 = new Point3D(point.X+0   , point.Y+size,point.Z+ size);
 
             mesh = MeshGenerator.Hexahedron(p0, p1, p2, p3, p4, p5, p6, p7);
         }
 
         public Hexahedron(Point3D p0, Point3D p1, Point3D p2, Point3D p3, Point3D p4, Point3D p5, Point3D p6, Point3D p7)
         {
+            type = Types.Hexahedron;
+
             this.p0 = p0;
             this.p1 = p1;
             this.p2 = p2;
@@ -1781,6 +1875,7 @@ namespace BCK.SmrSimulation.Draw3D
 
         public Cone3D(double radius, Vector3D heightVector, Point3D center, int resolution)
         {
+            type = Types.Cone;
             this.radius = radius;
             this.heightVector = heightVector;
             height = heightVector.Length;
@@ -1801,6 +1896,8 @@ namespace BCK.SmrSimulation.Draw3D
 
         public Circle3D(double radius, Vector3D normal, Point3D center, int resolution)
         {
+            type = Types.Circle;
+
             this.radius = radius;
             this.normal = normal;
             this.center = center;
@@ -1821,6 +1918,7 @@ namespace BCK.SmrSimulation.Draw3D
 
         public Cylinder3D(Point3D str, Vector3D dir, double dia, int resolution)
         {
+            type = Types.Cylinder;
             this.str = str;
             this.dir = dir;
             this.dia = dia;
@@ -1867,6 +1965,8 @@ namespace BCK.SmrSimulation.Draw3D
 
         public Polygon3D(Point3D str, Vector3D dir, SectionPoly poly)
         {
+            type = Types.Polygon;
+
             this.str = str;
             this.dir = dir;
             this.poly = poly;
@@ -1886,6 +1986,8 @@ namespace BCK.SmrSimulation.Draw3D
 
         public Arrow3D(Point3D str, Vector3D dir, double dia, int resolution)
         {
+            type = Types.Arrow;
+
             this.str = str;
             this.dir = dir;
             this.dia = dia;
@@ -1910,6 +2012,8 @@ namespace BCK.SmrSimulation.Draw3D
 
         public Sphere3D(Point3D center, double diameter, int resolution)
         {
+            type = Types.Sphere;
+
             this.center = center;
             this.diameter = diameter;
             this.resolution = resolution;
@@ -1918,6 +2022,7 @@ namespace BCK.SmrSimulation.Draw3D
             SetTransforms(center, new Vector3D(1, 1, 1));
         }
     }
+
     public class TextShape3dCollection : List<TextShape3D>
     {
         public TextShape3D Add(string caption, Point3D position, double size)

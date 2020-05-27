@@ -132,6 +132,12 @@
   <data name="String12" xml:space="preserve">
     <value>하중을 재하할 노드를 선택하세요.</value>
   </data>
+  <data name="String13" xml:space="preserve">
+    <value>재료 모델이 설정되지 않아 임의 모델을 추가합니다.</value>
+  </data>
+  <data name="String14" xml:space="preserve">
+    <value>단면 정보가 설정되지 않아 임의 단면을 추가합니다.</value>
+  </data>
   <data name="String2" xml:space="preserve">
     <value>선택할 노드번호를 입력하세요. (ex. 1~10,15-20)</value>
   </data>

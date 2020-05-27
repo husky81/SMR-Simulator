@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace BCK.SmrSimulator.Main.Properties {
+namespace BCK.SmrSimulation.Main.Properties {
     using System;
     
     
@@ -102,6 +102,24 @@ namespace BCK.SmrSimulator.Main.Properties {
         internal static string String12 {
             get {
                 return ResourceManager.GetString("String12", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 재료 모델이 설정되지 않아 임의 모델을 추가합니다..
+        /// </summary>
+        internal static string String13 {
+            get {
+                return ResourceManager.GetString("String13", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 단면 정보가 설정되지 않아 임의 단면을 추가합니다..
+        /// </summary>
+        internal static string String14 {
+            get {
+                return ResourceManager.GetString("String14", resourceCulture);
             }
         }
         

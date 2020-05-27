@@ -1,5 +1,6 @@
 ﻿using BCK.SmrSimulation.GeneralFunctions;
 using BCK.SmrSimulation.Main;
+using BCK.SmrSimulation.Main.Properties;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -280,7 +281,7 @@ namespace BCK.SmrSimulation.finiteElementMethod
             Model.Boundaries.Clear();
 
             Loads.Clear();
-            Loads.maxNum = 1;
+            Loads.MaxNum = 1;
 
             solved = false;
         }
@@ -302,17 +303,17 @@ namespace BCK.SmrSimulation.finiteElementMethod
             solved = true;
         }
 
-        internal void Check(CommandWindow cmd)
+        internal void Check()
         {
             //재료와 단면이 설정되지 않은경우 아무거나 입력.
             if(Model.Materials.Count == 0)
             {
-                WarningMessage("재료 모델이 설정되지 않아 임의 모델을 추가합니다.");
+                WarningMessage(Resource.String13);
                 Model.Materials.AddConcrete("C30");
             }
             if (Model.Sections.Count == 0)
             {
-                WarningMessage("단면 정보가 설정되지 않아 임의 단면을 추가합니다.");
+                WarningMessage(Resource.String14);
                 Model.Sections.AddRectangle(0.2, 0.2);
             }
 
@@ -1893,17 +1894,18 @@ namespace BCK.SmrSimulation.finiteElementMethod
 
     public class FemLoadCollection : List<FemLoad>
     {
-        public int maxNum = 1;
+        public int MaxNum { get => maxNum; set => maxNum = value; }
+        private int maxNum = 1;
 
         internal double maxForce = 1;
-        private double maxMoment = 1;
         internal double viewScale = 1; // 1.0 / 최대하중
+
 
         internal FemNodalLoad AddNodal(FemNode node, Vector3D force, Vector3D moment)
         {
             FemNodalLoad n = new FemNodalLoad(node, force, moment);
-            n.num = maxNum;
-            maxNum++;
+            n.num = MaxNum;
+            MaxNum++;
 
             double norm;
             norm = force.Length;

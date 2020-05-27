@@ -636,7 +636,7 @@ namespace BCK.SmrSimulation.Main
             WriteText("*Cancel*");
             Enter();
             main.requestUserInput = new RequestUserInput(main);
-            main.selectionWindow.End();
+            main.mouseInputGuideShapes.End();
             EndCommand();
         }
         private void Clear()
@@ -744,7 +744,6 @@ namespace BCK.SmrSimulation.Main
             requestedInputType = InputTypes.Ints;
         }
 
-        int numPointRequested;
         internal void RequestInput_Points(string message, int numPoint)
         {
             numPointRequested = numPoint;
@@ -758,6 +757,7 @@ namespace BCK.SmrSimulation.Main
             main.MouseMove += GetPoints_Moving;
 
         }
+        int numPointRequested;
 
         private void ClearActions()
         {
@@ -773,16 +773,27 @@ namespace BCK.SmrSimulation.Main
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point p = e.GetPosition(main.grdMain);
-                Point3D p3 = GetPoint3dFromPoint2D(p);
+
+                //ObjectSnap 처리. ObjctSnap이 켜져 있는 경우 입력 좌표를 ObjectSnap 좌표로 변경.
+                main.DrawNearstObjectSnapPoint(p);
+                Point3D p3;
+                if (main.snapPoint != null)
+                {
+                    p3 = main.snapPoint.point;
+                }
+                else
+                {
+                    p3 = GetPoint3dFromPoint2D(p);
+                }
+
                 main.Cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
         internal void PutPoints_Point(Point3D userInputPoint3D)
         {
             main.MouseDown -= GetPoints_Point;
-            main.MouseDown -= GetPoints_SecondAfterPoint;
             main.MouseMove -= GetPoints_Moving;
-            main.selectionWindow.End();
+            main.mouseInputGuideShapes.End();
 
             userInputPoints.Add(userInputPoint3D);
             actionAfterPointWithPoint?.Invoke(userInputPoint3D);
@@ -793,16 +804,16 @@ namespace BCK.SmrSimulation.Main
                 return;
             }
 
-            main.selectionWindow.viewType = SelectionWindow.ViewType.Line;
+            main.mouseInputGuideShapes.viewType = MouseInputGuideShapes.ViewType.Line;
             Point p = GetPointFromPoint3D(userInputPoint3D);
-            main.selectionWindow.viewType = viewType;
-            main.selectionWindow.Start(p);
+            main.mouseInputGuideShapes.viewType = viewType;
+            main.mouseInputGuideShapes.Start(p);
             main.MouseMove += GetPoints_Moving;
 
             WriteText("다음 점을 입력하세요" + cmdMark);
             SetCursorLast();
 
-            main.MouseDown += GetPoints_SecondAfterPoint;
+            main.MouseDown += GetPoints_Point;
         }
 
         private void PutPoints_Direction(Vector3D userInputPoint3D)
@@ -815,34 +826,24 @@ namespace BCK.SmrSimulation.Main
             Point p0 = e.GetPosition(main.grdMain);
 
             //Cross인 경우 첫번째 점을 입력하기 전부터 시작되어야 함.
-            if (viewType == SelectionWindow.ViewType.Cross & !main.selectionWindow.started)
+            if (viewType == MouseInputGuideShapes.ViewType.Cross & !main.mouseInputGuideShapes.started)
             {
-                main.selectionWindow.viewType = viewType;
-                main.selectionWindow.Start(p0);
+                main.mouseInputGuideShapes.viewType = viewType;
+                main.mouseInputGuideShapes.Start(p0);
             }
 
-            main.selectionWindow.Move(p0);
-        }
-        private void GetPoints_SecondAfterPoint(object sender, MouseButtonEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                Point p = e.GetPosition(main.grdMain);
-                Point3D p3 = GetPoint3dFromPoint2D(p);
-
-                main.Cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
-            }
+            main.DrawNearstObjectSnapPoint(p0);
+            main.mouseInputGuideShapes.Move(p0);
         }
         private void PutPoints_End()
         {
-            main.selectionWindow.End();
+            main.mouseInputGuideShapes.End();
             actionAfterPoints?.Invoke(userInputPoints);
             EndCommand();
         }
         private void RemoveEvents_GetPoints()
         {
             main.MouseMove -= GetPoints_Moving;
-            main.MouseDown -= GetPoints_SecondAfterPoint;
             main.MouseDown -= GetPoints_Point;
         }
 
@@ -880,7 +881,7 @@ namespace BCK.SmrSimulation.Main
             }
         }
         private Point3D vectorFirstPoint;
-        internal SelectionWindow.ViewType viewType;
+        internal MouseInputGuideShapes.ViewType viewType;
 
         internal void PutVectorFirstPoint(Point3D userInputPoint3D)
         {
@@ -888,8 +889,8 @@ namespace BCK.SmrSimulation.Main
             Point p = GetPointFromPoint3D(userInputPoint3D);
 
             main.MouseMove += GetVector_Moving;
-            main.selectionWindow.viewType = SelectionWindow.ViewType.Line;
-            main.selectionWindow.Start(p);
+            main.mouseInputGuideShapes.viewType = MouseInputGuideShapes.ViewType.Line;
+            main.mouseInputGuideShapes.Start(p);
 
             WriteText("벡터의 방향을 입력하세요." + cmdMark);
             SetCursorLast();
@@ -898,7 +899,7 @@ namespace BCK.SmrSimulation.Main
         private void GetVector_Moving(object sender, System.Windows.Input.MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
-            main.selectionWindow.Move(p0);
+            main.mouseInputGuideShapes.Move(p0);
         }
         private void PutVectorSecondPoint(object sender, MouseButtonEventArgs e)
         {
@@ -908,7 +909,7 @@ namespace BCK.SmrSimulation.Main
                 Point3D p3 = GetPoint3dFromPoint2D(p);
 
                 RemoveEvents_GetVector();
-                main.selectionWindow.End();
+                main.mouseInputGuideShapes.End();
 
                 Vector3D inputDirection = p3 - vectorFirstPoint;
                 main.requestUserInput.Put(inputDirection);
