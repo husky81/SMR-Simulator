@@ -669,7 +669,9 @@ namespace BCK.SmrSimulation.Draw3D
 
         internal Point3D point;
         internal Point point2d;
-        internal Types snapType; 
+        internal Types snapType;
+        internal UIElement object_;
+
         public ObjectSnapPoint(Point3D point, Types snapType)
         {
             this.point = point;
@@ -1023,6 +1025,8 @@ namespace BCK.SmrSimulation.Draw3D
         }
         internal void OrbitRotate(Vector mov)
         {
+            if (mov.Length == 0) return;
+
             Point3D pos = pCamera_init.Position;
             Vector3D dir = pCamera_init.LookDirection;
             Vector3D up = pCamera_init.UpDirection;
@@ -1055,6 +1059,10 @@ namespace BCK.SmrSimulation.Draw3D
             Vector3D ncv = Math.Cos(moveRad) * cv + Math.Sin(moveRad) * focalDist * moveDir;
 
             Point3D newPos = fp + ncv;
+            if (double.IsNaN(newPos.X))
+            {
+                System.Diagnostics.Debugger.Break();
+            }
             PCamera.Position = newPos;
 
             //카메라 방향

@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Ink;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
@@ -18,8 +19,8 @@ namespace BCK.SmrSimulation.Draw2D
     {
         private Grid grid;
 
-        internal Shapes2D shapes = new Shapes2D();
-        internal Texts2D texts = new Texts2D();
+        internal Shape2dCollection shapes = new Shape2dCollection();
+        internal Text2dCollection texts = new Text2dCollection();
 
         internal BoundaryConditionMarks boundaryConditionMarks;
         internal ObjectSnapMark objectSnapMark;
@@ -36,14 +37,14 @@ namespace BCK.SmrSimulation.Draw2D
             {
                 if (line.IsOnGridArea)
                 {
-                    grid.Children.Add(line.lineObj);
+                    grid.Children.Add(line.object_);
                 }
             }
             foreach (Polygon2D polygon in shapes.polygons)
             {
                 if (polygon.IsOnGridArea)
                 {
-                    grid.Children.Add(polygon.polygonObj);
+                    grid.Children.Add(polygon.object_Polygon);
                 }
             }
             foreach (Text2D text in texts)
@@ -57,25 +58,70 @@ namespace BCK.SmrSimulation.Draw2D
 
     }
 
-    class Shapes2D : List<Shape2D>
+    class Shape2dCollection : List<Shape2D>
     {
-        internal Lines2D lines = new Lines2D();
-        internal Polygons2D polygons = new Polygons2D();
+        internal UIElement recentObject;
 
-        //internal List<Line> lines = new List<Line>();
-        internal List<Rectangle> rectangles = new List<Rectangle>();
+        internal Line2dCollection lines = new Line2dCollection();
+        internal Polygon2dCollection polygons = new Polygon2dCollection();
+        internal Rectangle2dCollection rectangles = new Rectangle2dCollection();
 
-        internal void AddRectangle(Point strPoint, Point endPoint)
+        public Shape2dCollection()
         {
-            Rectangle r = new Rectangle();
-            r.PointFromScreen(strPoint);
-            r.PointToScreen(endPoint);
-            rectangles.Add(r);
+        }
+
+        internal new void Clear()
+        {
+            if (grid != null)
+            {
+                foreach (Shape2D shape in this)
+                {
+                    grid.Children.Remove(shape.object_);
+                }
+            }
+            base.Clear();
+            lines.Clear();
+            polygons.Clear();
+            rectangles.Clear();
+        }
+
+        internal Shape2dCollection All
+        {
+            get
+            {
+                base.Clear();
+                base.AddRange(lines);
+                base.AddRange(polygons);
+                base.AddRange(rectangles);
+                return this;
+            }
+        }
+
+        internal Rectangle2D AddSquare(Point center, double size)
+        {
+            return rectangles.Add(center, size);
+        }
+
+        internal void DrawAtGrid(Grid grid)
+        {
+            this.grid = grid;
+            foreach (Shape2D shape in All)
+            {
+                grid.Children.Add(shape.object_);
+            }
+        }
+        private Grid grid;
+
+        internal Shape2D AddTriangleReqular(Point center, double radius)
+        {
+            Polygon2D polgon2D = polygons.AddTriangleRegular(center, radius);
+            return polgon2D;
         }
     }
     class Shape2D
     {
         internal List<Point> points;
+        internal Shape object_;
 
         public Shape2D()
         {
@@ -92,8 +138,23 @@ namespace BCK.SmrSimulation.Draw2D
                 return true;
             }
         }
+
+        internal SolidColorBrush Color
+        {
+            set
+            {
+                object_.Stroke = value;
+            }
+        }
+        internal double Thickness
+        {
+            set
+            {
+                object_.StrokeThickness = value;
+            }
+        }
     }
-    class Lines2D : List<Line2D>
+    class Line2dCollection : List<Line2D>
     {
         internal Line2D Add(Point p0, Point p1)
         {
@@ -104,13 +165,12 @@ namespace BCK.SmrSimulation.Draw2D
     }
     class Line2D : Shape2D
     {
-        internal Line lineObj;
         internal Line2D(Point p0, Point p1)
         {
             points = new List<Point>();
             points.Add(p0);
             points.Add(p1);
-            lineObj = new Line
+            object_ = new Line
             {
                 Stroke = System.Windows.Media.Brushes.Black,
                 X1 = points[0].X,
@@ -124,7 +184,38 @@ namespace BCK.SmrSimulation.Draw2D
             //grid.Children.Add(lineObj);
         }
     }
-    class Polygons2D : List<Polygon2D>
+    class Rectangle2D : Shape2D
+    {
+        private Point center;
+        private double size;
+
+        public Rectangle2D(Point center, double size)
+        {
+            this.center = center;
+            this.size = size;
+
+            object_ = new Rectangle
+            {
+                Stroke = Brushes.Black,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Height = size,
+                Width = size,
+                Margin = new Thickness(center.X - size / 2, center.Y - size / 2,0,0),
+            };
+        }
+
+    }
+    class Rectangle2dCollection : List<Rectangle2D>
+    {
+        internal Rectangle2D Add(Point center, double size)
+        {
+            Rectangle2D rectangle = new Rectangle2D(center, size);
+            base.Add(rectangle);
+            return rectangle;
+        }
+    }
+    class Polygon2dCollection : List<Polygon2D>
     {
         internal void Add(List<Point> points)
         {
@@ -142,43 +233,55 @@ namespace BCK.SmrSimulation.Draw2D
             base.Add(polygon);
             return polygon;
         }
+
+        internal Polygon2D AddTriangleRegular(Point center, double radius)
+        {
+            Point p0 = new Point(center.X + radius * Math.Sin( 60.0/180.0*Math.PI), center.Y + radius * Math.Cos( 60.0/180.0*Math.PI));
+            Point p1 = new Point(center.X + radius * Math.Sin(180.0/180.0*Math.PI), center.Y + radius * Math.Cos(180.0/180.0*Math.PI));
+            Point p2 = new Point(center.X + radius * Math.Sin(300.0/180.0*Math.PI), center.Y + radius * Math.Cos(300.0 / 180.0*Math.PI));
+            
+            return AddTriangle(p0, p1, p2);
+        }
     }
     class Polygon2D : Shape2D
     {
-        internal Polygon polygonObj;
+        internal Polygon object_Polygon;
+
         internal Brush Stroke
         {
             get
             {
-                return polygonObj.Stroke;
+                return object_Polygon.Stroke;
             }
             set
             {
-                polygonObj.Stroke = value;
+                object_Polygon.Stroke = value;
             }
         }
         internal double StrokeThickness
         {
             get
             {
-                return polygonObj.StrokeThickness;
+                return object_Polygon.StrokeThickness;
             }
             set
             {
-                polygonObj.StrokeThickness = value;
+                object_Polygon.StrokeThickness = value;
             }
         }
         internal Brush Fill
         {
             get
             {
-                return polygonObj.Fill;
+                return object_Polygon.Fill;
             }
             set
             {
-                polygonObj.Fill = value;
+                object_Polygon.Fill = value;
             }
         }
+
+
         internal Polygon2D(List<Point> points)
         {
             this.points = points;
@@ -189,22 +292,23 @@ namespace BCK.SmrSimulation.Draw2D
                 myPointCollection.Add(point);
             }
 
-            polygonObj = new Polygon();
-            polygonObj.Points = myPointCollection;
+            object_Polygon = new Polygon();
+            object_Polygon.Points = myPointCollection;
 
-            polygonObj.Stroke = Brushes.Black;
-            polygonObj.StrokeThickness = 0.5;
-            polygonObj.Fill = Brushes.Yellow;
+            object_Polygon.Stroke = Brushes.Black;
+            object_Polygon.StrokeThickness = 0.5;
+            //object_Polygon.Fill = Brushes.Yellow;
             //polygonObj.Width = 100;
             //polygonObj.Height = 100;
             //polygonObj.Stretch = Stretch.Fill;
+            base.object_ = object_Polygon;
         }
     }
     class BoundaryConditionMarks : List<BoundaryConditionMark>
     {
-        private Shapes2D baseShapes;
+        private Shape2dCollection baseShapes;
 
-        public BoundaryConditionMarks(Shapes2D baseShapes)
+        public BoundaryConditionMarks(Shape2dCollection baseShapes)
         {
             this.baseShapes = baseShapes;
         }
@@ -234,7 +338,7 @@ namespace BCK.SmrSimulation.Draw2D
         private Point p0;
         private double radius = 10;
         private int[] boundaryCondition = new int[6];
-        internal Shapes2D shapes = new Shapes2D();
+        internal Shape2dCollection shapes = new Shape2dCollection();
 
         public BoundaryConditionMark(Point p0, int[] boundaryCondition)
         {
@@ -272,44 +376,55 @@ namespace BCK.SmrSimulation.Draw2D
     class ObjectSnapMark
     {
         private Grid grid;
+        internal Shape2dCollection shapes = new Shape2dCollection();
 
-        Line2D line;
+        private double thickness = 2.5;
+        private double markSize = 12;
+        private SolidColorBrush color = Brushes.DarkOrange;
 
-        internal Shapes2D shapes = new Shapes2D();
-        ObjectSnapPoint.Types snapType;
         public ObjectSnapMark(Grid grid)
         {
             this.grid = grid;
         }
-
         internal void Clear()
         {
-            grid.Children.Remove(line.lineObj);
+            shapes.Clear();
         }
-
         internal void Draw(ObjectSnapPoint objectSnapPoint)
         {
-            if (line!=null) Clear();
+            Clear();
             if (objectSnapPoint == null) return;
+
+            Point center = objectSnapPoint.point2d;
+            Shape2D shape = new Shape2D();
+
             switch (objectSnapPoint.snapType)
             {
                 case ObjectSnapPoint.Types.End:
                 case ObjectSnapPoint.Types.Node:
-                    Vector v = new Vector(10, 10);
-                    line = new Line2D(objectSnapPoint.point2d, objectSnapPoint.point2d + v);
-                    grid.Children.Add(line.lineObj);
+                    double size = markSize;
+                    shape = shapes.AddSquare(center, size);
                     break;
                 case ObjectSnapPoint.Types.Mid:
+                    double radius = markSize / 2;
+                    shape = shapes.AddTriangleReqular(center, radius);
                     break;
                 case ObjectSnapPoint.Types.Center:
                     break;
                 default:
                     break;
             }
+
+            if (shape == null) return;
+            shape.Color = color;
+            shape.Thickness = thickness;
+            objectSnapPoint.object_ = shape.object_;
+
+            shapes.DrawAtGrid(grid);
         }
     }
 
-    class Texts2D : List<Text2D>
+    class Text2dCollection : List<Text2D>
     {
         internal Text2D Add(Point p0, String text)
         {
@@ -465,7 +580,7 @@ namespace BCK.SmrSimulation.Draw2D
         internal bool enable = false;
         internal bool started = false;
 
-        internal Shapes2D shapes = new Shapes2D();
+        internal Shape2dCollection shapes = new Shape2dCollection();
         internal Point wP0, wP1;
         public ViewType viewType;
         public enum ViewType
@@ -507,6 +622,7 @@ namespace BCK.SmrSimulation.Draw2D
                     break;
                 case ViewType.Line:
                     if (line != null) grid.Children.Remove(line);
+                    this.wP1 = strPoint;
                     DrawLine();
                     break;
                 case ViewType.Arrow:

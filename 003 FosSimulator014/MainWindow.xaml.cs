@@ -434,10 +434,11 @@ namespace BCK.SmrSimulation.Main
         /// 사용자의 마우스 위치에 따라 ObjectSnapPoint를 찾아서 표현하고 snapPoint를 반환.
         /// </summary>
         /// <param name="p0"></param>
-        internal void DrawNearstObjectSnapPoint(Point p0)
+        internal ObjectSnapPoint DrawNearstObjectSnapPoint(Point p0)
         {
             snapPoint = draw.GetObjectSnapPoint(p0);
             draw2d.objectSnapMark.Draw(snapPoint);
+            return snapPoint;
         }
     }
     partial class MainWindow : Window
@@ -1424,6 +1425,8 @@ namespace BCK.SmrSimulation.Main
                     MouseDown -= new MouseButtonEventHandler(OrbitStart_MouseDown);
                     MouseUp -= new MouseButtonEventHandler(OrbitEnd_MouseUp);
                     grdMain.MouseLeave -= new System.Windows.Input.MouseEventHandler(Orbit_MouseLeave);
+                    MouseMove -= new System.Windows.Input.MouseEventHandler(Orbit_MouseMove);
+
                     KeyDown -= TurnOffOrbit_Esc;
                     IsOnWindowSelect = true;
                 }

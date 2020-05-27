@@ -832,7 +832,14 @@ namespace BCK.SmrSimulation.Main
                 main.mouseInputGuideShapes.Start(p0);
             }
 
-            main.DrawNearstObjectSnapPoint(p0);
+            ObjectSnapPoint objectSnapPoint = main.DrawNearstObjectSnapPoint(p0);
+            
+            //ObjectSnape 도형을 클릭하면 grdMain에서 이벤트가 발생하지 않음. OsnapMark에 따로 이벤트를 넣어줘야함.
+            if (objectSnapPoint != null)
+            {
+                objectSnapPoint.object_.MouseDown += GetPoints_Point;
+            }
+
             main.mouseInputGuideShapes.Move(p0);
         }
         private void PutPoints_End()
