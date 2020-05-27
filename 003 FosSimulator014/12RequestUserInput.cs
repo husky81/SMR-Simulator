@@ -1,6 +1,5 @@
 ﻿using BCK.SmrSimulation.Draw2D;
 using BCK.SmrSimulation.Draw3D;
-using BCK.SmrSimulator.Main.Properties;
 using System;
 using System.Collections.Generic;
 using System.Linq;

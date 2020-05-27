@@ -96,9 +96,19 @@
             <MenuItem Header="Ab_out" />
         </Menu>
 
-        <StatusBar DockPanel.Dock="Bottom">
-            <Label x:Name="stbLabel" Content="Label1"/>
-        </StatusBar>
+        <DockPanel DockPanel.Dock="Bottom">
+            <WrapPanel DockPanel.Dock="Right" Width="393">
+                <ProgressBar x:Name="progressBar" Value="0" Margin="2" Width="90"/>
+                <Button x:Name="btnObjectSnap" Content="OSNAP" Margin="2" Click="SwitchObjectSnap" ToolTip="Object Snap (F6) : 근처 점을 잡아준다."/>
+                <Button x:Name="btnOrthogonal" Content="ORTHO" Margin="2" Click="SwitchOrthogonal" ToolTip="Orthogonal (F8) : 연직/수평선 가이드라인 적용." />
+                <TextBox TextWrapping="Wrap" Text="TextBox" Margin="2" Width="90"/>
+                <TextBox TextWrapping="Wrap" Text="TextBox" Margin="2" Width="90"/>
+            </WrapPanel>
+
+            <StatusBar Background="#FFF1EDED" HorizontalContentAlignment="Right" Height="22" >
+                <Label x:Name="stbLabel" Content="Label1" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="4,0,0,0"/>
+            </StatusBar>
+        </DockPanel>
 
         <TabControl DockPanel.Dock ="Left" Width="202">
             <TabItem Header="FEM Works">
@@ -194,7 +204,7 @@
         </Grid>
 
         <Grid x:Name="grdMain"/>
-        
+
     </DockPanel>
 
 </Window>

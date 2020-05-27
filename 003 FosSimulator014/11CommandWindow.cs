@@ -671,7 +671,7 @@ namespace BCK.SmrSimulation.Main
             textBox.AppendText(text);
             SetCursorLast();
         }
-        private void SetCursorLast()
+        void SetCursorLast()
         {
             textBox.Select(textBox.Text.Length, 0);
         }
@@ -777,9 +777,9 @@ namespace BCK.SmrSimulation.Main
                 //ObjectSnap 처리. ObjctSnap이 켜져 있는 경우 입력 좌표를 ObjectSnap 좌표로 변경.
                 main.DrawNearstObjectSnapPoint(p);
                 Point3D p3;
-                if (main.snapPoint != null)
+                if (main.SnapPoint != null)
                 {
-                    p3 = main.snapPoint.point;
+                    p3 = main.SnapPoint.point;
                 }
                 else
                 {
@@ -833,10 +833,11 @@ namespace BCK.SmrSimulation.Main
             }
 
             ObjectSnapPoint objectSnapPoint = main.DrawNearstObjectSnapPoint(p0);
-            
-            //ObjectSnape 도형을 클릭하면 grdMain에서 이벤트가 발생하지 않음. OsnapMark에 따로 이벤트를 넣어줘야함.
             if (objectSnapPoint != null)
             {
+                //이렇게 하면 선을 미리 snap point에 그림.
+                p0 = objectSnapPoint.point2d;
+                //ObjectSnape 도형을 클릭하면 grdMain에서 이벤트가 발생하지 않음. OsnapMark에 따로 이벤트를 넣어줘야함.
                 objectSnapPoint.object_.MouseDown += GetPoints_Point;
             }
 
@@ -956,6 +957,12 @@ namespace BCK.SmrSimulation.Main
             Dist,
             Points,
             VectorValue
+        }
+
+        internal void GetCursor()
+        {
+            Keyboard.Focus(textBox);
+            SetCursorLast();
         }
     } //명령창 명령어 관리
 

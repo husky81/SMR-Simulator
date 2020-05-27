@@ -665,7 +665,10 @@ namespace BCK.SmrSimulation.Draw3D
     }
     class ObjectSnapPoint
     {
-        internal readonly static double objectSnapDistance = 30;
+        /// <summary>
+        /// OSNAP이 걸리는 길이 설정.
+        /// </summary>
+        internal const double objectSnapDistance = 12;
 
         internal Point3D point;
         internal Point point2d;

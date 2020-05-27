@@ -1,5 +1,4 @@
-﻿using BCK.SmrSimulator.Main.Properties;
-using BCK.SmrSimulation.Draw2D;
+﻿using BCK.SmrSimulation.Draw2D;
 using BCK.SmrSimulation.Draw3D;
 using BCK.SmrSimulation.finiteElementMethod;
 using System;
@@ -24,6 +23,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using bck.SMR_simulator.main.Properties;
 
 namespace BCK.SmrSimulation.Main
 {
@@ -35,7 +35,7 @@ namespace BCK.SmrSimulation.Main
 
         public BckDraw3D Draw => draw;
         private readonly BckDraw3D draw;
-        internal ObjectSnapPoint snapPoint;
+        
         internal readonly Draw2D.Draw2D draw2d;
         internal MouseInputGuideShapes mouseInputGuideShapes;
 
@@ -44,6 +44,8 @@ namespace BCK.SmrSimulation.Main
         internal RequestUserInput requestUserInput;
 
         public CultureInfo CultureInfo => cultureInfo;
+
+
         private readonly CultureInfo cultureInfo = new CultureInfo("ko-KR", false);
 
         public MainWindow()
@@ -61,8 +63,9 @@ namespace BCK.SmrSimulation.Main
             mouseInputGuideShapes = new MouseInputGuideShapes(grdMain);
             requestUserInput = new RequestUserInput(this);
 
-            EventSetter();
             InitializeSetting();
+            EventSetter();
+            FunctionKeyClickEvent();
 
             draw.ViewTop();
             draw.ViewZoomExtend();
@@ -79,13 +82,15 @@ namespace BCK.SmrSimulation.Main
 
         private void InitializeSetting()
         {
-            
+
             //Fem Node번호 보일지 말지 결정하는 옵션
             isFemViewNodeNumber.IsChecked = Settings.Default.isFemViewNodeNumber;
             isFemViewElemNumber.IsChecked = Settings.Default.isFemViewElemNumber;
-            
-        }
 
+            SetObjectSnap(Settings.Default.isOnObjectSnap);
+            SetOrthogonalOption(Settings.Default.isOnOrthogonal);
+
+        }
         private void EventSetter()
         {
             grdMain.SizeChanged += GrdMain_SizeChanged; // gird size가 변경된 경우 redraw3dRelated2dShapes 수행.
@@ -95,6 +100,53 @@ namespace BCK.SmrSimulation.Main
             TurnOnErase_Del(true);
             TurnOnFemAnalysis_F5(true);
         }
+        private void FunctionKeyClickEvent()
+        {
+            this.KeyDown += MainWindow_KeyDown_FunctionKeys;
+        }
+        private void MainWindow_KeyDown_FunctionKeys(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.F1:
+                    break;
+                case Key.F2:
+                    break;
+                case Key.F3:
+                    break;
+                case Key.F4:
+                    break;
+                case Key.F5:
+                    break;
+                case Key.F6:
+                    SwitchObjectSnap(null, null);
+                    break;
+                case Key.F7:
+                    break;
+                case Key.F8:
+                    SwitchOrthogonal(null, null);
+                    break;
+                case Key.F9:
+                    break;
+                case Key.F10:
+                    break;
+                case Key.System:
+                    if(e.SystemKey == Key.F10)
+                    {
+                        //F10은 특이하다고 함.
+                        //ref. https://stackoverflow.com/questions/2103497/detecting-the-user-pressing-f10-in-wpf
+
+                    }
+                    break;
+                case Key.F11:
+                    break;
+                case Key.F12:
+                    break;
+                default:
+                    break;
+            }
+        }
+
 
         private void GrdMain_SizeChanged(object sender, SizeChangedEventArgs e)
         {
@@ -341,6 +393,7 @@ namespace BCK.SmrSimulation.Main
 
         private void ExitApplication(object sender, RoutedEventArgs e)
         {
+            Settings.Default.Save();
             this.Close();
         }
 
@@ -436,9 +489,54 @@ namespace BCK.SmrSimulation.Main
         /// <param name="p0"></param>
         internal ObjectSnapPoint DrawNearstObjectSnapPoint(Point p0)
         {
-            snapPoint = draw.GetObjectSnapPoint(p0);
-            draw2d.objectSnapMark.Draw(snapPoint);
-            return snapPoint;
+            if (!Settings.Default.isOnObjectSnap)
+            {
+                SnapPoint = null;
+                return null;
+            }
+
+            SnapPoint = draw.GetObjectSnapPoint(p0);
+            draw2d.objectSnapMark.Draw(SnapPoint);
+            return SnapPoint;
+        }
+        internal ObjectSnapPoint SnapPoint { get; set; }
+
+        private void SwitchObjectSnap(object sender, RoutedEventArgs e)
+        {
+            SetObjectSnap(!Settings.Default.isOnObjectSnap);
+            cmd.GetCursor();
+        }
+        private void SetObjectSnap(bool isOn)
+        {
+            Settings.Default.isOnObjectSnap = isOn;
+            if (isOn)
+            {
+                btnObjectSnap.Background = Brushes.Gray;
+            }
+            else
+            {
+                btnObjectSnap.Background = Brushes.LightGray;
+                draw2d.objectSnapMark.Clear();
+            }
+        }
+
+        private void SwitchOrthogonal(object sender, RoutedEventArgs e)
+        {
+            SetOrthogonalOption(!Settings.Default.isOnOrthogonal);
+            cmd.GetCursor();
+        }
+
+        private void SetOrthogonalOption(bool isOn)
+        {
+            Settings.Default.isOnOrthogonal = isOn;
+            if (isOn)
+            {
+                btnOrthogonal.Background = Brushes.LightGray;
+            }
+            else
+            {
+                btnOrthogonal.Background = Brushes.Gray;
+            }
         }
     }
     partial class MainWindow : Window
@@ -1231,6 +1329,7 @@ namespace BCK.SmrSimulation.Main
         {
             if (e.Key == Key.Escape)
             {
+                cmd.GetCursor();
                 if (IsOnOrbit)
                 {
                     IsOnOrbit = false;

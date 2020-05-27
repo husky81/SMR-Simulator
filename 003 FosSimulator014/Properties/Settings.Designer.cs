@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace BCK.SmrSimulator.Main.Properties {
+namespace bck.SMR_simulator.main.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
@@ -68,6 +68,30 @@ namespace BCK.SmrSimulator.Main.Properties {
             }
             set {
                 this["forceUnit"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool isOnOrthogonal {
+            get {
+                return ((bool)(this["isOnOrthogonal"]));
+            }
+            set {
+                this["isOnOrthogonal"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool isOnObjectSnap {
+            get {
+                return ((bool)(this["isOnObjectSnap"]));
+            }
+            set {
+                this["isOnObjectSnap"] = value;
             }
         }
     }
