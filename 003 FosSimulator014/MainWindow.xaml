@@ -28,8 +28,8 @@
                     <MenuItem Header="_Full Screen" Click="FullScreenWindow" IsCheckable="True"/>
                     <Separator/>
                     <MenuItem Header="_Zoom">
-                        <MenuItem Header="_In"/>
-                        <MenuItem Header="_Out"/>
+                        <MenuItem Header="_In" Click="Zoom_ForwardOneStep"/>
+                        <MenuItem Header="_Out" Click="Zoom_ForwardBackStep"/>
                         <MenuItem Header="_Extend" Click="ZoomExtents"/>
                     </MenuItem>
                     <MenuItem Header="Or_bit">

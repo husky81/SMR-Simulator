@@ -511,11 +511,11 @@ namespace BCK.SmrSimulation.Main
             Settings.Default.isOnObjectSnap = isOn;
             if (isOn)
             {
-                btnObjectSnap.Background = Brushes.Gray;
+                btnObjectSnap.Background = pressedButtonColor;
             }
             else
             {
-                btnObjectSnap.Background = Brushes.LightGray;
+                btnObjectSnap.Background = unpressedButtonColor;
                 draw2d.objectSnapMark.Clear();
             }
         }
@@ -523,6 +523,7 @@ namespace BCK.SmrSimulation.Main
         private void SwitchOrthogonal(object sender, RoutedEventArgs e)
         {
             SetOrthogonalOption(!Settings.Default.isOnOrthogonal);
+            MouseInputGuideShapes.orthogonal = !Settings.Default.isOnOrthogonal;
             cmd.GetCursor();
         }
 
@@ -531,18 +532,20 @@ namespace BCK.SmrSimulation.Main
             Settings.Default.isOnOrthogonal = isOn;
             if (isOn)
             {
-                btnOrthogonal.Background = Brushes.LightGray;
+                btnOrthogonal.Background = unpressedButtonColor;
             }
             else
             {
-                btnOrthogonal.Background = Brushes.Gray;
+                btnOrthogonal.Background = pressedButtonColor;
             }
         }
-
+        private SolidColorBrush pressedButtonColor = Brushes.Gray;
+        private SolidColorBrush unpressedButtonColor = Brushes.LightGray;
         private void SwitchFreeOrbit(object sender, RoutedEventArgs e)
         {
-
+            IsOnOrbit = !IsOnOrbit;
         }
+
     }
     partial class MainWindow : Window
     {
@@ -970,7 +973,7 @@ namespace BCK.SmrSimulation.Main
 
         private void RedrawFemModel(object sender, RoutedEventArgs e)
         {
-            RedrawFemModel();
+            cmd.Call("Regen");
         }
         public void RedrawFemModel()
         {
@@ -1022,13 +1025,13 @@ namespace BCK.SmrSimulation.Main
                                 Point3D str = frame.nodes[0].C1;
                                 Point3D end = frame.nodes[1].C1;
                                 Vector3D dir = end - str;
-                                if (showSection)
+                                if (showSection | frame.Section == null)
                                 {
                                     Draw.Shapes.AddPolygon(str, dir, frame.Section.Poly);
                                 }
                                 else
                                 {
-                                    Draw.Shapes.AddCylinder(str, dir, diaElem, rlsElem);
+                                    Draw.Shapes.AddLine(str, str + dir);
                                 }
                                 break;
                             case 40:
@@ -1184,7 +1187,7 @@ namespace BCK.SmrSimulation.Main
 
         public void RedrawShapes(object sender, RoutedEventArgs e)
         {
-            RedrawShapes();
+            cmd.Call("Redraw");
         }
         public void RedrawShapes()
         {
@@ -1461,7 +1464,19 @@ namespace BCK.SmrSimulation.Main
         }
         private void Zoom_MouseWheelScroll(object sender, MouseWheelEventArgs e)
         {
-            Draw.ZoomForward(e.Delta);
+            Zoom_Forward(e.Delta);
+        }
+        private void Zoom_ForwardOneStep(object sender, RoutedEventArgs e)
+        {
+            Zoom_Forward(500);
+        }
+        private void Zoom_ForwardBackStep(object sender, RoutedEventArgs e)
+        {
+            Zoom_Forward(-500);
+        }
+        internal void Zoom_Forward(int zoomInt)
+        {
+            Draw.ZoomForward(zoomInt);
             AfterViewChanged();
         }
         private void PanOn_MouseWheelDown(object sender, MouseButtonEventArgs e)
@@ -1534,6 +1549,16 @@ namespace BCK.SmrSimulation.Main
                     KeyDown -= TurnOffOrbit_Esc;
                     IsOnWindowSelect = true;
                 }
+
+                if (value)
+                {
+                    btnOrbit.Background = pressedButtonColor;
+                }
+                else
+                {
+                    btnOrbit.Background = unpressedButtonColor;
+                }
+
                 isOnOrbit = value;
             }
         }

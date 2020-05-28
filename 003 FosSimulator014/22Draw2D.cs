@@ -3,6 +3,7 @@ using BCK.SmrSimulation.GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Management.Instrumentation;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading.Tasks;
@@ -579,6 +580,7 @@ namespace BCK.SmrSimulation.Draw2D
         private readonly Grid grid;
         internal bool enable = false;
         internal bool started = false;
+        internal static bool orthogonal = false;
 
         internal Shape2dCollection shapes = new Shape2dCollection();
         internal Point wP0, wP1;
@@ -748,10 +750,30 @@ namespace BCK.SmrSimulation.Draw2D
             return points;
         }
 
+        
         private void ChangeLine()
         {
-            line.X2 = wP1.X;
-            line.Y2 = wP1.Y;
+            if (orthogonal)
+            {
+                double xChange = Math.Abs(line.X1 - wP1.X);
+                double yChange = Math.Abs(line.Y1 - wP1.Y);
+
+                if (xChange > yChange)
+                {
+                    line.X2 = wP1.X;
+                    line.Y2 = line.Y1;
+                }
+                else
+                {
+                    line.X2 = line.X1;
+                    line.Y2 = wP1.Y;
+                }
+            }
+            else
+            {
+                line.X2 = wP1.X;
+                line.Y2 = wP1.Y;
+            }
         }
         private void ChangeCross()
         {

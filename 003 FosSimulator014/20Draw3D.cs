@@ -2029,6 +2029,8 @@ namespace BCK.SmrSimulation.Draw3D
             this.diameter = diameter;
             this.resolution = resolution;
 
+            snapPoints.Add(center, ObjectSnapPoint.Types.Node);
+
             mesh = MeshGenerator.Sphere(diameter, resolution);
             SetTransforms(center, new Vector3D(1, 1, 1));
         }
