@@ -9,103 +9,110 @@
 
     <DockPanel x:Name="baseDockPanel">
 
-
-        <Menu DockPanel.Dock ="Top">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open" HorizontalAlignment="Left"/>
-                <MenuItem Header="E_xit" HorizontalAlignment="Left" Click="ExitApplication"/>
-            </MenuItem>
-            <MenuItem Header="_View">
-                <MenuItem Header="_Redraw" Click="RedrawShapes"/>
-                <MenuItem Header="Re_gen" Click="RedrawFemModel"/>
-                <Separator/>
-                <MenuItem Header="_Full Screen" Click="FullScreenWindow" IsCheckable="True"/>
-                <Separator/>
-                <MenuItem Header="_Zoom">
-                    <MenuItem Header="_In"/>
-                    <MenuItem Header="_Out"/>
-                    <MenuItem Header="_Extend" Click="ZoomExtents"/>
+        <DockPanel DockPanel.Dock="Top">
+            <WrapPanel DockPanel.Dock="Right" Background="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" >
+                <Label Content="N:" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="4,0,0,0" Height="16"/>
+                <TextBox TextWrapping="Wrap" Text="(Selected Nodes)" Margin="2" Width="100" Foreground="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}"/>
+                <Label Content="E:" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="4,0,0,0" Height="16"/>
+                <TextBox TextWrapping="Wrap" Text="(Selected Elems)" Margin="2" Width="100" Foreground="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}"/>
+            </WrapPanel>
+            <Menu>
+                <MenuItem Header="_File">
+                    <MenuItem Header="_Open" HorizontalAlignment="Left"/>
+                    <MenuItem Header="E_xit" HorizontalAlignment="Left" Click="ExitApplication"/>
                 </MenuItem>
-                <MenuItem Header="Or_bit">
-                    <MenuItem Header="_Free Orbit" Click="TurnOnOrbit"/>
-                </MenuItem>
-                <MenuItem Header="_3D Views">
-                    <MenuItem Header="_Top" Click="ViewTop" HorizontalAlignment="Left"/>
-                    <MenuItem Header="B_ottom" Click="ViewBottom" HorizontalAlignment="Left"/>
-                    <MenuItem Header="_Left" Click="ViewLeft" HorizontalAlignment="Left"/>
-                    <MenuItem Header="_Right" Click="ViewRight" HorizontalAlignment="Left"/>
-                    <MenuItem Header="_Front" Click="ViewFront" HorizontalAlignment="Left"/>
-                    <MenuItem Header="_Back" Click="ViewBack" HorizontalAlignment="Left"/>
-                    <Separator Height="1" />
-                    <MenuItem Header="_S-W" Click="ViewSW" HorizontalAlignment="Left"/>
-                    <MenuItem Header="S-_E" Click="ViewSE" HorizontalAlignment="Left"/>
-                    <MenuItem Header="_N-E" Click="ViewNE" HorizontalAlignment="Left"/>
-                    <MenuItem Header="N-_W" Click="ViewNW" HorizontalAlignment="Left"/>
-                </MenuItem>
-                <Separator/>
-                <MenuItem x:Name="mnuCoordinateSystem" Header="Coordinate _system" Click="ViewCoordinateSystem" IsChecked="True" IsCheckable="True"/>
-                <MenuItem Header="Base plane _grid" Click="ViewBasePlaneGrid" IsCheckable="True" IsChecked="True"/>
-                <Separator/>
-                <MenuItem Header="_Camera control pannel" Click="OpenPannelCameraControl" HorizontalAlignment="Left"/>
-                <MenuItem Header="F_em Works Pannel" Click="OpenPannelFemWorks"/>
-
-            </MenuItem>
-
-            <MenuItem Header="_Structure" >
-                <MenuItem Header="_Concrete" Click="OpenPannelConcreteSetting" HorizontalAlignment="Left"/>
-            </MenuItem>
-            <MenuItem Header="F_EM">
                 <MenuItem Header="_View">
-                    <MenuItem Header="No_de" Click="ViewNode" IsCheckable="True" IsChecked="True"/>
-                    <MenuItem x:Name="isFemViewNodeNumber" Header="_Node Number" Click="ViewNodeNumber" IsCheckable="True" IsChecked="True"/>
-                    <MenuItem Header="E_lement" Click="ViewElement" IsCheckable="True" IsChecked="True"/>
-                    <MenuItem x:Name="isFemViewElemNumber" Header="_Element Number" Click="ViewElementNumber" IsCheckable="True" IsChecked="False"/>
-                </MenuItem>
-                <MenuItem Header="M_odel">
-                    <MenuItem Header="Add _Material" Click="AddMaterial"/>
-                    <MenuItem Header="Add _Section" Click="AddSection"/>
-                    <MenuItem Header="Add _Node" Click="AddNode"/>
-                    <MenuItem Header="Draw _Line Element" Click="AddFemLine"/>
-                </MenuItem>
-                <MenuItem Header="_Modify">
-                    <MenuItem Header="E_xtrude" Click="FemExtrude"/>
-                    <MenuItem Header="_Divide" Click="FemDivide"/>
-                </MenuItem>
-                <MenuItem Header="_Load">
-                    <MenuItem Header="Add _Load" Click="FemAddLoadSelected"/>
-                </MenuItem>
-                <MenuItem Header="Analysis(F5)" Click="FemAnalysis"/>
-                <MenuItem Header="_Example">
-                    <MenuItem Header="0_1 SimpleBeamLoadZ" Click="FemTest_SimpleBeamLoadZ" HorizontalAlignment="Left"/>
-                    <MenuItem Header="0_2 SimpleBeamLoadY" Click="FemTest_SimpleBeamLoadY" HorizontalAlignment="Left"/>
-                    <MenuItem Header="0_3 SolidExample" Click="FemTest_Solid003" HorizontalAlignment="Left"/>
-                </MenuItem>
-            </MenuItem>
-            <MenuItem Header="_Draw" >
-                <MenuItem Header="_3D Solid" HorizontalAlignment="Left" >
-                    <MenuItem Header="_Sphere" Click="DrawSphere" HorizontalAlignment="Left"/>
-                    <MenuItem Header="Co_ne" Click="DrawCone" HorizontalAlignment="Left"/>
-                    <MenuItem Header="_Coordination Mark" Click="DrawCoordinationMark" HorizontalAlignment="Left"/>
-                    <MenuItem Header ="Performance test" Click="DrawPerformanceTest" HorizontalAlignment="Left"/>
-                </MenuItem>
-                <MenuItem Header="_2D Example" >
-                    <MenuItem Header="gradation" Click="DrawSampleGradient" HorizontalAlignment="Left"/>
+                    <MenuItem Header="_Redraw" Click="RedrawShapes"/>
+                    <MenuItem Header="Re_gen" Click="RedrawFemModel"/>
+                    <Separator/>
+                    <MenuItem Header="_Full Screen" Click="FullScreenWindow" IsCheckable="True"/>
+                    <Separator/>
+                    <MenuItem Header="_Zoom">
+                        <MenuItem Header="_In"/>
+                        <MenuItem Header="_Out"/>
+                        <MenuItem Header="_Extend" Click="ZoomExtents"/>
+                    </MenuItem>
+                    <MenuItem Header="Or_bit">
+                        <MenuItem Header="_Free Orbit" Click="TurnOnOrbit"/>
+                    </MenuItem>
+                    <MenuItem Header="_3D Views">
+                        <MenuItem Header="_Top" Click="ViewTop" HorizontalAlignment="Left"/>
+                        <MenuItem Header="B_ottom" Click="ViewBottom" HorizontalAlignment="Left"/>
+                        <MenuItem Header="_Left" Click="ViewLeft" HorizontalAlignment="Left"/>
+                        <MenuItem Header="_Right" Click="ViewRight" HorizontalAlignment="Left"/>
+                        <MenuItem Header="_Front" Click="ViewFront" HorizontalAlignment="Left"/>
+                        <MenuItem Header="_Back" Click="ViewBack" HorizontalAlignment="Left"/>
+                        <Separator Height="1" />
+                        <MenuItem Header="_S-W" Click="ViewSW" HorizontalAlignment="Left"/>
+                        <MenuItem Header="S-_E" Click="ViewSE" HorizontalAlignment="Left"/>
+                        <MenuItem Header="_N-E" Click="ViewNE" HorizontalAlignment="Left"/>
+                        <MenuItem Header="N-_W" Click="ViewNW" HorizontalAlignment="Left"/>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem x:Name="mnuCoordinateSystem" Header="Coordinate _system" Click="ViewCoordinateSystem" IsChecked="True" IsCheckable="True"/>
+                    <MenuItem Header="Base plane _grid" Click="ViewBasePlaneGrid" IsCheckable="True" IsChecked="True"/>
+                    <Separator/>
+                    <MenuItem Header="_Camera control pannel" Click="OpenPannelCameraControl" HorizontalAlignment="Left"/>
+                    <MenuItem Header="F_em Works Pannel" Click="OpenPannelFemWorks"/>
+
                 </MenuItem>
 
-            </MenuItem>
-            <MenuItem Header="Ab_out" />
-        </Menu>
+                <MenuItem Header="_Structure" >
+                    <MenuItem Header="_Concrete" Click="OpenPannelConcreteSetting" HorizontalAlignment="Left"/>
+                </MenuItem>
+                <MenuItem Header="F_EM">
+                    <MenuItem Header="_View">
+                        <MenuItem Header="No_de" Click="ViewNode" IsCheckable="True" IsChecked="True"/>
+                        <MenuItem x:Name="isFemViewNodeNumber" Header="_Node Number" Click="ViewNodeNumber" IsCheckable="True" IsChecked="True"/>
+                        <MenuItem Header="E_lement" Click="ViewElement" IsCheckable="True" IsChecked="True"/>
+                        <MenuItem x:Name="isFemViewElemNumber" Header="_Element Number" Click="ViewElementNumber" IsCheckable="True" IsChecked="False"/>
+                    </MenuItem>
+                    <MenuItem Header="M_odel">
+                        <MenuItem Header="Add _Material" Click="AddMaterial"/>
+                        <MenuItem Header="Add _Section" Click="AddSection"/>
+                        <MenuItem Header="Add _Node" Click="AddNode"/>
+                        <MenuItem Header="Draw _Line Element" Click="AddFemLine"/>
+                    </MenuItem>
+                    <MenuItem Header="_Modify">
+                        <MenuItem Header="E_xtrude" Click="FemExtrude"/>
+                        <MenuItem Header="_Divide" Click="FemDivide"/>
+                    </MenuItem>
+                    <MenuItem Header="_Load">
+                        <MenuItem Header="Add _Load" Click="FemAddLoadSelected"/>
+                    </MenuItem>
+                    <MenuItem Header="Analysis(F5)" Click="FemAnalysis"/>
+                    <MenuItem Header="_Example">
+                        <MenuItem Header="0_1 SimpleBeamLoadZ" Click="FemTest_SimpleBeamLoadZ" HorizontalAlignment="Left"/>
+                        <MenuItem Header="0_2 SimpleBeamLoadY" Click="FemTest_SimpleBeamLoadY" HorizontalAlignment="Left"/>
+                        <MenuItem Header="0_3 SolidExample" Click="FemTest_Solid003" HorizontalAlignment="Left"/>
+                    </MenuItem>
+                </MenuItem>
+                <MenuItem Header="_Draw" >
+                    <MenuItem Header="_3D Solid" HorizontalAlignment="Left" >
+                        <MenuItem Header="_Sphere" Click="DrawSphere" HorizontalAlignment="Left"/>
+                        <MenuItem Header="Co_ne" Click="DrawCone" HorizontalAlignment="Left"/>
+                        <MenuItem Header="_Coordination Mark" Click="DrawCoordinationMark" HorizontalAlignment="Left"/>
+                        <MenuItem Header ="Performance test" Click="DrawPerformanceTest" HorizontalAlignment="Left"/>
+                    </MenuItem>
+                    <MenuItem Header="_2D Example" >
+                        <MenuItem Header="gradation" Click="DrawSampleGradient" HorizontalAlignment="Left"/>
+                    </MenuItem>
+
+                </MenuItem>
+                <MenuItem Header="Ab_out" />
+            </Menu>
+
+        </DockPanel>
 
         <DockPanel DockPanel.Dock="Bottom">
-            <WrapPanel DockPanel.Dock="Right" Width="393">
-                <ProgressBar x:Name="progressBar" Value="0" Margin="2" Width="90"/>
+            <WrapPanel DockPanel.Dock="Right" Width="249" Background="{DynamicResource {x:Static SystemColors.MenuBrushKey}}">
+                <ProgressBar x:Name="progressBar" Value="0" Margin="2" Width="90" Height="16"/>
+                <Button x:Name="btnOrbit" Content="ORBIT" Margin="2" Click="SwitchFreeOrbit" ToolTip="Free Orbit (F7) : 3차원으로 돌려보기"/>
                 <Button x:Name="btnObjectSnap" Content="OSNAP" Margin="2" Click="SwitchObjectSnap" ToolTip="Object Snap (F6) : 근처 점을 잡아준다."/>
                 <Button x:Name="btnOrthogonal" Content="ORTHO" Margin="2" Click="SwitchOrthogonal" ToolTip="Orthogonal (F8) : 연직/수평선 가이드라인 적용." />
-                <TextBox TextWrapping="Wrap" Text="TextBox" Margin="2" Width="90"/>
-                <TextBox TextWrapping="Wrap" Text="TextBox" Margin="2" Width="90"/>
             </WrapPanel>
 
-            <StatusBar Background="#FFF1EDED" HorizontalContentAlignment="Right" Height="22" >
+            <StatusBar Background="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" HorizontalContentAlignment="Right" >
                 <Label x:Name="stbLabel" Content="Label1" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="4,0,0,0"/>
             </StatusBar>
         </DockPanel>
@@ -203,7 +210,8 @@
             <TextBox x:Name="tbxCommand" TextWrapping="Wrap" Text="&gt; " RenderTransformOrigin="0.5,0.5" ForceCursor="True" AcceptsReturn="True" VerticalScrollBarVisibility="Visible"/>
         </Grid>
 
-        <Grid x:Name="grdMain"/>
+        <Grid x:Name="grdMain">
+        </Grid>
 
     </DockPanel>
 

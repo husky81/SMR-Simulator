@@ -538,6 +538,11 @@ namespace BCK.SmrSimulation.Main
                 btnOrthogonal.Background = Brushes.Gray;
             }
         }
+
+        private void SwitchFreeOrbit(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
     partial class MainWindow : Window
     {
