@@ -36,8 +36,9 @@ namespace BCK.SmrSimulation.Main
         public BckDraw3D Draw => draw;
         private readonly BckDraw3D draw;
         
-        internal readonly Draw2D.Draw2D draw2d;
-        internal MouseInputGuideShapes mouseInputGuideShapes;
+        internal readonly Draw2D.BckDraw2D draw2d;
+        internal MouseInputGuide mouseInputGuide;
+        internal MouseInputGuide3D mouseInputGuide3d;
 
         public CommandWindow Cmd => cmd;
         private readonly CommandWindow cmd;
@@ -57,10 +58,11 @@ namespace BCK.SmrSimulation.Main
             fem = new FEM();
             fem.cmd = cmd; //fem에서 메시지를 보내기위한 용도로만 사용함.
 
-            draw = new Draw3D.BckDraw3D(grdMain);
-            draw2d = new Draw2D.Draw2D(grdMain);
+            draw = new BckDraw3D(grdMain);
+            draw2d = new BckDraw2D(grdMain);
 
-            mouseInputGuideShapes = new MouseInputGuideShapes(grdMain);
+            mouseInputGuide = new MouseInputGuide(grdMain);
+            mouseInputGuide3d = new MouseInputGuide3D(draw);
             requestUserInput = new RequestUserInput(this);
 
             InitializeSetting();
@@ -538,7 +540,8 @@ namespace BCK.SmrSimulation.Main
         private void SwitchOrthogonal(object sender, RoutedEventArgs e)
         {
             SetOrthogonalOption(!Settings.Default.isOnOrthogonal);
-            MouseInputGuideShapes.orthogonal = !Settings.Default.isOnOrthogonal;
+            MouseInputGuide.orthogonal = !Settings.Default.isOnOrthogonal;
+            MouseInputGuide3D.orthogonal = !Settings.Default.isOnOrthogonal;
             cmd.GetCursor();
         }
 
@@ -616,7 +619,7 @@ namespace BCK.SmrSimulation.Main
         private void AddNode(object sender, RoutedEventArgs e)
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.viewType = MouseInputGuideShapes.ViewType.Cross;
+            requestUserInput.viewType = MouseInputGuide.ViewType.Cross;
             requestUserInput.RequestPoints(-1);
             requestUserInput.actionAfterEveryLastPointWithPoint += Fem.Model.Nodes.Add_NoReturn;
             requestUserInput.actionAfterEveryPoint += RedrawFemModel;
@@ -630,7 +633,7 @@ namespace BCK.SmrSimulation.Main
         internal void AddFemLine()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.viewType = MouseInputGuideShapes.ViewType.Line;
+            requestUserInput.viewType = MouseInputGuide.ViewType.Line;
             requestUserInput.RequestPoints(Properties.Resource.String7);
             requestUserInput.actionEveryLastTwoPointsWithPointPoint += AddFemLine;
             requestUserInput.actionEveryLastTwoPoints += RedrawFemModel;
@@ -820,7 +823,7 @@ namespace BCK.SmrSimulation.Main
         {
             requestUserInput = new RequestUserInput(this);
             requestUserInput.RequestPoints("define fence");
-            requestUserInput.viewType = MouseInputGuideShapes.ViewType.Line;
+            requestUserInput.viewType = MouseInputGuide.ViewType.Line;
             requestUserInput.actionEveryLastTwoPointsWithPointPoint += SelectElemByFenceLine;
             requestUserInput.actionEnd += EraseSelected;
             requestUserInput.Start();
@@ -1353,7 +1356,7 @@ namespace BCK.SmrSimulation.Main
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 RequestUserMouseWindowInput r = new RequestUserMouseWindowInput(this);
-                r.viewType = MouseInputGuideShapes.ViewType.SelectionWindow;
+                r.viewType = MouseInputGuide.ViewType.SelectionWindow;
                 r.FirstPoint = e.GetPosition(grdMain);
                 r.action = SelectFemByWindow;
                 r.Start();
@@ -1475,7 +1478,7 @@ namespace BCK.SmrSimulation.Main
         internal void ZoomWindow()
         {
             requestUserInput = new RequestUserInput(this);
-            requestUserInput.viewType = MouseInputGuideShapes.ViewType.Rectangle;
+            requestUserInput.viewType = MouseInputGuide.ViewType.Rectangle;
             requestUserInput.RequestPoints(2);
             requestUserInput.actionEveryLastTwoPointsWithPointPoint += Draw.ViewZoomWindow;
             requestUserInput.actionEnd += AfterViewChanged;
@@ -1511,10 +1514,6 @@ namespace BCK.SmrSimulation.Main
             {
                 pointMouseDown = e.GetPosition(grdMain);
                 Draw.OrbitStart();
-                if (requestUserInput.IsOn)
-                {
-                    //requestUserInput.PanMoveStart();
-                }
                 MouseMove += Pan_MouseWheelDownMove;
             }
         }
@@ -1524,14 +1523,7 @@ namespace BCK.SmrSimulation.Main
             {
                 Point p = e.GetPosition(grdMain);
                 Vector mov = p - pointMouseDown;
-                stbLabel.Content = mov.X + ", " + mov.Y;
-                //bckD.OrbitMoveX(mov.X / 2); //MoveX와 MoveY중 처음 실행된 것 하나만 동작함.
-                //bckD.OrbitMoveY(mov.Y / 2);
                 Draw.OrbitMove(mov);
-                if (requestUserInput.IsOn)
-                {
-                    //requestUserInput.PanMove(mov);
-                }
                 AfterViewChanged();
             }
         }

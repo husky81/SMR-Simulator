@@ -15,18 +15,18 @@ namespace BCK.SmrSimulation.Main
 {
     public class CommandWindow
     {
-        private readonly MainWindow main;
-        private readonly System.Windows.Controls.TextBox textBox;
+        readonly MainWindow main;
+        readonly System.Windows.Controls.TextBox textBox;
 
         /// <summary>
         /// 모든 command의 상위 command, root command.
         /// </summary>
-        private readonly Command rootCommand;
-        private Command activeCommand;
-        private Command lastCommand;
-        private readonly string initialCmdMark = "Command";
-        private readonly string cmdMark = ": ";
-        private bool isMouseInput = false;
+        readonly Command rootCommand;
+        Command activeCommand;
+        Command lastCommand;
+        readonly string initialCmdMark = "Command";
+        readonly string cmdMark = ": ";
+        bool isMouseInput = false;
 
         public CommandWindow(MainWindow mainWindow, System.Windows.Controls.TextBox textBox)
         {
@@ -109,7 +109,7 @@ namespace BCK.SmrSimulation.Main
             }
         }
 
-        private void SetCommandStructure()
+        void SetCommandStructure()
         {
             Command cmd, subCmd;
             cmd = rootCommand.Add("Regen", "re"); cmd.run += main.RedrawFemModel;
@@ -157,8 +157,9 @@ namespace BCK.SmrSimulation.Main
 
         /// <summary>
         /// 명령창에 입력된 명령어 인식 및 처리. 명령창에서 스페이스를 누르면이 이 함수가 실행됨.
+        /// 사용자가 입력한 명령 실행. 커멘드 창에서 space, enter를 누르면 실행됨.
         /// </summary>
-        private void GetCommand()
+        void GetCommand()
         {
             //명령창에서 사용자가 입력한 명령어 반환
             string userInput = GetCommandTextFromCommandWindowText();
@@ -216,8 +217,6 @@ namespace BCK.SmrSimulation.Main
             InputTypes userInputType = GetTypeOfUserInput(userInput);
             switch (requestedInputType)
             {
-                case InputTypes.None:
-                    break;
                 case InputTypes.Int:
                     if (userInputType == requestedInputType)
                     {
@@ -294,6 +293,8 @@ namespace BCK.SmrSimulation.Main
                             break;
                     }
                     break;
+                case InputTypes.None:
+                    break;
                 default:
                     break;
             }
@@ -314,9 +315,9 @@ namespace BCK.SmrSimulation.Main
             return;
 
 
-        } // 사용자가 입력한 명령 실행. 커멘드 창에서 space, enter를 누르면 실행됨.
+        }
 
-        private void ActionAfterVecWithVec()
+        void ActionAfterVecWithVec()
         {
             if (actionAfterVecWithVec != null)
             {
@@ -326,10 +327,10 @@ namespace BCK.SmrSimulation.Main
             }
         }
 
-        private InputTypes GetTypeOfUserInput(string uInp)
+        InputTypes GetTypeOfUserInput(string uInp)
         {
             //입력값이 상대좌표인 경우. @로 시작하는 경우 상대좌표로 인식.
-            if (uInp.Substring(0, 1).Equals("@"))
+            if (uInp.Substring(0, 1).Equals("@",StringComparison.CurrentCultureIgnoreCase))
             {
                 int isRelativeCoordinateInput = IsRelativeCoordinateInput(uInp.Substring(1));
                 if (isRelativeCoordinateInput >= 0) Enter();
@@ -375,15 +376,14 @@ namespace BCK.SmrSimulation.Main
 
             return InputTypes.None;
         }
-
-        private bool IsIntList(string uInp)
+        bool IsIntList(string uInp)
         {
             userInputInts = GF.ConvertStringsToIntList(uInp);
             if (userInputInts == null) return false;
             return true;
         }
 
-        private string GetCommandTextFromCommandWindowText()
+        string GetCommandTextFromCommandWindowText()
         {
             //커맨드 창에 입력된 명령어 추출
             userInput = "";
@@ -399,7 +399,7 @@ namespace BCK.SmrSimulation.Main
             }
             return userInput;
         }
-        private Command FindCommandFromUserInput(string userInput)
+        Command FindCommandFromUserInput(string userInput)
         {
             //입력 명령어와 동일한 명령 실행
             foreach (Command cmd in activeCommand.commands)
@@ -523,7 +523,7 @@ namespace BCK.SmrSimulation.Main
             return isCoordinateInput;
         } //사용자 입력에 의한 userInputPoint3D 반환
 
-        private void ExecuteCommand(Command cmd)
+        void ExecuteCommand(Command cmd)
         {
             lastCommand = cmd;
 
@@ -554,7 +554,7 @@ namespace BCK.SmrSimulation.Main
             activeCommand = cmd;
             WriteText(cmdMark);
         }
-        private void EndCommand()
+        void EndCommand()
         {
 
             if (main.requestUserInput == null)
@@ -573,11 +573,13 @@ namespace BCK.SmrSimulation.Main
                 RemoveEvents_All();
                 ClearActions();
                 activeCommand = rootCommand;
+                requestedInputType = InputTypes.None;
+                
                 NewLine();
             }
         }
 
-        private void Tbx_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        void Tbx_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             switch (e.Key)
             {
@@ -600,7 +602,7 @@ namespace BCK.SmrSimulation.Main
                     break;
             }
         }
-        private void Tbx_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        void Tbx_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             switch (e.Key)
             {
@@ -616,7 +618,7 @@ namespace BCK.SmrSimulation.Main
                     break;
             }
         }
-        private void Tbx_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        void Tbx_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
             switch (e.Key)
             {
@@ -632,26 +634,26 @@ namespace BCK.SmrSimulation.Main
             }
         }
 
-        private void Cancel_EscKey()
+        void Cancel_EscKey()
         {
             WriteText("*Cancel*");
             Enter();
             main.requestUserInput = new RequestUserInput(main);
-            main.mouseInputGuideShapes.End();
+            main.mouseInputGuide.End();
             EndCommand();
         }
-        private void Clear()
+        void Clear()
         {
             textBox.Focus();
             textBox.Text = initialCmdMark + cmdMark;
             SetCursorLast();
         }
-        private void Space()
+        void Space()
         {
             textBox.AppendText(" ");
             SetCursorLast();
         }
-        private void BackSpace(int length = 1)
+        void BackSpace(int length = 1)
         {
             textBox.Text = textBox.Text.Substring(0, textBox.Text.Length - length);
             SetCursorLast();
@@ -667,7 +669,7 @@ namespace BCK.SmrSimulation.Main
             textBox.AppendText(initialCmdMark + cmdMark);
             SetCursorLast();
         }
-        private void WriteText(String text)
+        void WriteText(String text)
         {
             textBox.AppendText(text);
             SetCursorLast();
@@ -706,14 +708,14 @@ namespace BCK.SmrSimulation.Main
         } //외부에서 명령어 실행 요청
 
         //입력요청 관련
-        private InputTypes requestedInputType = InputTypes.None;
-        private string userInput;
-        private Point3D userInputPoint3D;
-        private Vector3D userInputVector3D;
-        private double userInputDouble;
-        private int userInputInt;
-        private List<int> userInputInts;
-        private List<Point3D> userInputPoints;
+        InputTypes requestedInputType = InputTypes.None;
+        string userInput;
+        Point3D userInputPoint3D;
+        Vector3D userInputVector3D;
+        double userInputDouble;
+        int userInputInt;
+        List<int> userInputInts;
+        List<Point3D> userInputPoints;
 
         internal delegate void inputInt(int n);
         internal inputInt actionAfterIntWithInt;
@@ -728,7 +730,7 @@ namespace BCK.SmrSimulation.Main
         internal delegate void inputPoints(List<Point3D> pointList);
         internal inputPoints actionAfterPoints;
 
-        private void ClearActions()
+        void ClearActions()
         {
             actionAfterIntWithInt = null;
             actionAfterIntWithDirInt = null;
@@ -768,7 +770,7 @@ namespace BCK.SmrSimulation.Main
 
         }
         int numPointRequested;
-        private void GetPoints_Point(object sender, MouseButtonEventArgs e)
+        void GetPoints_Point(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
@@ -781,7 +783,7 @@ namespace BCK.SmrSimulation.Main
         {
             main.MouseDown -= GetPoints_Point;
             main.MouseMove -= GetPoints_Moving;
-            main.mouseInputGuideShapes.End();
+            main.mouseInputGuide3d.End();
 
             userInputPoints.Add(userInputPoint3D);
             actionAfterPointWithPoint?.Invoke(userInputPoint3D);
@@ -792,10 +794,8 @@ namespace BCK.SmrSimulation.Main
                 return;
             }
 
-            main.mouseInputGuideShapes.viewType = MouseInputGuideShapes.ViewType.Line;
-            Point p = GetPointFromPoint3D(userInputPoint3D);
-            main.mouseInputGuideShapes.viewType = viewType;
-            main.mouseInputGuideShapes.Start(p);
+            main.mouseInputGuide3d.viewType = MouseInputGuide3D.ViewType.Line;
+            main.mouseInputGuide3d.Start(userInputPoint3D);
             main.MouseMove += GetPoints_Moving;
 
             WriteText("다음 점을 입력하세요" + cmdMark);
@@ -803,33 +803,33 @@ namespace BCK.SmrSimulation.Main
 
             main.MouseDown += GetPoints_Point;
         }
-        private void PutPoints_Direction(Vector3D userInputPoint3D)
+        void PutPoints_Direction(Vector3D userInputPoint3D)
         {
             Point3D nextPoint = userInputPoints[userInputPoints.Count - 1] + userInputPoint3D;
             PutPoints_Point(nextPoint);
         }
-        private void GetPoints_Moving(object sender, MouseEventArgs e)
+        void GetPoints_Moving(object sender, MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
 
             //Cross인 경우 첫번째 점을 입력하기 전부터 시작되어야 함.
-            if (viewType == MouseInputGuideShapes.ViewType.Cross & !main.mouseInputGuideShapes.started)
+            if (viewType == MouseInputGuide.ViewType.Cross & !main.mouseInputGuide3d.started)
             {
-                main.mouseInputGuideShapes.viewType = viewType;
-                main.mouseInputGuideShapes.Start(p0);
+                main.mouseInputGuide.viewType = viewType;
+                main.mouseInputGuide.Start(p0);
             }
 
             main.ChangeToSnapPointAndDrawMark(ref p0, GetPoints_Point);
 
-            main.mouseInputGuideShapes.Move(p0);
+            if (userInputPoints.Count > 0) main.mouseInputGuide3d.Move(p0);
         }
-        private void PutPoints_End()
+        void PutPoints_End()
         {
-            main.mouseInputGuideShapes.End();
+            main.mouseInputGuide3d.End();
             actionAfterPoints?.Invoke(userInputPoints);
             EndCommand();
         }
-        private void RemoveEvents_GetPoints()
+        void RemoveEvents_GetPoints()
         {
             main.MouseMove -= GetPoints_Moving;
             main.MouseDown -= GetPoints_Point;
@@ -880,7 +880,7 @@ namespace BCK.SmrSimulation.Main
             if (isSecondPointInputOfVector)
             {
                 RemoveEvents_GetVector();
-                main.mouseInputGuideShapes.End();
+                main.mouseInputGuide.End();
 
                 Vector3D inputDirection = userInputPoint3D - vectorFirstPoint;
                 main.requestUserInput.Put(inputDirection);
@@ -892,38 +892,38 @@ namespace BCK.SmrSimulation.Main
                 Point p = GetPointFromPoint3D(userInputPoint3D);
 
                 main.MouseMove += GetVector_Moving;
-                main.mouseInputGuideShapes.viewType = MouseInputGuideShapes.ViewType.Line;
-                main.mouseInputGuideShapes.Start(p);
+                main.mouseInputGuide.viewType = MouseInputGuide.ViewType.Line;
+                main.mouseInputGuide.Start(p);
 
                 WriteText("벡터의 방향을 입력하세요." + cmdMark);
                 SetCursorLast();
                 main.MouseDown += GetVector;
             }
         }
-        private void GetVector_Moving(object sender, System.Windows.Input.MouseEventArgs e)
+        void GetVector_Moving(object sender, System.Windows.Input.MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
             main.ChangeToSnapPointAndDrawMark(ref p0, GetVector);
-            main.mouseInputGuideShapes.Move(p0);
+            main.mouseInputGuide.Move(p0);
         }
-        private void RemoveEvents_GetVector()
+        void RemoveEvents_GetVector()
         {
             main.MouseDown -= GetVector;
             main.MouseMove -= GetVector_Moving;
         }
 
-        internal MouseInputGuideShapes.ViewType viewType;
-        private void RemoveEvents_All()
+        internal MouseInputGuide.ViewType viewType;
+        void RemoveEvents_All()
         {
             RemoveEvents_GetPoints();
             RemoveEvents_GetVector();
         }
 
-        private Point3D GetPoint3dFromPoint2D(Point p0)
+        Point3D GetPoint3dFromPoint2D(Point p0)
         {
             return main.Draw.GetPoint3dOnBasePlaneFromPoint2D(p0);
         }
-        private Point GetPointFromPoint3D(Point3D p3d)
+        Point GetPointFromPoint3D(Point3D p3d)
         {
             return main.Draw.GetPoint2DFromPoint3D(p3d);
         }
@@ -932,7 +932,7 @@ namespace BCK.SmrSimulation.Main
         /// </summary>
         /// <param name="p"></param>
         /// <returns>OsnapPoint 옵션을 고려한 3차원 좌표 반환</returns>
-        private Point3D GetPointFromPoint3DbySnapPoint(Point p)
+        Point3D GetPointFromPoint3DbySnapPoint(Point p)
         {
             main.ChangeToSnapPointAndDrawMark(ref p);
             Point3D p3;

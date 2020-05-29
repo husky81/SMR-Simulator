@@ -932,6 +932,358 @@ namespace BCK.SmrSimulation.Draw3D
             yAxis = new Vector3D(0, 1, 0);
         }
     }
+    class MouseInputGuide3D
+    {
+        readonly BckDraw3D draw;
+        internal bool enable = false;
+        internal bool started = false;
+        internal static bool orthogonal = false;
+
+        internal Shape2dCollection shapes = new Shape2dCollection();
+        internal Point wP0, wP1;
+        Point3D p0, p1;
+        public ViewType viewType;
+        public enum ViewType
+        {
+            SelectionWindow,
+            Rectangle,
+            Line,
+            Arrow,
+            Circle,
+            Cross
+        }
+        Rectangle rectangle;
+        Line line;
+        Line crossLine0, crossLine1;
+
+        /// <summary>
+        /// 커서로 사용할 십자가모양의 반지름 길이 설정.
+        /// </summary>
+        private double crossRadius = 10;
+        double crossLineStrokeThickness = 1;
+
+
+        public MouseInputGuide3D(BckDraw3D draw)
+        {
+            this.draw = draw;
+            //shapes.AddRectangle(strPoint, endPoint);
+        }
+        internal void Start(Point3D point)
+        {
+            p0 = point;
+            p1 = point;
+
+            Point strPoint = draw.GetPoint2DFromPoint3D(p0);
+
+            started = true;
+            wP0 = strPoint;
+            wP1 = strPoint;
+
+            switch (viewType)
+            {
+                case ViewType.SelectionWindow:
+                    DrawSelectionWindow();
+                    break;
+                case ViewType.Rectangle:
+                    DrawRectangle();
+                    break;
+                case ViewType.Line:
+                    if (line != null) draw.Grid.Children.Remove(line);
+                    wP1 = strPoint;
+                    DrawLine();
+                    break;
+                case ViewType.Arrow:
+                    break;
+                case ViewType.Circle:
+                    break;
+                case ViewType.Cross:
+                    DrawCross();
+                    break;
+                default:
+                    break;
+            }
+        }
+        internal void Move(Point endPoint)
+        {
+            if (!started) return;
+            wP1 = endPoint;
+            switch (viewType)
+            {
+                case ViewType.SelectionWindow:
+                    ChangeSelectionWindow();
+                    break;
+                case ViewType.Rectangle:
+                    ChangeRectangle();
+                    break;
+                case ViewType.Line:
+                    //ChangeLine();
+
+                    //DrawLine();
+                    RedrawLine();
+
+                    break;
+                case ViewType.Arrow:
+                    break;
+                case ViewType.Circle:
+                    break;
+                case ViewType.Cross:
+                    ChangeCross();
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void RedrawLine()
+        {
+            wP0 = draw.GetPoint2DFromPoint3D(p0);
+            line.X1 = wP0.X;
+            line.Y1 = wP0.Y;
+            
+            if (orthogonal)
+            {
+                p1 = draw.GetPoint3dFromPoint2D(wP1);
+
+                double xChange = Math.Abs(p1.X - p0.X);
+                double yChange = Math.Abs(p1.Y - p0.Y);
+
+                Point3D p2 = new Point3D();
+                if (xChange > yChange)
+                {
+                    p2.X = p1.X;
+                    p2.Y = p0.Y;
+                    p2.Z = 0;
+                }
+                else
+                {
+                    p2.X = p0.X;
+                    p2.Y = p1.Y;
+                    p2.Z = 0;
+                }
+
+                Point wP2 = draw.GetPoint2DFromPoint3D(p2);
+
+                line.X2 = wP2.X;
+                line.Y2 = wP2.Y;
+
+            }
+            else
+            {
+                line.X2 = wP1.X;
+                line.Y2 = wP1.Y;
+            }
+
+            if (line != null) draw.Grid.Children.Remove(line);
+            draw.Grid.Children.Add(line);
+        }
+
+        internal void End()
+        {
+            started = false;
+            switch (viewType)
+            {
+                case ViewType.SelectionWindow:
+                    draw.Grid.Children.Remove(rectangle);
+                    break;
+                case ViewType.Rectangle:
+                    draw.Grid.Children.Remove(rectangle);
+                    break;
+                case ViewType.Line:
+                    draw.Grid.Children.Remove(line);
+                    //grid.Children.Clear();
+                    break;
+                case ViewType.Arrow:
+                    break;
+                case ViewType.Circle:
+                    break;
+                case ViewType.Cross:
+                    draw.Grid.Children.Remove(crossLine0);
+                    draw.Grid.Children.Remove(crossLine1);
+                    break;
+                default:
+                    break;
+            }
+        }
+        private void DrawLine()
+        {
+            line = new Line
+            {
+                Stroke = System.Windows.Media.Brushes.Black,
+                X1 = wP0.X,
+                X2 = wP1.X,
+                Y1 = wP0.Y,
+                Y2 = wP1.Y,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                StrokeThickness = 1
+            };
+            draw.Grid.Children.Add(line);
+        }
+        private void DrawCross()
+        {
+            Point center = wP0;
+            Point[] points = GetCrossPoints(center);
+            crossLine0 = new Line
+            {
+                Stroke = System.Windows.Media.Brushes.Black,
+                X1 = points[0].X,
+                X2 = points[2].X,
+                Y1 = points[0].Y,
+                Y2 = points[2].Y,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                StrokeThickness = crossLineStrokeThickness
+            };
+            crossLine1 = new Line
+            {
+                Stroke = System.Windows.Media.Brushes.Black,
+                X1 = points[1].X,
+                X2 = points[3].X,
+                Y1 = points[1].Y,
+                Y2 = points[3].Y,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                StrokeThickness = crossLineStrokeThickness
+            };
+            draw.Grid.Children.Add(crossLine0);
+            draw.Grid.Children.Add(crossLine1);
+        }
+        /// <summary>
+        /// <param name="center"/>를 중심으로 십자가를 표현하는 시계방향순서의 4개 절점 반환.
+        /// </summary>
+        /// <param name="center"></param>
+        /// <returns></returns>
+        private Point[] GetCrossPoints(Point center)
+        {
+            Point[] points = new Point[4];
+            points[0] = center + new Vector(0, -crossRadius);
+            points[1] = center + new Vector(crossRadius, 0);
+            points[2] = center + new Vector(0, crossRadius);
+            points[3] = center + new Vector(-crossRadius, 0);
+            return points;
+        }
+
+        private void ChangeLine()
+        {
+            wP0 = draw.GetPoint2DFromPoint3D(p0);
+            line.X1 = wP0.X;
+            line.Y1 = wP0.Y;
+
+            if (orthogonal)
+            {
+                double xChange = Math.Abs(line.X1 - wP1.X);
+                double yChange = Math.Abs(line.Y1 - wP1.Y);
+
+                if (xChange > yChange)
+                {
+                    line.X2 = wP1.X;
+                    line.Y2 = line.Y1;
+                }
+                else
+                {
+                    line.X2 = line.X1;
+                    line.Y2 = wP1.Y;
+                }
+            }
+            else
+            {
+                line.X2 = wP1.X;
+                line.Y2 = wP1.Y;
+            }
+        }
+        private void ChangeCross()
+        {
+            Point center = wP1;
+            Point[] points = GetCrossPoints(center);
+
+            crossLine0.X1 = points[0].X;
+            crossLine0.Y1 = points[0].Y;
+            crossLine0.X2 = points[2].X;
+            crossLine0.Y2 = points[2].Y;
+            crossLine1.X1 = points[1].X;
+            crossLine1.Y1 = points[1].Y;
+            crossLine1.X2 = points[3].X;
+            crossLine1.Y2 = points[3].Y;
+        }
+        private void DrawSelectionWindow()
+        {
+            rectangle = new Rectangle();
+            rectangle.Width = 0;
+            rectangle.Height = 0;
+            rectangle.Fill = Brushes.Blue;
+            rectangle.Opacity = 0.2;
+            rectangle.Margin = new Thickness(wP0.X, wP0.Y, 0, 0);
+            rectangle.Stroke = Brushes.Black;
+            rectangle.HorizontalAlignment = HorizontalAlignment.Left;
+            rectangle.VerticalAlignment = VerticalAlignment.Top;
+            draw.Grid.Children.Add(rectangle);
+        }
+        private void DrawRectangle()
+        {
+            rectangle = new Rectangle();
+            rectangle.Width = 0;
+            rectangle.Height = 0;
+            rectangle.Fill = null;
+            rectangle.Opacity = 1;
+            rectangle.Margin = new Thickness(wP0.X, wP0.Y, 0, 0);
+            rectangle.Stroke = Brushes.Black;
+            rectangle.HorizontalAlignment = HorizontalAlignment.Left;
+            rectangle.VerticalAlignment = VerticalAlignment.Top;
+            draw.Grid.Children.Add(rectangle);
+        }
+        private void ChangeRectangle()
+        {
+            double top = wP0.Y;
+            double left = wP0.X;
+            double width = wP1.X - wP0.X;
+            double height = wP1.Y - wP0.Y;
+
+            if (height < 0)
+            {
+                height = -height;
+                top -= height;
+            }
+
+            if (width < 0)
+            {
+                width = -width;
+                left -= width;
+            }
+            rectangle.Margin = new Thickness(left, top, 0, 0);
+            rectangle.Width = width;
+            rectangle.Height = height;
+        }
+        private void ChangeSelectionWindow()
+        {
+            double top = wP0.Y;
+            double left = wP0.X;
+            double width = wP1.X - wP0.X;
+            double height = wP1.Y - wP0.Y;
+
+            if (height < 0)
+            {
+                height = -height;
+                top -= height;
+            }
+
+            if (width < 0)
+            {
+                width = -width;
+                left -= width;
+                rectangle.Fill = Brushes.Green;
+                rectangle.StrokeDashArray = new DoubleCollection() { 4, 4 };
+            }
+            else
+            {
+                rectangle.Fill = Brushes.Blue;
+                rectangle.StrokeDashArray = new DoubleCollection();
+            }
+            rectangle.Margin = new Thickness(left, top, 0, 0);
+            rectangle.Width = width;
+            rectangle.Height = height;
+        }
+    }
+
     partial class BckDraw3D // Orbit & View
     {
         public PerspectiveCamera PCamera { get; set; } = new PerspectiveCamera

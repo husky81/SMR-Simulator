@@ -16,7 +16,7 @@ using System.Windows.Shapes;
 
 namespace BCK.SmrSimulation.Draw2D
 {
-    class Draw2D
+    class BckDraw2D
     {
         private Grid grid;
 
@@ -25,7 +25,7 @@ namespace BCK.SmrSimulation.Draw2D
 
         internal BoundaryConditionMarks boundaryConditionMarks;
         internal ObjectSnapMark objectSnapMark;
-        public Draw2D(Grid grid)
+        public BckDraw2D(Grid grid)
         {
             this.grid = grid;
             boundaryConditionMarks = new BoundaryConditionMarks(shapes);
@@ -575,7 +575,7 @@ namespace BCK.SmrSimulation.Draw2D
 
     }
 
-    class MouseInputGuideShapes
+    class MouseInputGuide
     {
         private readonly Grid grid;
         internal bool enable = false;
@@ -604,7 +604,7 @@ namespace BCK.SmrSimulation.Draw2D
         private double crossRadius = 10;
         double crossLineStrokeThickness = 1;
 
-        public MouseInputGuideShapes(Grid grid)
+        public MouseInputGuide(Grid grid)
         {
             this.grid = grid;
             //shapes.AddRectangle(strPoint, endPoint);
@@ -749,7 +749,6 @@ namespace BCK.SmrSimulation.Draw2D
             points[3] = center + new Vector(-crossRadius, 0);
             return points;
         }
-
         
         private void ChangeLine()
         {
