@@ -150,6 +150,7 @@ namespace BCK.SmrSimulation.Main
 
             cmd = rootCommand.Add("Force", "f"); cmd.runSelected += main.FemAddLoadSelected;
 
+            cmd = rootCommand.Add("Move", "m"); cmd.runSelected += main.FemMoveSelected;
 
 
         } //명령어 구성!!!
@@ -252,7 +253,7 @@ namespace BCK.SmrSimulation.Main
                 case InputTypes.Point:
                     break;
                 case InputTypes.Vector:
-                case InputTypes.VectorValue: //VectorValue는 키보드로 절대좌표를 입력한 경우 입력값을 그대로 벡터로 반환함.
+                case InputTypes.VectorValue:
                     switch (userInputType)
                     {
                         case InputTypes.Point: //상대좌표를 요청했는데 절대좌표가 입력된 경우.
@@ -264,7 +265,7 @@ namespace BCK.SmrSimulation.Main
                             }
                             else
                             {
-                                PutVectorFirstPoint(userInputPoint3D);
+                                PutVectorPoint(userInputPoint3D);
                             }
                             return;
                         case InputTypes.Vector:
@@ -403,11 +404,11 @@ namespace BCK.SmrSimulation.Main
             //입력 명령어와 동일한 명령 실행
             foreach (Command cmd in activeCommand.commands)
             {
-                if (userInput.Equals(cmd.shortName.ToUpper()))
+                if (userInput.Equals(cmd.shortName.ToUpper(main.CultureInfo)))
                 {
                     return cmd;
                 }
-                if (userInput.Equals(cmd.name.ToUpper()))
+                if (userInput.Equals(cmd.name.ToUpper(main.CultureInfo)))
                 {
                     return cmd;
                 }
@@ -727,6 +728,15 @@ namespace BCK.SmrSimulation.Main
         internal delegate void inputPoints(List<Point3D> pointList);
         internal inputPoints actionAfterPoints;
 
+        private void ClearActions()
+        {
+            actionAfterIntWithInt = null;
+            actionAfterIntWithDirInt = null;
+            actionAfterVecWithVec = null;
+            actionAfterPointWithPoint = null;
+            actionAfterPoints = null;
+        }
+
         /// <summary>
         /// 사용자에게 Int 값을 입력하도록 요청.
         /// </summary>
@@ -758,34 +768,12 @@ namespace BCK.SmrSimulation.Main
 
         }
         int numPointRequested;
-
-        private void ClearActions()
-        {
-            actionAfterIntWithInt = null;
-            actionAfterIntWithDirInt = null;
-            actionAfterVecWithVec = null;
-            actionAfterPointWithPoint = null;
-            actionAfterPoints = null;
-        }
-
         private void GetPoints_Point(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point p = e.GetPosition(main.grdMain);
-
-                //ObjectSnap 처리. ObjctSnap이 켜져 있는 경우 입력 좌표를 ObjectSnap 좌표로 변경.
-                main.DrawNearstObjectSnapPoint(p);
-                Point3D p3;
-                if (main.SnapPoint != null)
-                {
-                    p3 = main.SnapPoint.point;
-                }
-                else
-                {
-                    p3 = GetPoint3dFromPoint2D(p);
-                }
-
+                Point3D p3 = GetPointFromPoint3DbySnapPoint(p);
                 main.Cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
@@ -815,7 +803,6 @@ namespace BCK.SmrSimulation.Main
 
             main.MouseDown += GetPoints_Point;
         }
-
         private void PutPoints_Direction(Vector3D userInputPoint3D)
         {
             Point3D nextPoint = userInputPoints[userInputPoints.Count - 1] + userInputPoint3D;
@@ -832,14 +819,7 @@ namespace BCK.SmrSimulation.Main
                 main.mouseInputGuideShapes.Start(p0);
             }
 
-            ObjectSnapPoint objectSnapPoint = main.DrawNearstObjectSnapPoint(p0);
-            if (objectSnapPoint != null)
-            {
-                //이렇게 하면 선을 미리 snap point에 그림.
-                p0 = objectSnapPoint.point2d;
-                //ObjectSnape 도형을 클릭하면 grdMain에서 이벤트가 발생하지 않음. OsnapMark에 따로 이벤트를 넣어줘야함.
-                objectSnapPoint.object_.MouseDown += GetPoints_Point;
-            }
+            main.ChangeToSnapPointAndDrawMark(ref p0, GetPoints_Point);
 
             main.mouseInputGuideShapes.Move(p0);
         }
@@ -861,17 +841,22 @@ namespace BCK.SmrSimulation.Main
         /// <param name="message"></param>
         internal void RequestInputVector(string message)
         {
+            isSecondPointInputOfVector = false;
             WriteText(message + cmdMark);
             SetCursorLast();
             requestedInputType = InputTypes.Vector;
             main.MouseDown += GetVector;
+            main.MouseMove += GetVector_Moving;
         }
+        Point3D vectorFirstPoint;
+        bool isSecondPointInputOfVector;
         /// <summary>
         /// 사용자에게 Vector3D 값을 입력하도록 요청. 키보드로 입력한 경우 값을 벡터로 반환. 마우스로 입력하는 경우 두번째 점을 요청하여 벡터 반환.
         /// </summary>
         /// <param name="message"></param>
         internal void RequestInputVectorValue(string message)
         {
+            isSecondPointInputOfVector = false;
             WriteText(message + cmdMark);
             SetCursorLast();
             requestedInputType = InputTypes.VectorValue;
@@ -882,56 +867,52 @@ namespace BCK.SmrSimulation.Main
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point p = e.GetPosition(main.grdMain);
-                Point3D p3 = GetPoint3dFromPoint2D(p);
+                Point3D p3 = GetPointFromPoint3DbySnapPoint(p);
+
                 main.MouseDown -= GetVector;
                 isMouseInput = true;
                 main.Cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
+                isSecondPointInputOfVector = true;
             }
         }
-        private Point3D vectorFirstPoint;
-        internal MouseInputGuideShapes.ViewType viewType;
-
-        internal void PutVectorFirstPoint(Point3D userInputPoint3D)
+        internal void PutVectorPoint(Point3D userInputPoint3D)
         {
-            vectorFirstPoint = userInputPoint3D;
-            Point p = GetPointFromPoint3D(userInputPoint3D);
+            if (isSecondPointInputOfVector)
+            {
+                RemoveEvents_GetVector();
+                main.mouseInputGuideShapes.End();
 
-            main.MouseMove += GetVector_Moving;
-            main.mouseInputGuideShapes.viewType = MouseInputGuideShapes.ViewType.Line;
-            main.mouseInputGuideShapes.Start(p);
+                Vector3D inputDirection = userInputPoint3D - vectorFirstPoint;
+                main.requestUserInput.Put(inputDirection);
+                EndCommand();
+            }
+            else
+            {
+                vectorFirstPoint = userInputPoint3D;
+                Point p = GetPointFromPoint3D(userInputPoint3D);
 
-            WriteText("벡터의 방향을 입력하세요." + cmdMark);
-            SetCursorLast();
-            main.MouseDown += PutVectorSecondPoint;
+                main.MouseMove += GetVector_Moving;
+                main.mouseInputGuideShapes.viewType = MouseInputGuideShapes.ViewType.Line;
+                main.mouseInputGuideShapes.Start(p);
+
+                WriteText("벡터의 방향을 입력하세요." + cmdMark);
+                SetCursorLast();
+                main.MouseDown += GetVector;
+            }
         }
         private void GetVector_Moving(object sender, System.Windows.Input.MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
+            main.ChangeToSnapPointAndDrawMark(ref p0, GetVector);
             main.mouseInputGuideShapes.Move(p0);
-        }
-        private void PutVectorSecondPoint(object sender, MouseButtonEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                Point p = e.GetPosition(main.grdMain);
-                Point3D p3 = GetPoint3dFromPoint2D(p);
-
-                RemoveEvents_GetVector();
-                main.mouseInputGuideShapes.End();
-
-                Vector3D inputDirection = p3 - vectorFirstPoint;
-                main.requestUserInput.Put(inputDirection);
-                Enter();
-                EndCommand();
-            }
         }
         private void RemoveEvents_GetVector()
         {
             main.MouseDown -= GetVector;
-            main.MouseDown -= PutVectorSecondPoint;
             main.MouseMove -= GetVector_Moving;
         }
 
+        internal MouseInputGuideShapes.ViewType viewType;
         private void RemoveEvents_All()
         {
             RemoveEvents_GetPoints();
@@ -946,6 +927,26 @@ namespace BCK.SmrSimulation.Main
         {
             return main.Draw.GetPoint2DFromPoint3D(p3d);
         }
+        /// <summary>
+        /// ObjectSnap 처리. ObjctSnap이 켜져 있는 경우 입력 좌표를 ObjectSnap 좌표로 변경.
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns>OsnapPoint 옵션을 고려한 3차원 좌표 반환</returns>
+        private Point3D GetPointFromPoint3DbySnapPoint(Point p)
+        {
+            main.ChangeToSnapPointAndDrawMark(ref p);
+            Point3D p3;
+            if (main.SnapPoint != null)
+            {
+                p3 = main.SnapPoint.point;
+            }
+            else
+            {
+                p3 = GetPoint3dFromPoint2D(p);
+            }
+            return p3;
+        }
+
         enum InputTypes
         {
             None,
@@ -953,9 +954,15 @@ namespace BCK.SmrSimulation.Main
             Ints,
             Double,
             Point,
-            Vector,
             Dist,
             Points,
+            /// <summary>
+            /// 키보드로 절대좌표를 입력한 경우 다음점을 입력 요청.
+            /// </summary>
+            Vector,
+            /// <summary>
+            /// 키보드로 절대좌표를 입력한 경우 입력값을 그대로 벡터로 반환함.
+            /// </summary>
             VectorValue
         }
 

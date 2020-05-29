@@ -232,6 +232,7 @@ namespace BCK.SmrSimulation.Main
 
             return true;
         }
+
         private void TestExtrude()
         {
             Fem.Initialize();
@@ -487,7 +488,7 @@ namespace BCK.SmrSimulation.Main
         /// 사용자의 마우스 위치에 따라 ObjectSnapPoint를 찾아서 표현하고 snapPoint를 반환.
         /// </summary>
         /// <param name="p0"></param>
-        internal ObjectSnapPoint DrawNearstObjectSnapPoint(Point p0)
+        internal ObjectSnapPoint ChangeToSnapPointAndDrawMark(ref Point p0)
         {
             if (!Settings.Default.isOnObjectSnap)
             {
@@ -495,8 +496,22 @@ namespace BCK.SmrSimulation.Main
                 return null;
             }
 
-            SnapPoint = draw.GetObjectSnapPoint(p0);
+            SnapPoint = draw.ChangeToSnapPoint(ref p0);
+
             draw2d.objectSnapMark.Draw(SnapPoint);
+            return SnapPoint;
+        }
+        /// <summary>
+        /// ObjectSnapeMark를 클릭하면 grdMain에서 이벤트가 발생하지 않음. OsnapMark에 따로 이벤트를 넣어줘야함.
+        /// </summary>
+        /// <param name="p0"></param>
+        internal ObjectSnapPoint ChangeToSnapPointAndDrawMark(ref Point p0, MouseButtonEventHandler eventObject)
+        {
+            SnapPoint = ChangeToSnapPointAndDrawMark(ref p0);
+            if (SnapPoint != null)
+            {
+                SnapPoint.PutEventAtMark(eventObject);
+            }
             return SnapPoint;
         }
         internal ObjectSnapPoint SnapPoint { get; set; }
@@ -653,6 +668,17 @@ namespace BCK.SmrSimulation.Main
             requestUserInput.RequestVector(Properties.Resource.String5);
             requestUserInput.RequestInt(Properties.Resource.String6);
             requestUserInput.actionAfterIntWithVecInt += Fem.ExtrudeWoReturn;
+            requestUserInput.actionEnd += Fem.Selection.Clear;
+            requestUserInput.actionEnd += RedrawFemModel;
+            requestUserInput.Start();
+        }
+
+        internal void FemMoveSelected()
+        {
+            requestUserInput = new RequestUserInput(this);
+            requestUserInput.RequestNodeSelection("이동할 절점을 선택하세요.");
+            requestUserInput.RequestVector("이동시킬 방향을 설정하세요.");
+            requestUserInput.actionAfterVecWithVec += Fem.MoveNode;
             requestUserInput.actionEnd += Fem.Selection.Clear;
             requestUserInput.actionEnd += RedrawFemModel;
             requestUserInput.Start();

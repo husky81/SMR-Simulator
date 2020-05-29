@@ -638,7 +638,7 @@ namespace BCK.SmrSimulation.Draw3D
             v1 = pp1 - pos;
         }
 
-        internal ObjectSnapPoint GetObjectSnapPoint(Point p0)
+        internal ObjectSnapPoint ChangeToSnapPoint(ref Point p0)
         {
             
             double nearstDistance = ObjectSnapPoint.objectSnapDistance;
@@ -660,6 +660,10 @@ namespace BCK.SmrSimulation.Draw3D
                 }
             }
             if (nearstDistance == ObjectSnapPoint.objectSnapDistance) return null;
+
+            //이렇게 하면 선을 미리 snap point에 그림.
+            p0 = nearstSnapPoint.point2d;
+
             return nearstSnapPoint;
         }
     }
@@ -686,6 +690,12 @@ namespace BCK.SmrSimulation.Draw3D
             Mid,
             Node,
             Center
+        }
+
+        internal void PutEventAtMark(MouseButtonEventHandler getPoints_Point)
+        {
+            //ObjectSnape 도형을 클릭하면 grdMain에서 이벤트가 발생하지 않음. OsnapMark에 따로 이벤트를 넣어줘야함.
+            object_.MouseDown += getPoints_Point;
         }
     }
     class ObjectSnapePointCollection : List<ObjectSnapPoint>

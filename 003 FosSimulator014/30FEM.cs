@@ -467,7 +467,7 @@ namespace BCK.SmrSimulation.finiteElementMethod
             List<int> nodesNumberDdp = new List<int>();
             ExtrudedNodeList(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
 
-            FemNode[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
+            FemNode[,] nodeMatrix = ExtrudedNodeMatrixAddNode(nodesDdp, iter, dir);
 
             for (int i = 0; i < iter; i++)
             {
@@ -491,7 +491,7 @@ namespace BCK.SmrSimulation.finiteElementMethod
             ExtrudedNodeList(nodes, nodesDdp, nodesNumber, nodesNumberDdp);
 
             //중복을 제거한 노드리스트를 dir 방향으로 iter번 반복해서 절점 생성.
-            FemNode[,] nodeMatrix = ExtrudedNodeMatrix_AddNode(nodesDdp, iter, dir);
+            FemNode[,] nodeMatrix = ExtrudedNodeMatrixAddNode(nodesDdp, iter, dir);
 
             FemElementCollection extrudedElems = new FemElementCollection();
             for (int i = 0; i < iter; i++)
@@ -572,7 +572,7 @@ namespace BCK.SmrSimulation.finiteElementMethod
                 }
             }
         }
-        private FemNode[,] ExtrudedNodeMatrix_AddNode(FemNodeCollection nodesDdp, int iter, Vector3D dir)
+        private FemNode[,] ExtrudedNodeMatrixAddNode(FemNodeCollection nodesDdp, int iter, Vector3D dir)
         {
             //중복을 제거한 노드리스트를 dir 방향으로 iter번 반복해서 절점 생성.
             FemNode[,] nodeMatrix = new FemNode[iter + 1, nodesDdp.Count];
@@ -591,6 +591,13 @@ namespace BCK.SmrSimulation.finiteElementMethod
             return nodeMatrix;
         }
 
+        internal void MoveNode(Vector3D vec)
+        {
+            foreach (FemNode node in selection.nodes)
+            {
+                node.C0 += vec;
+            }
+        }
     }
     public class FemSelection
     {

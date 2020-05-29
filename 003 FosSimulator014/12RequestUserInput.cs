@@ -242,6 +242,9 @@ namespace BCK.SmrSimulation.Main
             userInputTypes.Add(userInputAction);
         }
 
+        /// <summary>
+        /// 구성된 RequestUserInput을 실행합니다.
+        /// </summary>
         internal void Start()
         {
             actionStep = -1;
