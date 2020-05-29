@@ -1050,14 +1050,14 @@ namespace BCK.SmrSimulation.Draw3D
                 Point3D p2 = new Point3D();
                 if (xChange > yChange)
                 {
-                    p2.X = p1.X;
-                    p2.Y = p0.Y;
+                    p2.X = p0.X;
+                    p2.Y = p1.Y;
                     p2.Z = 0;
                 }
                 else
                 {
-                    p2.X = p0.X;
-                    p2.Y = p1.Y;
+                    p2.X = p1.X;
+                    p2.Y = p0.Y;
                     p2.Z = 0;
                 }
 
