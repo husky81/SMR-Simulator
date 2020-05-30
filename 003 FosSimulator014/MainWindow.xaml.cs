@@ -540,21 +540,21 @@ namespace BCK.SmrSimulation.Main
         private void SwitchOrthogonal(object sender, RoutedEventArgs e)
         {
             SetOrthogonalOption(!Settings.Default.isOnOrthogonal);
-            MouseInputGuide.orthogonal = !Settings.Default.isOnOrthogonal;
-            MouseInputGuide3D.orthogonal = !Settings.Default.isOnOrthogonal;
             cmd.GetCursor();
         }
 
         private void SetOrthogonalOption(bool isOn)
         {
             Settings.Default.isOnOrthogonal = isOn;
+            MouseInputGuide.orthogonal = isOn;
+            MouseInputGuide3D.orthogonal = isOn;
             if (isOn)
             {
-                btnOrthogonal.Background = unpressedButtonColor;
+                btnOrthogonal.Background = pressedButtonColor;
             }
             else
             {
-                btnOrthogonal.Background = pressedButtonColor;
+                btnOrthogonal.Background = unpressedButtonColor;
             }
         }
         private SolidColorBrush pressedButtonColor = Brushes.Gray;

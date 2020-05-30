@@ -1036,6 +1036,8 @@ namespace BCK.SmrSimulation.Draw3D
 
         private void RedrawLine()
         {
+            if (line != null) draw.Grid.Children.Remove(line);
+
             wP0 = draw.GetPoint2DFromPoint3D(p0);
             line.X1 = wP0.X;
             line.Y1 = wP0.Y;
@@ -1050,15 +1052,15 @@ namespace BCK.SmrSimulation.Draw3D
                 Point3D p2 = new Point3D();
                 if (xChange > yChange)
                 {
-                    p2.X = p0.X;
-                    p2.Y = p1.Y;
-                    p2.Z = 0;
+                    p2.X = p1.X;
+                    p2.Y = p0.Y;
+                    p2.Z = p1.Z;
                 }
                 else
                 {
-                    p2.X = p1.X;
-                    p2.Y = p0.Y;
-                    p2.Z = 0;
+                    p2.X = p0.X;
+                    p2.Y = p1.Y;
+                    p2.Z = p1.Z;
                 }
 
                 Point wP2 = draw.GetPoint2DFromPoint3D(p2);
@@ -1073,7 +1075,6 @@ namespace BCK.SmrSimulation.Draw3D
                 line.Y2 = wP1.Y;
             }
 
-            if (line != null) draw.Grid.Children.Remove(line);
             draw.Grid.Children.Add(line);
         }
 
