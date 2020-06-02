@@ -1,10 +1,12 @@
-﻿using BCK.SmrSimulation.Draw2D;
+﻿using bck.SMR_simulator.main.Properties;
+using BCK.SmrSimulation.Draw2D;
 using BCK.SmrSimulation.Draw3D;
 using BCK.SmrSimulation.GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -775,7 +777,7 @@ namespace BCK.SmrSimulation.Main
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point p = e.GetPosition(main.grdMain);
-                Point3D p3 = GetPointFromPoint3DbySnapPoint(p);
+                Point3D p3 = GetSnapAndOrthogonalPoint3dFromChangingPoint2d(ref p);
                 main.Cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
@@ -812,17 +814,63 @@ namespace BCK.SmrSimulation.Main
         {
             Point p0 = e.GetPosition(main.grdMain);
 
-            //Cross인 경우 첫번째 점을 입력하기 전부터 시작되어야 함.
+            //개체선택용 MouseInputGuide 클래스 사용 시 Cross 옵션인 경우 첫번째 점을 입력하기 전부터 시작되어야 함.
             if (viewType == MouseInputGuide.ViewType.Cross & !main.mouseInputGuide3d.started)
             {
                 main.mouseInputGuide.viewType = viewType;
                 main.mouseInputGuide.Start(p0);
             }
 
-            main.ChangeToSnapPointAndDrawMark(ref p0, GetPoints_Point);
+            GetSnapAndOrthogonalPoint3dFromChangingPoint2d(ref p0, GetPoints_Point);
 
-            if (userInputPoints.Count > 0) main.mouseInputGuide3d.Move(p0);
+            //Points 입력 요청일 때 2번째 입력값 부터 InputGuideLine생성.
+            if (userInputPoints.Count > 0)
+            {
+                main.mouseInputGuide3d.Move(p0);
+            }
         }
+
+        /// <summary>
+        /// Point2D에 Snap 및 Orthogonal 옵션을 적용해서 변경된 절점으로 변경 및 Point3D 반환.
+        /// 이때, ObjectSnapMark에 이벤트도 넣어줌.
+        /// </summary>
+        /// <param name="p0"></param>
+        /// <param name="eventObject"></param>
+        /// <returns></returns>
+        private Point3D GetSnapAndOrthogonalPoint3dFromChangingPoint2d(ref Point p0, MouseButtonEventHandler eventObject = null)
+        {
+            //마우스 위치를 SnapPoint로 변경. 마크 생성. 이번트 입력.
+            ObjectSnapPoint snapPoint;
+            if (eventObject == null)
+            {
+                snapPoint = main.ChangeToSnapPointAndDrawMark(ref p0);
+            }
+            else
+            {
+                snapPoint = main.ChangeToSnapPointAndDrawMarkAndPutEvent(ref p0, eventObject);
+            }
+
+            if (snapPoint == null)
+            {
+                //SnapPoint가 없는 경우
+                if (Settings.Default.isOnOrthogonal)
+                {
+                    //수직선 옵션이 켜 있는 경우
+                    return main.mouseInputGuide3d.GetOrthogonalPoint3dFromPoint2d(ref p0);
+                }
+                else
+                {
+                    //수직선 옵션이 꺼 있는 경우 그냥 대응하는 3차원 점 반환
+                    return main.Draw.GetPoint3dOnBasePlaneFromPoint2D(p0);
+                }
+            }
+            else
+            {
+                //SnapPoint가 있는 경우
+                return snapPoint.point;
+            }
+        }
+
         void PutPoints_End()
         {
             main.mouseInputGuide3d.End();
@@ -867,7 +915,7 @@ namespace BCK.SmrSimulation.Main
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point p = e.GetPosition(main.grdMain);
-                Point3D p3 = GetPointFromPoint3DbySnapPoint(p);
+                Point3D p3 = GetPoint3dFromPointBySnapPoint(p);
 
                 main.MouseDown -= GetVector;
                 isMouseInput = true;
@@ -903,7 +951,7 @@ namespace BCK.SmrSimulation.Main
         void GetVector_Moving(object sender, System.Windows.Input.MouseEventArgs e)
         {
             Point p0 = e.GetPosition(main.grdMain);
-            main.ChangeToSnapPointAndDrawMark(ref p0, GetVector);
+            main.ChangeToSnapPointAndDrawMarkAndPutEvent(ref p0, GetVector);
             main.mouseInputGuide.Move(p0);
         }
         void RemoveEvents_GetVector()
@@ -932,7 +980,7 @@ namespace BCK.SmrSimulation.Main
         /// </summary>
         /// <param name="p"></param>
         /// <returns>OsnapPoint 옵션을 고려한 3차원 좌표 반환</returns>
-        Point3D GetPointFromPoint3DbySnapPoint(Point p)
+        Point3D GetPoint3dFromPointBySnapPoint(Point p)
         {
             main.ChangeToSnapPointAndDrawMark(ref p);
             Point3D p3;

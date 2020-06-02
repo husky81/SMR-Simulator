@@ -504,10 +504,11 @@ namespace BCK.SmrSimulation.Main
             return SnapPoint;
         }
         /// <summary>
+        /// 마우스 위치를 가장 가까운 SnapPoint로 변경. SnapPointMark 생성.
         /// ObjectSnapeMark를 클릭하면 grdMain에서 이벤트가 발생하지 않음. OsnapMark에 따로 이벤트를 넣어줘야함.
         /// </summary>
         /// <param name="p0"></param>
-        internal ObjectSnapPoint ChangeToSnapPointAndDrawMark(ref Point p0, MouseButtonEventHandler eventObject)
+        internal ObjectSnapPoint ChangeToSnapPointAndDrawMarkAndPutEvent(ref Point p0, MouseButtonEventHandler eventObject)
         {
             SnapPoint = ChangeToSnapPointAndDrawMark(ref p0);
             if (SnapPoint != null)
@@ -547,7 +548,6 @@ namespace BCK.SmrSimulation.Main
         {
             Settings.Default.isOnOrthogonal = isOn;
             MouseInputGuide.orthogonal = isOn;
-            MouseInputGuide3D.orthogonal = isOn;
             if (isOn)
             {
                 btnOrthogonal.Background = pressedButtonColor;

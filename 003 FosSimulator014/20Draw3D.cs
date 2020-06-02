@@ -937,7 +937,6 @@ namespace BCK.SmrSimulation.Draw3D
         readonly BckDraw3D draw;
         internal bool enable = false;
         internal bool started = false;
-        internal static bool orthogonal = false;
 
         internal Shape2dCollection shapes = new Shape2dCollection();
         internal Point wP0, wP1;
@@ -1016,11 +1015,7 @@ namespace BCK.SmrSimulation.Draw3D
                     ChangeRectangle();
                     break;
                 case ViewType.Line:
-                    //ChangeLine();
-
-                    //DrawLine();
                     RedrawLine();
-
                     break;
                 case ViewType.Arrow:
                     break;
@@ -1041,41 +1036,75 @@ namespace BCK.SmrSimulation.Draw3D
             wP0 = draw.GetPoint2DFromPoint3D(p0);
             line.X1 = wP0.X;
             line.Y1 = wP0.Y;
-            
-            if (orthogonal)
-            {
-                p1 = draw.GetPoint3dFromPoint2D(wP1);
 
-                double xChange = Math.Abs(p1.X - p0.X);
-                double yChange = Math.Abs(p1.Y - p0.Y);
-
-                Point3D p2 = new Point3D();
-                if (xChange > yChange)
-                {
-                    p2.X = p1.X;
-                    p2.Y = p1.Y;
-                    p2.Z = p1.Z;
-                }
-                else
-                {
-                    p2.X = p1.X;
-                    p2.Y = p1.Y;
-                    p2.Z = p1.Z;
-                }
-
-                Point wP2 = draw.GetPoint2DFromPoint3D(p2);
-
-                line.X2 = wP2.X;
-                line.Y2 = wP2.Y;
-
-            }
-            else
-            {
-                line.X2 = wP1.X;
-                line.Y2 = wP1.Y;
-            }
+            line.X2 = wP1.X;
+            line.Y2 = wP1.Y;
 
             draw.Grid.Children.Add(line);
+        }
+        internal Point3D GetOrthogonalPoint3dFromPoint2d(ref Point endPoint)
+        {
+            p1 = draw.GetPoint3dOnBasePlaneFromPoint2D(endPoint);
+
+            double xChange = Math.Abs(p1.X - p0.X);
+            double yChange = Math.Abs(p1.Y - p0.Y);
+            double zChange = Math.Abs(p1.Z - p0.Z);
+
+            int first = 1;
+            if (xChange < yChange) first = 2;
+            if (yChange < zChange) first = 3;
+
+            Point3D p2 = new Point3D();
+            switch (first)
+            {
+                case 1: //xChange가 제일 큰 경우
+                    if(yChange < zChange)
+                    {
+                        p2.X = p1.X;
+                        p2.Y = p1.Y;
+                        p2.Z = p0.Z;
+                    }
+                    else
+                    {
+                        p2.X = p1.X;
+                        p2.Y = p0.Y;
+                        p2.Z = p1.Z;
+                    }
+                    break;
+                case 2: //yChange가 제일 큰 경우
+                    if (xChange < zChange)
+                    {
+                        p2.X = p1.X;
+                        p2.Y = p1.Y;
+                        p2.Z = p0.Z;
+                    }
+                    else
+                    {
+                        p2.X = p0.X;
+                        p2.Y = p1.Y;
+                        p2.Z = p1.Z;
+
+                    }
+                    break;
+                case 3: //zChange가 제일 큰 경우
+                    if (xChange < yChange)
+                    {
+                        p2.X = p1.X;
+                        p2.Y = p0.Y;
+                        p2.Z = p1.Z;
+
+                    }
+                    else
+                    {
+                        p2.X = p0.X;
+                        p2.Y = p1.Y;
+                        p2.Z = p1.Z;
+                    }
+                    break;
+            }
+
+            endPoint = draw.GetPoint2DFromPoint3D(p2);
+            return p2;
         }
 
         internal void End()
@@ -1164,34 +1193,6 @@ namespace BCK.SmrSimulation.Draw3D
             return points;
         }
 
-        private void ChangeLine()
-        {
-            wP0 = draw.GetPoint2DFromPoint3D(p0);
-            line.X1 = wP0.X;
-            line.Y1 = wP0.Y;
-
-            if (orthogonal)
-            {
-                double xChange = Math.Abs(line.X1 - wP1.X);
-                double yChange = Math.Abs(line.Y1 - wP1.Y);
-
-                if (xChange > yChange)
-                {
-                    line.X2 = wP1.X;
-                    line.Y2 = line.Y1;
-                }
-                else
-                {
-                    line.X2 = line.X1;
-                    line.Y2 = wP1.Y;
-                }
-            }
-            else
-            {
-                line.X2 = wP1.X;
-                line.Y2 = wP1.Y;
-            }
-        }
         private void ChangeCross()
         {
             Point center = wP1;
