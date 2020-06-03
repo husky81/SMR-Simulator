@@ -783,7 +783,30 @@ namespace BCK.SmrSimulation.Main
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point p = e.GetPosition(main.grdMain);
-                Point3D p3 = GetSnapAndOrthogonalPoint3dFromChangingPoint2d(ref p);
+
+                ObjectSnapPoint snapPoint = main.ChangeToSnapPointAndDrawMark(ref p);
+
+                Point3D p3;
+                if (snapPoint == null)
+                {
+                    //SnapPoint가 없는 경우
+                    if (Settings.Default.isOnOrthogonal & userInputPoints.Count > 0)
+                    {
+                        //수직선 옵션이 켜 있는 경우
+                        p3 = main.mouseInputGuide3d.GetOrthogonalPoint3dFromPoint2d(ref p);
+                    }
+                    else
+                    {
+                        //수직선 옵션이 꺼 있는 경우 그냥 대응하는 3차원 점 반환
+                        p3 = main.Draw.GetPoint3dOnBasePlaneFromPoint2D(p);
+                    }
+                }
+                else
+                {
+                    //SnapPoint가 있는 경우
+                    p3 = snapPoint.point;
+                }
+
                 main.Cmd.Call(p3.X + "," + p3.Y + "," + p3.Z);
             }
         }
@@ -844,11 +867,15 @@ namespace BCK.SmrSimulation.Main
                 main.mouseInputGuide.Start(currentMousePoint);
             }
 
+            //SnapPoint 그리기.
             ObjectSnapPoint snapPoint = main.ChangeToSnapPointAndDrawMarkAndPutEvent(ref currentMousePoint, GetPoints_Point);
-            if (snapPoint == null & Settings.Default.isOnOrthogonal) main.mouseInputGuide3d.GetOrthogonalPoint3dFromPoint2d(ref currentMousePoint);
 
             //Points 입력 요청일 때 2번째 입력값 부터 InputGuideLine생성.
-            if (userInputPoints.Count > 0) main.mouseInputGuide3d.Move(currentMousePoint);
+            if (userInputPoints.Count > 0)
+            {
+                if (snapPoint == null & Settings.Default.isOnOrthogonal) main.mouseInputGuide3d.GetOrthogonalPoint3dFromPoint2d(ref currentMousePoint);
+                main.mouseInputGuide3d.Move(currentMousePoint);
+            }
         }
 
         /// <summary>
