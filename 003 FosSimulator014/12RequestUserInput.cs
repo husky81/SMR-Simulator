@@ -326,11 +326,11 @@ namespace BCK.SmrSimulation.Main
                 case UserInputAction.RequestInputType.Vector:
                     //main.cmd.SendRequestMessage(userInputAction.message);
                     //main.MouseDown += GetDirection;
-                    main.Cmd.RequestInputVector(userInputType.message);
+                    main.Cmd.RequestInput_Vector(userInputType.message);
                     main.Cmd.actionAfterVecWithVec += Put;
                     return;
                 case UserInputAction.RequestInputType.VectorValue:
-                    main.Cmd.RequestInputVectorValue(userInputType.message);
+                    main.Cmd.RequestInput_VectorValue(userInputType.message);
                     main.Cmd.actionAfterVecWithVec += Put;
                     return;
                 default:
