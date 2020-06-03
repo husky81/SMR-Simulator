@@ -291,6 +291,9 @@ namespace BCK.SmrSimulation.Main
                         case InputTypes.Vector:
                             PutPoints_Direction(userInputVector3D);
                             return;
+                        case InputTypes.Int:
+                            PutPoints_MouseDirectionDist(userInputInt);
+                            break;
                         default:
                             break;
                     }
@@ -611,11 +614,11 @@ namespace BCK.SmrSimulation.Main
                 case Key.Escape:
                     if (activeCommand != rootCommand)
                     {
-                        Cancel_EscKey();
+                        CancelByEsc();
                     }
                     else
                     {
-                        Cancel_EscKey();
+                        CancelByEsc();
                     }
                     break;
             }
@@ -636,12 +639,15 @@ namespace BCK.SmrSimulation.Main
             }
         }
 
-        void Cancel_EscKey()
+        private void CancelByEsc()
         {
             WriteText("*Cancel*");
             Enter();
+
             main.requestUserInput = new RequestUserInput(main);
             main.mouseInputGuide.End();
+            main.mouseInputGuide3d.End();
+
             EndCommand();
         }
         void Clear()
@@ -805,29 +811,44 @@ namespace BCK.SmrSimulation.Main
 
             main.MouseDown += GetPoints_Point;
         }
+        private Point3D PreviousPoint
+        {
+            get
+            {
+                return userInputPoints[userInputPoints.Count - 1];
+            }
+        }
         void PutPoints_Direction(Vector3D userInputPoint3D)
         {
-            Point3D nextPoint = userInputPoints[userInputPoints.Count - 1] + userInputPoint3D;
+            Point3D nextPoint = PreviousPoint + userInputPoint3D;
             PutPoints_Point(nextPoint);
         }
+        void PutPoints_MouseDirectionDist(int userInputInt)
+        {
+            Point3D previousPoint = PreviousPoint;
+            Point3D currentMousePoint3D = GetSnapAndOrthogonalPoint3dFromChangingPoint2d(ref currentMousePoint);
+            Vector3D mouseDirection = currentMousePoint3D - previousPoint;
+            mouseDirection.Normalize();
+            Point3D nextPoint = previousPoint + mouseDirection * userInputInt;
+            PutPoints_Point(nextPoint);
+        }
+        private Point currentMousePoint;
         void GetPoints_Moving(object sender, MouseEventArgs e)
         {
-            Point p0 = e.GetPosition(main.grdMain);
+            currentMousePoint = e.GetPosition(main.grdMain);
 
             //개체선택용 MouseInputGuide 클래스 사용 시 Cross 옵션인 경우 첫번째 점을 입력하기 전부터 시작되어야 함.
             if (viewType == MouseInputGuide.ViewType.Cross & !main.mouseInputGuide3d.started)
             {
                 main.mouseInputGuide.viewType = viewType;
-                main.mouseInputGuide.Start(p0);
+                main.mouseInputGuide.Start(currentMousePoint);
             }
 
-            GetSnapAndOrthogonalPoint3dFromChangingPoint2d(ref p0, GetPoints_Point);
+            ObjectSnapPoint snapPoint = main.ChangeToSnapPointAndDrawMarkAndPutEvent(ref currentMousePoint, GetPoints_Point);
+            if (snapPoint == null & Settings.Default.isOnOrthogonal) main.mouseInputGuide3d.GetOrthogonalPoint3dFromPoint2d(ref currentMousePoint);
 
             //Points 입력 요청일 때 2번째 입력값 부터 InputGuideLine생성.
-            if (userInputPoints.Count > 0)
-            {
-                main.mouseInputGuide3d.Move(p0);
-            }
+            if (userInputPoints.Count > 0) main.mouseInputGuide3d.Move(currentMousePoint);
         }
 
         /// <summary>

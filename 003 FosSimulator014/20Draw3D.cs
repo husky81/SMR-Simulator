@@ -1016,6 +1016,7 @@ namespace BCK.SmrSimulation.Draw3D
                     break;
                 case ViewType.Line:
                     RedrawLine();
+
                     break;
                 case ViewType.Arrow:
                     break;
@@ -1105,6 +1106,14 @@ namespace BCK.SmrSimulation.Draw3D
 
             endPoint = draw.GetPoint2DFromPoint3D(p2);
             return p2;
+        }
+        private Vector3D currentMouseDirection;
+        internal Vector3D CurrentMouseDirection
+        {
+            get
+            {
+                return currentMouseDirection;
+            }
         }
 
         internal void End()

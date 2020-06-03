@@ -96,11 +96,11 @@ namespace BCK.SmrSimulation.Main
         private void EventSetter()
         {
             grdMain.SizeChanged += GrdMain_SizeChanged; // gird size가 변경된 경우 redraw3dRelated2dShapes 수행.
-            TurnOnWheelPanZoom();
+            TurnOnPanZoomByMouseWheel();
             IsOnWindowSelect = true;
-            IsOnDeselectAll_Esc = true;
-            TurnOnErase_Del(true);
-            TurnOnFemAnalysis_F5(true);
+            IsOnDeselectAllByEsc = true;
+            TurnOnEraseByDel(true);
+            TurnOnFemAnalysisRunByF5(true);
         }
         private void FunctionKeyClickEvent()
         {
@@ -1308,28 +1308,28 @@ namespace BCK.SmrSimulation.Main
             }
         }
         private bool isOnWindowSelect = false;
-        internal bool IsOnDeselectAll_Esc
+        internal bool IsOnDeselectAllByEsc
         {
             get
             {
-                return IsOnDeselectAll_Esc;
+                return IsOnDeselectAllByEsc;
             }
             set
             {
                 if (value)
                 {
-                    if (isOnDeselectAll_Esc) return;
+                    if (isOnDeselectAllByEsc) return;
                     KeyDown += UnselectAll_OrbitEnd_Esc;
                 }
                 else
                 {
                     KeyDown -= UnselectAll_OrbitEnd_Esc;
                 }
-                isOnDeselectAll_Esc = value;
+                isOnDeselectAllByEsc = value;
             }
         }
-        private bool isOnDeselectAll_Esc = false;
-        private void TurnOnErase_Del(bool on)
+        private bool isOnDeselectAllByEsc = false;
+        private void TurnOnEraseByDel(bool on)
         {
             if (on)
             {
@@ -1340,7 +1340,7 @@ namespace BCK.SmrSimulation.Main
                 PreviewKeyDown -= Erase_Del;
             }
         }
-        private void TurnOnFemAnalysis_F5(bool on)
+        private void TurnOnFemAnalysisRunByF5(bool on)
         {
             if (on)
             {
@@ -1485,7 +1485,7 @@ namespace BCK.SmrSimulation.Main
             requestUserInput.Start();
         }
 
-        private void TurnOnWheelPanZoom()
+        private void TurnOnPanZoomByMouseWheel()
         {
             MouseWheel += new MouseWheelEventHandler(Zoom_MouseWheelScroll);
             MouseDown += PanOn_MouseWheelDown;

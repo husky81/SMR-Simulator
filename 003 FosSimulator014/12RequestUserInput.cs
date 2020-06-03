@@ -62,13 +62,13 @@ namespace BCK.SmrSimulation.Main
                 {
                     if (isOn) return;
                     main.IsOnWindowSelect = false;
-                    main.IsOnDeselectAll_Esc = false;
+                    main.IsOnDeselectAllByEsc = false;
                     main.KeyDown += ExitCommand_EscKey;
                 }
                 else
                 {
                     main.IsOnWindowSelect = true;
-                    main.IsOnDeselectAll_Esc = true;
+                    main.IsOnDeselectAllByEsc = true;
                     main.KeyDown -= ExitCommand_EscKey;
                 }
                 isOn = value;
