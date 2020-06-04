@@ -24,6 +24,7 @@ using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using bck.SMR_simulator.main.Properties;
+using bck.SMR_simulator.main;
 
 namespace BCK.SmrSimulation.Main
 {
@@ -79,6 +80,10 @@ namespace BCK.SmrSimulation.Main
             BoundaryConditionDrawingTest();
 
             //RedrawFemModel();
+
+            //MainFrame.Navigate(new Page1());
+            MainFrame.Content = new Page1();
+
 
         }
 
