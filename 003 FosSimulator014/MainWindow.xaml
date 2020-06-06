@@ -207,7 +207,7 @@
         </TabControl>
 
         <Grid DockPanel.Dock="Right">
-            <Frame x:Name="MainFrame" />
+            <Frame x:Name="PropertyFrame" />
 
         </Grid>
 

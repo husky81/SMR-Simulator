@@ -246,10 +246,21 @@ namespace BCK.SmrSimulation.finiteElementMethod
         {
             foreach (FemNode node in Selection.nodes)
             {
+                //node에 연결된 모든 element 삭제
                 foreach (FemElement elem in node.connectedElements)
                 {
                     Model.Elems.Remove(elem);
                     Selection.elems.Remove(elem);
+                }
+                // 노드에 설정된 모든 경계조건 삭제
+                foreach (FemBoundary boundary in node.boundaries)
+                {
+                    model.Boundaries.Remove(boundary);
+                }
+                //노드에 연결된 모든 하중 삭제
+                foreach (FemLoad load in node.loads)
+                {
+                    loads.Remove(load);
                 }
                 Model.Nodes.Remove(node);
             }
@@ -673,8 +684,8 @@ namespace BCK.SmrSimulation.finiteElementMethod
         private readonly FemSectionCollection sections = new FemSectionCollection();
         public FemMaterialCollection Materials => materials;
         private readonly FemMaterialCollection materials = new FemMaterialCollection();
-        public FemBoundarieCollection Boundaries => boundaries;
-        private readonly FemBoundarieCollection boundaries = new FemBoundarieCollection();
+        public FemBoundaryCollection Boundaries => boundaries;
+        private readonly FemBoundaryCollection boundaries = new FemBoundaryCollection();
 
         internal int dof;
 
@@ -1055,6 +1066,8 @@ namespace BCK.SmrSimulation.finiteElementMethod
         internal bool selected = false;
         internal FemElementCollection connectedElements = new FemElementCollection();
         internal bool selectedAtThisTime;
+        internal FemBoundaryCollection boundaries = new FemBoundaryCollection();
+        internal FemLoadCollection loads = new FemLoadCollection();
 
         public int Num { get => num; set => num = value; }
         public Point3D C0 { get => c0; 
@@ -1869,17 +1882,20 @@ namespace BCK.SmrSimulation.finiteElementMethod
         }
     }
 
-    public class FemBoundarieCollection : List<FemBoundary>
+    public class FemBoundaryCollection : List<FemBoundary>
     {
         internal bool visibility = true;
         int maxNum = 1;
         public FemBoundary AddBoundary(FemNode node,int Dx, int Dy, int Dz, int Rx, int Ry, int Rz)
         {
-            FemBoundary b = new FemBoundary(node, Dx, Dy, Dz, Rx, Ry, Rz);
-            b.num = maxNum;
+            if (node == null) return null;
+
+            FemBoundary boundary = new FemBoundary(node, Dx, Dy, Dz, Rx, Ry, Rz);
+            node.boundaries.Add(boundary);
+            boundary.num = maxNum;
             maxNum++;
-            base.Add(b);
-            return b;
+            base.Add(boundary);
+            return boundary;
         }
     }
     public class FemBoundary
@@ -1910,16 +1926,17 @@ namespace BCK.SmrSimulation.finiteElementMethod
 
         internal FemNodalLoad AddNodal(FemNode node, Vector3D force, Vector3D moment)
         {
-            FemNodalLoad n = new FemNodalLoad(node, force, moment);
-            n.num = MaxNum;
+            FemNodalLoad nodalLoad = new FemNodalLoad(node, force, moment);
+            nodalLoad.num = MaxNum;
             MaxNum++;
 
             double norm;
             norm = force.Length;
             if (maxForce < norm) maxForce = norm;
 
-            base.Add(n);
-            return n;
+            node.loads.Add(nodalLoad);
+            base.Add(nodalLoad);
+            return nodalLoad;
         }
         internal double GetMaxLoadSize()
         {

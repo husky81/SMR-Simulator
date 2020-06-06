@@ -42,13 +42,12 @@ namespace BCK.SmrSimulation.Main
             Clear();
             SetCommandStructure();
 
-            //textBox가 non인 경우가 발생할 수 있으므로 경고 옵션을 꺼둠.
-            #pragma warning disable CA1062 // Validate arguments of public methods
-            textBox.PreviewKeyDown += Tbx_PreviewKeyDown; //space, enter, backspace 처리
-            #pragma warning restore CA1062 // Validate arguments of public methods
-            
-            textBox.KeyDown += Tbx_KeyDown; //esc 처리
-            textBox.KeyUp += Tbx_KeyUp; //space, enter 후처리
+            if (textBox != null)
+            {
+                textBox.PreviewKeyDown += Tbx_PreviewKeyDown; //space, enter, backspace 처리
+                textBox.KeyDown += Tbx_KeyDown; //esc 처리
+                textBox.KeyUp += Tbx_KeyUp; //space, enter 후처리
+            }
         }
         internal class Command
         {
@@ -275,7 +274,7 @@ namespace BCK.SmrSimulation.Main
                         case InputTypes.Int:
                         case InputTypes.Double:
                             PutVector_MouseDirectionDist(userInputDouble);
-                            break;
+                            return;
                         default:
                             break;
                     }
@@ -709,11 +708,13 @@ namespace BCK.SmrSimulation.Main
         internal void ErrorMessage(string v)
         {
             WriteText("Error!!! " + v);
+            Enter();
             NewLine();
         }
         internal void WarningMessage(string v)
         {
-            WriteText("Warning: " + v);
+            WriteText("Warning! " + v);
+            Enter();
             NewLine();
         }
         public void Call(string cmdText)
@@ -960,7 +961,7 @@ namespace BCK.SmrSimulation.Main
                 main.mouseInputGuide3d.viewType = MouseInputGuide3D.ViewType.Line;
                 main.mouseInputGuide3d.Start(userInputPoint3D);
 
-                WriteText("벡터의 방향을 입력하세요." + cmdMark);
+                WriteText("벡터의 방향과 크기를 지정하세요." + cmdMark);
                 SetCursorLast();
                 main.MouseDown += GetVector;
             }

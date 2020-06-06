@@ -82,7 +82,7 @@ namespace BCK.SmrSimulation.Main
             //RedrawFemModel();
 
             //MainFrame.Navigate(new Page1());
-            MainFrame.Content = new Page1();
+            //PropertyFrame.Content = new Page1();
 
 
         }
