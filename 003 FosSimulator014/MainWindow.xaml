@@ -117,107 +117,130 @@
             </StatusBar>
         </DockPanel>
 
-        <TabControl DockPanel.Dock ="Left" Width="202">
-            <TabItem Header="FEM Works">
-                <Grid Background="#FFE5E5E5">
-                    <TreeView x:Name="treeViewFemWorks"/>
+        <DockPanel>
+            
+            <Grid DockPanel.Dock="Right">
+                <Frame x:Name="PropertyFrame" />
+
+            </Grid>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200" MinWidth="50"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition MinWidth="50"/>
+                </Grid.ColumnDefinitions>
+                
+                <TabControl Grid.Column ="0">
+                    <TabItem Header="FEM Works">
+                        <Grid Background="#FFE5E5E5">
+                            <TreeView x:Name="treeViewFemWorks"/>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Concrete Structure">
+                        <StackPanel>
+                            <Label Content="length[m]"/>
+                            <TextBox x:Name="tbxLength" Text="TextBox"  Margin="5,0"/>
+                            <Label Content="width[m]" />
+                            <TextBox x:Name="tbxWidth" Text="TextBox" Margin="5,0"/>
+                            <Label Content="height[m]" />
+                            <TextBox x:Name="tbxHeight" Text="TextBox" Margin="5,0"/>
+                            <Button Content="_Apply" Click="SetConcrete" Margin="5,10,5,0"/>
+                            <Button Content="_Close" Click="ClosePannelConcreteSetting" Margin="5,10,5,0"/>
+                        </StackPanel>
+
+                    </TabItem>
+                    <TabItem Header="Camera Position">
+                        <StackPanel>
+                            <Label Content="Position"/>
+                            <Grid Margin="5,0,5,-2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="16*"/>
+                                    <ColumnDefinition Width="127*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock TextWrapping="Wrap" Text="x:"/>
+                                <TextBlock Grid.Row="1" TextWrapping="Wrap" Text="y:" />
+                                <TextBlock Grid.Row="2" TextWrapping="Wrap" Text="z:"/>
+                                <TextBox x:Name="tbxCameraPositionX" Grid.Column="1" TextWrapping="Wrap" Text="TextBox"/>
+                                <TextBox x:Name="tbxCameraPositionY" Grid.Column="1" Grid.Row="1" TextWrapping="Wrap" Text="TextBox"/>
+                                <TextBox x:Name="tbxCameraPositionZ" Grid.Column="1" Grid.Row="2" TextWrapping="Wrap" Text="TextBox"/>
+                            </Grid>
+                            <Label Content="LookDirection "/>
+                            <Grid Margin="5,0,5,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="16*"/>
+                                    <ColumnDefinition Width="127*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock TextWrapping="Wrap" Text="x:"/>
+                                <TextBlock Grid.Row="1" TextWrapping="Wrap" Text="y:" />
+                                <TextBlock Grid.Row="2" TextWrapping="Wrap" Text="z:"/>
+                                <TextBox x:Name="tbxCameraLookDirectionX" Grid.Column="1" TextWrapping="Wrap" Text="TextBox"/>
+                                <TextBox x:Name="tbxCameraLookDirectionY" Grid.Column="1" Grid.Row="1" TextWrapping="Wrap" Text="TextBox"/>
+                                <TextBox x:Name="tbxCameraLookDirectionZ" Grid.Column="1" Grid.Row="2" TextWrapping="Wrap" Text="TextBox"/>
+                            </Grid>
+                            <Label Content="UpDirection "/>
+                            <Grid Margin="5,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="16*"/>
+                                    <ColumnDefinition Width="127*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock TextWrapping="Wrap" Text="x:"/>
+                                <TextBlock Grid.Row="1" TextWrapping="Wrap" Text="y:" />
+                                <TextBlock Grid.Row="2" TextWrapping="Wrap" Text="z:"/>
+                                <TextBox x:Name="tbxCameraUpDirectionX" Grid.Column="1" TextWrapping="Wrap" Text="TextBox"/>
+                                <TextBox x:Name="tbxCameraUpDirectionY" Grid.Column="1" Grid.Row="1" TextWrapping="Wrap" Text="TextBox"/>
+                                <TextBox x:Name="tbxCameraUpDirectionZ" Grid.Column="1" Grid.Row="2" TextWrapping="Wrap" Text="TextBox"/>
+                            </Grid>
+                            <Label Content="FieldOfView "/>
+                            <TextBox x:Name="tbxCameraFieldOfView" TextWrapping="Wrap" Margin="5,0" />
+                            <Label Content="NearPlaneDistance "/>
+                            <TextBox x:Name="tbxCameraNearPlaneDistance" TextWrapping="Wrap" Margin="5,0" />
+                            <Label Content="FarPlaneDistance "/>
+                            <TextBox x:Name="tbxCameraFarPlaneDistance" TextWrapping="Wrap" Margin="5,0" />
+                            <Button Content="_Apply" Click="SetCameraInfo" Margin="5,10,5,0"/>
+
+
+                        </StackPanel>
+
+                    </TabItem>
+                </TabControl>
+                
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Left" Width="4"/>
+
+                <Grid Grid.Column="2" MinWidth="50">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition Height="4"/>
+                        <RowDefinition Height="50" MinHeight="18"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Grid Grid.Row="0" x:Name="grdMain" ClipToBounds="True">
+                    </Grid>
+                    <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch"/>
+
+                    <TextBox Grid.Row ="2" x:Name="tbxCommand" Text="&gt; " ForceCursor="True" AcceptsReturn="True" VerticalScrollBarVisibility="Visible" HorizontalContentAlignment="Stretch"/>
+
                 </Grid>
-            </TabItem>
-            <TabItem Header="Concrete Structure">
-                <StackPanel>
-                    <Label Content="length[m]"/>
-                    <TextBox x:Name="tbxLength" Text="TextBox"  Margin="5,0"/>
-                    <Label Content="width[m]" />
-                    <TextBox x:Name="tbxWidth" Text="TextBox" Margin="5,0"/>
-                    <Label Content="height[m]" />
-                    <TextBox x:Name="tbxHeight" Text="TextBox" Margin="5,0"/>
-                    <Button Content="_Apply" Click="SetConcrete" Margin="5,10,5,0"/>
-                    <Button Content="_Close" Click="ClosePannelConcreteSetting" Margin="5,10,5,0"/>
-                </StackPanel>
 
-            </TabItem>
-            <TabItem Header="Camera Position">
-                <StackPanel>
-                    <Label Content="Position"/>
-                    <Grid Margin="5,0,5,-2">
-                        <Grid.RowDefinitions>
-                            <RowDefinition/>
-                            <RowDefinition/>
-                            <RowDefinition/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="16*"/>
-                            <ColumnDefinition Width="127*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock TextWrapping="Wrap" Text="x:"/>
-                        <TextBlock Grid.Row="1" TextWrapping="Wrap" Text="y:" />
-                        <TextBlock Grid.Row="2" TextWrapping="Wrap" Text="z:"/>
-                        <TextBox x:Name="tbxCameraPositionX" Grid.Column="1" TextWrapping="Wrap" Text="TextBox"/>
-                        <TextBox x:Name="tbxCameraPositionY" Grid.Column="1" Grid.Row="1" TextWrapping="Wrap" Text="TextBox"/>
-                        <TextBox x:Name="tbxCameraPositionZ" Grid.Column="1" Grid.Row="2" TextWrapping="Wrap" Text="TextBox"/>
-                    </Grid>
-                    <Label Content="LookDirection "/>
-                    <Grid Margin="5,0,5,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition/>
-                            <RowDefinition/>
-                            <RowDefinition/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="16*"/>
-                            <ColumnDefinition Width="127*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock TextWrapping="Wrap" Text="x:"/>
-                        <TextBlock Grid.Row="1" TextWrapping="Wrap" Text="y:" />
-                        <TextBlock Grid.Row="2" TextWrapping="Wrap" Text="z:"/>
-                        <TextBox x:Name="tbxCameraLookDirectionX" Grid.Column="1" TextWrapping="Wrap" Text="TextBox"/>
-                        <TextBox x:Name="tbxCameraLookDirectionY" Grid.Column="1" Grid.Row="1" TextWrapping="Wrap" Text="TextBox"/>
-                        <TextBox x:Name="tbxCameraLookDirectionZ" Grid.Column="1" Grid.Row="2" TextWrapping="Wrap" Text="TextBox"/>
-                    </Grid>
-                    <Label Content="UpDirection "/>
-                    <Grid Margin="5,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition/>
-                            <RowDefinition/>
-                            <RowDefinition/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="16*"/>
-                            <ColumnDefinition Width="127*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock TextWrapping="Wrap" Text="x:"/>
-                        <TextBlock Grid.Row="1" TextWrapping="Wrap" Text="y:" />
-                        <TextBlock Grid.Row="2" TextWrapping="Wrap" Text="z:"/>
-                        <TextBox x:Name="tbxCameraUpDirectionX" Grid.Column="1" TextWrapping="Wrap" Text="TextBox"/>
-                        <TextBox x:Name="tbxCameraUpDirectionY" Grid.Column="1" Grid.Row="1" TextWrapping="Wrap" Text="TextBox"/>
-                        <TextBox x:Name="tbxCameraUpDirectionZ" Grid.Column="1" Grid.Row="2" TextWrapping="Wrap" Text="TextBox"/>
-                    </Grid>
-                    <Label Content="FieldOfView "/>
-                    <TextBox x:Name="tbxCameraFieldOfView" TextWrapping="Wrap" Margin="5,0" />
-                    <Label Content="NearPlaneDistance "/>
-                    <TextBox x:Name="tbxCameraNearPlaneDistance" TextWrapping="Wrap" Margin="5,0" />
-                    <Label Content="FarPlaneDistance "/>
-                    <TextBox x:Name="tbxCameraFarPlaneDistance" TextWrapping="Wrap" Margin="5,0" />
-                    <Button Content="_Apply" Click="SetCameraInfo" Margin="5,10,5,0"/>
+            </Grid>
 
-
-                </StackPanel>
-
-            </TabItem>
-        </TabControl>
-
-        <Grid DockPanel.Dock="Right">
-            <Frame x:Name="PropertyFrame" />
-
-        </Grid>
-
-        <Grid DockPanel.Dock="Bottom" Height="50" Margin="-0.2,0,-0.4,0" >
-            <TextBox x:Name="tbxCommand" TextWrapping="Wrap" Text="&gt; " RenderTransformOrigin="0.5,0.5" ForceCursor="True" AcceptsReturn="True" VerticalScrollBarVisibility="Visible"/>
-        </Grid>
-
-        <Grid x:Name="grdMain" ClipToBounds="True">
-        </Grid>
-
+        </DockPanel>
+        
     </DockPanel>
 
 </Window>
