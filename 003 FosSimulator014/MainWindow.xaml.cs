@@ -864,50 +864,50 @@ namespace BCK.SmrSimulation.Main
         }
         private void GetCameraInfo()
         {
-            tbxCameraPositionX.Text = Draw.PCamera.Position.X.ToString();
-            tbxCameraPositionY.Text = Draw.PCamera.Position.Y.ToString();
-            tbxCameraPositionZ.Text = Draw.PCamera.Position.Z.ToString();
-            tbxCameraLookDirectionX.Text = Draw.PCamera.LookDirection.X.ToString();
-            tbxCameraLookDirectionY.Text = Draw.PCamera.LookDirection.Y.ToString();
-            tbxCameraLookDirectionZ.Text = Draw.PCamera.LookDirection.Z.ToString();
-            tbxCameraUpDirectionX.Text = Draw.PCamera.UpDirection.X.ToString();
-            tbxCameraUpDirectionY.Text = Draw.PCamera.UpDirection.Y.ToString();
-            tbxCameraUpDirectionZ.Text = Draw.PCamera.UpDirection.Z.ToString();
-            tbxCameraFarPlaneDistance.Text = Draw.PCamera.FarPlaneDistance.ToString();
-            tbxCameraFieldOfView.Text = Draw.PCamera.FieldOfView.ToString();
-            tbxCameraNearPlaneDistance.Text = Draw.PCamera.NearPlaneDistance.ToString();
+            tbxCameraPositionX.Text = Draw.PCamera.Position.X.ToString(cultureInfo);
+            tbxCameraPositionY.Text = Draw.PCamera.Position.Y.ToString(cultureInfo);
+            tbxCameraPositionZ.Text = Draw.PCamera.Position.Z.ToString(cultureInfo);
+            tbxCameraLookDirectionX.Text = Draw.PCamera.LookDirection.X.ToString(cultureInfo);
+            tbxCameraLookDirectionY.Text = Draw.PCamera.LookDirection.Y.ToString(cultureInfo);
+            tbxCameraLookDirectionZ.Text = Draw.PCamera.LookDirection.Z.ToString(cultureInfo);
+            tbxCameraUpDirectionX.Text = Draw.PCamera.UpDirection.X.ToString(cultureInfo);
+            tbxCameraUpDirectionY.Text = Draw.PCamera.UpDirection.Y.ToString(cultureInfo);
+            tbxCameraUpDirectionZ.Text = Draw.PCamera.UpDirection.Z.ToString(cultureInfo);
+            tbxCameraFarPlaneDistance.Text = Draw.PCamera.FarPlaneDistance.ToString(cultureInfo);
+            tbxCameraFieldOfView.Text = Draw.PCamera.FieldOfView.ToString(cultureInfo);
+            tbxCameraNearPlaneDistance.Text = Draw.PCamera.NearPlaneDistance.ToString(cultureInfo);
         }
         private void SetCameraInfo(object sender, RoutedEventArgs e)
         {
             Draw.PCamera.Position = new Point3D
             {
-                X = Convert.ToDouble(tbxCameraPositionX.Text),
-                Y = Convert.ToDouble(tbxCameraPositionY.Text),
-                Z = Convert.ToDouble(tbxCameraPositionZ.Text)
+                X = Convert.ToDouble(tbxCameraPositionX.Text, cultureInfo),
+                Y = Convert.ToDouble(tbxCameraPositionY.Text, cultureInfo),
+                Z = Convert.ToDouble(tbxCameraPositionZ.Text, cultureInfo)
             };
             Draw.PCamera.LookDirection = new Vector3D
             {
-                X = Convert.ToDouble(tbxCameraLookDirectionX.Text),
-                Y = Convert.ToDouble(tbxCameraLookDirectionY.Text),
-                Z = Convert.ToDouble(tbxCameraLookDirectionZ.Text)
+                X = Convert.ToDouble(tbxCameraLookDirectionX.Text, cultureInfo),
+                Y = Convert.ToDouble(tbxCameraLookDirectionY.Text, cultureInfo),
+                Z = Convert.ToDouble(tbxCameraLookDirectionZ.Text, cultureInfo)
             };
             Draw.PCamera.UpDirection = new Vector3D
             {
-                X = Convert.ToDouble(tbxCameraUpDirectionX.Text),
-                Y = Convert.ToDouble(tbxCameraUpDirectionY.Text),
-                Z = Convert.ToDouble(tbxCameraUpDirectionZ.Text)
+                X = Convert.ToDouble(tbxCameraUpDirectionX.Text, cultureInfo),
+                Y = Convert.ToDouble(tbxCameraUpDirectionY.Text, cultureInfo),
+                Z = Convert.ToDouble(tbxCameraUpDirectionZ.Text, cultureInfo)
             };
-            Draw.PCamera.FieldOfView = Convert.ToDouble(tbxCameraFieldOfView.Text);
-            Draw.PCamera.NearPlaneDistance = Convert.ToDouble(tbxCameraNearPlaneDistance.Text);
-            Draw.PCamera.FarPlaneDistance = Convert.ToDouble(tbxCameraFarPlaneDistance.Text);
+            Draw.PCamera.FieldOfView = Convert.ToDouble(tbxCameraFieldOfView.Text, cultureInfo);
+            Draw.PCamera.NearPlaneDistance = Convert.ToDouble(tbxCameraNearPlaneDistance.Text, cultureInfo);
+            Draw.PCamera.FarPlaneDistance = Convert.ToDouble(tbxCameraFarPlaneDistance.Text, cultureInfo);
         }
 
         private void OpenPannelConcreteSetting(object sender, RoutedEventArgs e)
         {
             //dkpStructureConcrete.Visibility = Visibility.Visible;
-            tbxHeight.Text = smr.structure.height.ToString();
-            tbxLength.Text = smr.structure.length.ToString();
-            tbxWidth.Text = smr.structure.width.ToString();
+            tbxHeight.Text = smr.structure.height.ToString(cultureInfo);
+            tbxLength.Text = smr.structure.length.ToString(cultureInfo);
+            tbxWidth.Text = smr.structure.width.ToString(cultureInfo);
         }
         private void ClosePannelConcreteSetting(object sender, RoutedEventArgs e)
         {
@@ -915,9 +915,9 @@ namespace BCK.SmrSimulation.Main
         }
         private void SetConcrete(object sender, RoutedEventArgs e)
         {
-            smr.structure.height = Convert.ToDouble(tbxHeight.Text);
-            smr.structure.length = Convert.ToDouble(tbxLength.Text);
-            smr.structure.width = Convert.ToDouble(tbxWidth.Text);
+            smr.structure.height = Convert.ToDouble(tbxHeight.Text, cultureInfo);
+            smr.structure.length = Convert.ToDouble(tbxLength.Text, cultureInfo);
+            smr.structure.width = Convert.ToDouble(tbxWidth.Text, cultureInfo);
             Draw.Shapes.AddBox(new Point3D(0, 0, 0), new Vector3D(smr.structure.length, smr.structure.width, smr.structure.height));
             Draw.RegenerateShapesModelVisual3ds();
             Draw.RedrawShapes();
@@ -955,6 +955,15 @@ namespace BCK.SmrSimulation.Main
             {
                 item.Items.Add(new TreeViewItem() { Header = section.num });
             }
+
+
+            System.Windows.Controls.ContextMenu contextMenu = new System.Windows.Controls.ContextMenu();
+            System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
+            mi.Header = "_Add Section";
+            mi.Click += OpenAddSectionWindow;
+            contextMenu.Items.Add(mi);
+            item.ContextMenu = contextMenu;
+
             treeViewFemWorks.Items.Add(item);
 
             item = new TreeViewItem();
@@ -988,6 +997,12 @@ namespace BCK.SmrSimulation.Main
                 item.Items.Add(new TreeViewItem() { Header = boundary.node.Num });
             }
             treeViewFemWorks.Items.Add(item);
+        }
+
+        private void OpenAddSectionWindow(object sender, RoutedEventArgs e)
+        {
+            FemSectionsWindow sectionWindow = new FemSectionsWindow();
+            sectionWindow.Show();
         }
 
         private void ViewCoordinateSystem(object sender, RoutedEventArgs e)

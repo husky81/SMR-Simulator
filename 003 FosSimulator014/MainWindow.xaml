@@ -118,7 +118,7 @@
         </DockPanel>
 
         <DockPanel>
-            
+
             <Grid DockPanel.Dock="Right">
                 <Frame x:Name="PropertyFrame" />
 
@@ -130,12 +130,11 @@
                     <ColumnDefinition Width="4"/>
                     <ColumnDefinition MinWidth="50"/>
                 </Grid.ColumnDefinitions>
-                
+
                 <TabControl Grid.Column ="0">
-                    <TabItem Header="FEM Works">
-                        <Grid Background="#FFE5E5E5">
-                            <TreeView x:Name="treeViewFemWorks"/>
-                        </Grid>
+                    <TabItem Header="FEM Works" UseLayoutRounding="True">
+                        <TreeView x:Name="treeViewFemWorks">
+                        </TreeView>
                     </TabItem>
                     <TabItem Header="Concrete Structure">
                         <StackPanel>
@@ -219,7 +218,7 @@
 
                     </TabItem>
                 </TabControl>
-                
+
                 <GridSplitter Grid.Column="1" HorizontalAlignment="Left" Width="4"/>
 
                 <Grid Grid.Column="2" MinWidth="50">
@@ -228,7 +227,7 @@
                         <RowDefinition Height="4"/>
                         <RowDefinition Height="50" MinHeight="18"/>
                     </Grid.RowDefinitions>
-                    
+
                     <Grid Grid.Row="0" x:Name="grdMain" ClipToBounds="True">
                     </Grid>
                     <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch"/>
@@ -240,7 +239,7 @@
             </Grid>
 
         </DockPanel>
-        
+
     </DockPanel>
 
 </Window>
