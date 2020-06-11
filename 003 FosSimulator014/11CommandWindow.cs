@@ -1,4 +1,4 @@
-﻿using bck.SMR_simulator.main.Properties;
+﻿using bck.SmrSimulator.main.Properties;
 using BCK.SmrSimulation.Draw2D;
 using BCK.SmrSimulation.Draw3D;
 using BCK.SmrSimulation.GeneralFunctions;

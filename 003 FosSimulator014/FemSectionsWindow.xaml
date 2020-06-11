@@ -1,15 +1,15 @@
-﻿<Window x:Class="bck.SMR_simulator.main.FemSectionsWindow"
+﻿<Window x:Class="bck.SmrSimulator.main.FemSectionsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:bck.SMR_simulator.main"
+        xmlns:local="clr-namespace:bck.SmrSimulator.main"
         mc:Ignorable="d"
         Title="FemSectionsWindow" Height="450" Width="800">
     <Grid>
         <DockPanel>
             <StackPanel DockPanel.Dock="Right" Width="100">
-                <Button Margin="2" Height="30" Content="_Apply"/>
+                <Button Margin="2" Height="30" Content="_Save"/>
                 <Button Margin="2" Height="30" Content="Add _New"/>
                 <Button Margin="2" Height="30" Content="_Cancle"/>
             </StackPanel>
@@ -26,14 +26,22 @@
                         <RowDefinition Height="4"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    <Grid x:Name="grdSectionView" Grid.Row="0" Background="WhiteSmoke">
+                    <DockPanel>
+                        <Label Content="Cross Section View" DockPanel.Dock="Top"></Label>
+                        <Grid x:Name="grdSectionView" Grid.Row="0" Background="WhiteSmoke">
 
-                    </Grid>
+                        </Grid>
+                    </DockPanel>
                     <GridSplitter Grid.Row="1" Height="4"/>
 
-                    <Grid Grid.Row="2">
+                    <DockPanel Grid.Row="2">
+                        <Label Content="Properties">
+                            
+                        </Label>
+                        <Grid>
 
-                    </Grid>
+                        </Grid>
+                    </DockPanel>
                 </Grid>
                 <GridSplitter Grid.Column="1" Width="4"/>
                 <TabControl Grid.Column="2" >
@@ -47,6 +55,8 @@
                             <TextBox>
 
                             </TextBox>
+                            <Button Margin="2" Height="30" Content="Show and Calculate" Click="Button_Click"/>
+
                         </StackPanel>
                     </TabItem>
                     <TabItem Header="Circle">

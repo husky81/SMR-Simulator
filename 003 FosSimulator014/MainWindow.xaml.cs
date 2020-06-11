@@ -2,29 +2,15 @@
 using BCK.SmrSimulation.Draw3D;
 using BCK.SmrSimulation.finiteElementMethod;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
 using System.Globalization;
-using System.IO;
-using System.Net.NetworkInformation;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Forms;
-using System.Windows.Forms.PropertyGridInternal;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using bck.SMR_simulator.main.Properties;
-using bck.SMR_simulator.main;
+using bck.SmrSimulator.main.Properties;
+using bck.SmrSimulator.main;
+using System.Runtime.Remoting.Contexts;
 
 namespace BCK.SmrSimulation.Main
 {
@@ -96,6 +82,9 @@ namespace BCK.SmrSimulation.Main
 
             SetObjectSnap(Settings.Default.isOnObjectSnap);
             SetOrthogonalOption(Settings.Default.isOnOrthogonal);
+
+            //Context메뉴를 미리 만들어둡니다.
+            SetContextMenu_FemWorksTreeView();
 
         }
         private void EventSetter()
@@ -934,74 +923,117 @@ namespace BCK.SmrSimulation.Main
         {
             //dkpFemWorks.Visibility = Visibility.Collapsed;
         }
+
+        void SetContextMenu_FemWorksTreeView()
+        {
+
+            //Add Section
+            contextMenuSections = new ContextMenu();
+            MenuItem menuItemAddSection = new MenuItem();
+            menuItemAddSection.Header = "_Add Section";
+            menuItemAddSection.Click += FemAddBaseSection;
+            menuItemAddSection.Click += RedrawFemWorksTreeView_FemWorksTreeView;
+            contextMenuSections.Items.Add(menuItemAddSection);
+
+            //Modify Section
+            contextMenuSection = new ContextMenu();
+            MenuItem menuItemModifySection = new MenuItem();
+            menuItemModifySection.Header = "_Modify";
+            menuItemModifySection.Click += OpenSectionWindow;
+            contextMenuSection.Items.Add(menuItemModifySection);
+
+        }
+
+        private void RedrawFemWorksTreeView_FemWorksTreeView(object sender, RoutedEventArgs e)
+        {
+            RedrawFemWorksTreeView();
+        }
+
+        private void FemAddBaseSection(object sender, RoutedEventArgs e)
+        {
+            //Base Section
+            FemSectionCollection sections = new FemSectionCollection();
+            FemSection baseSection = sections.AddRectangle(0.3, 0.4);
+        }
+        ContextMenu contextMenuSections;
+        ContextMenu contextMenuSection;
+
         private void RedrawFemWorksTreeView()
         {
             //ref. https://www.codeproject.com/Articles/124644/Basic-Understanding-of-Tree-View-in-WPF
             treeViewFemWorks.Items.Clear();
 
-            TreeViewItem item = new TreeViewItem();
-            item.Header = "Materials(" + Fem.Model.Materials.Count + ")";
-            item.IsExpanded = false;
+            TreeViewItem tviMaterials = new TreeViewItem();
+            tviMaterials.Header = "Materials(" + Fem.Model.Materials.Count + ")";
+            //tviMaterials.IsExpanded = false;
             foreach (FemMaterial material in Fem.Model.Materials)
             {
-                item.Items.Add(new TreeViewItem() { Header = material.name });
+                TreeViewItem tviMaterial = new TreeViewItem()
+                {
+                    Header = material.name,
+                    Tag = material
+                };
+                tviMaterials.Items.Add(tviMaterial);
             }
-            treeViewFemWorks.Items.Add(item);
+            treeViewFemWorks.Items.Add(tviMaterials);
 
-            item = new TreeViewItem();
-            item.Header = "Sections(" + Fem.Model.Sections.Count + ")";
-            item.IsExpanded = false;
+            TreeViewItem tviSections = new TreeViewItem();
+            tviSections.Header = "Sections(" + Fem.Model.Sections.Count + ")";
             foreach (FemSection section in Fem.Model.Sections)
             {
-                item.Items.Add(new TreeViewItem() { Header = section.num });
+                TreeViewItem tviSection = new TreeViewItem()
+                {
+                    Header = section.num,
+                    Tag = section
+                };
+                tviSection.ContextMenu = contextMenuSection;
+
+                tviSections.Items.Add(tviSection);
             }
+            tviSections.ContextMenu = contextMenuSections;
 
+            treeViewFemWorks.Items.Add(tviSections);
 
-            System.Windows.Controls.ContextMenu contextMenu = new System.Windows.Controls.ContextMenu();
-            System.Windows.Controls.MenuItem mi = new System.Windows.Controls.MenuItem();
-            mi.Header = "_Add Section";
-            mi.Click += OpenAddSectionWindow;
-            contextMenu.Items.Add(mi);
-            item.ContextMenu = contextMenu;
+            TreeViewItem tviNodes = new TreeViewItem();
+            tviNodes.Header = "Nodes(" + Fem.Model.Nodes.Count + ")";
+            tviNodes.IsExpanded = true;
+            treeViewFemWorks.Items.Add(tviNodes);
 
-            treeViewFemWorks.Items.Add(item);
-
-            item = new TreeViewItem();
-            item.Header = "Nodes(" + Fem.Model.Nodes.Count + ")";
-            item.IsExpanded = true;
-            treeViewFemWorks.Items.Add(item);
-
-            item = new TreeViewItem();
+            TreeViewItem tviElems = new TreeViewItem();
             FemElementCollection elems = Fem.Model.Elems;
-            item.Header = "Elements(" + elems.Count + ")";
-            item.IsExpanded = true;
-            if (elems.Frames.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Frame(" + elems.Frames.Count + ")" });
-            if (elems.Plates.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Plate(" + elems.Plates.Count + ")" });
-            if (elems.Solids.Count != 0) item.Items.Add(new TreeViewItem() { Header = "Solid(" + elems.Solids.Count + ")" });
-            treeViewFemWorks.Items.Add(item);
+            tviElems.Header = "Elements(" + elems.Count + ")";
+            tviElems.IsExpanded = true;
+            if (elems.Frames.Count != 0) tviElems.Items.Add(new TreeViewItem() { Header = "Frame(" + elems.Frames.Count + ")" });
+            if (elems.Plates.Count != 0) tviElems.Items.Add(new TreeViewItem() { Header = "Plate(" + elems.Plates.Count + ")" });
+            if (elems.Solids.Count != 0) tviElems.Items.Add(new TreeViewItem() { Header = "Solid(" + elems.Solids.Count + ")" });
+            treeViewFemWorks.Items.Add(tviElems);
 
-            item = new TreeViewItem();
-            item.Header = "Boundaries(" + Fem.Model.Boundaries.Count + ")";
-            item.IsExpanded = false;
+            TreeViewItem tviBoundaries = new TreeViewItem();
+            tviBoundaries.Header = "Boundaries(" + Fem.Model.Boundaries.Count + ")";
             foreach (FemBoundary boundary in Fem.Model.Boundaries)
             {
-                item.Items.Add(new TreeViewItem() { Header = boundary.node.Num });
+                tviMaterials.Items.Add(new TreeViewItem() { Header = boundary.node.Num });
             }
-            treeViewFemWorks.Items.Add(item);
+            treeViewFemWorks.Items.Add(tviBoundaries);
 
-            item = new TreeViewItem();
-            item.Header = "Loads(" + Fem.Loads.Count + ")";
-            item.IsExpanded = false;
+            TreeViewItem tviLoads = new TreeViewItem();
+            tviLoads.Header = GetNameNumberText("Loads", Fem.Loads.Count);
             foreach (FemBoundary boundary in Fem.Model.Boundaries)
             {
-                item.Items.Add(new TreeViewItem() { Header = boundary.node.Num });
+                tviMaterials.Items.Add(new TreeViewItem() { Header = boundary.node.Num });
             }
-            treeViewFemWorks.Items.Add(item);
+            treeViewFemWorks.Items.Add(tviLoads);
+
+            String GetNameNumberText(string name, int number)
+            {
+                return name + "(" + Fem.Loads.Count + ")";
+            }
         }
 
-        private void OpenAddSectionWindow(object sender, RoutedEventArgs e)
+
+        private void OpenSectionWindow(object sender, RoutedEventArgs e)
         {
-            FemSectionsWindow sectionWindow = new FemSectionsWindow();
+            FemSectionsWindow sectionWindow = new FemSectionsWindow(Fem.Model.Sections);
             sectionWindow.Show();
         }
 

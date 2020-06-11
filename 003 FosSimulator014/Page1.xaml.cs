@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace bck.SMR_simulator.main
+namespace bck.SmrSimulator.main
 {
     /// <summary>
     /// Interaction logic for Page1.xaml
