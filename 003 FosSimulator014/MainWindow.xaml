@@ -69,7 +69,9 @@
                     </MenuItem>
                     <MenuItem Header="M_odel">
                         <MenuItem Header="Add _Material" Click="AddMaterial"/>
-                        <MenuItem Header="Add _Section" Click="AddSection"/>
+                        <MenuItem Header="Add _Section" Click="AddSection">
+                            <MenuItem Header="Section _Window" Click="ShowSectionWindow"/>
+                        </MenuItem>
                         <MenuItem Header="Add _Node" Click="AddNode"/>
                         <MenuItem Header="Draw _Line Element" Click="AddFemLine"/>
                     </MenuItem>

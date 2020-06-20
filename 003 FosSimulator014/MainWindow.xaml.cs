@@ -558,6 +558,10 @@ namespace BCK.SmrSimulation.Main
             IsOnOrbit = !IsOnOrbit;
         }
 
+        private void ShowSectionWindow(object sender, RoutedEventArgs e)
+        {
+            OpenSectionWindow(sender, e);
+        }
     }
     partial class MainWindow : Window
     {

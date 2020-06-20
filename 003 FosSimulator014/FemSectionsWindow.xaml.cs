@@ -36,6 +36,8 @@ namespace bck.SmrSimulator.main
         {
             Point p0 = new Point(0, 0);
             Point p1 = new Point(10, 10);
+
+
             draw2d.shapes.lines.Add(p0,p1);
             draw2d.RedrawShapes();
 
