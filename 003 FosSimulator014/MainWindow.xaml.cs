@@ -18,7 +18,7 @@ namespace BCK.SimPlan.Main
     {
         private readonly SMR smr;
         public FEM Fem => fem;
-        private readonly FEM fem;
+        private readonly FEM fem; 
 
         public BckDraw3D Draw => draw;
         private readonly BckDraw3D draw;
