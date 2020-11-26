@@ -1,5 +1,5 @@
-﻿using BCK.SmrSimulation.Draw2D;
-using BCK.SmrSimulation.GeneralFunctions;
+﻿using BCK.SimPlan.Draw2D;
+using BCK.SimPlan.GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
@@ -13,7 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-namespace BCK.SmrSimulation.Draw3D
+namespace BCK.SimPlan.Draw3D
 {
     public partial class BckDraw3D // 기본
     {

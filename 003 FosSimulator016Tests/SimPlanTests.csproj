@@ -64,9 +64,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\003 FosSimulator014\003 FosSimulator016.csproj">
+    <ProjectReference Include="..\003 FosSimulator014\SimPlan.csproj">
       <Project>{BEBD0B1B-231E-4AFE-9950-7D42637E390D}</Project>
-      <Name>003 FosSimulator016</Name>
+      <Name>SimPlan</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>

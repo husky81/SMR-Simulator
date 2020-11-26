@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BCK.SmrSimulation.Main
+namespace BCK.SimPlan.Main
 {
     class SMR
     {

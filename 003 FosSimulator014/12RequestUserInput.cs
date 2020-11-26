@@ -1,5 +1,5 @@
-﻿using BCK.SmrSimulation.Draw2D;
-using BCK.SmrSimulation.Draw3D;
+﻿using BCK.SimPlan.Draw2D;
+using BCK.SimPlan.Draw3D;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 
-namespace BCK.SmrSimulation.Main
+namespace BCK.SimPlan.Main
 {
     /// <summary>
     /// 사용자가 요청한 하나하나의 실행 단위.

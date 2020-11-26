@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29911.84
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "003 FosSimulator016", "003 FosSimulator014\003 FosSimulator016.csproj", "{BEBD0B1B-231E-4AFE-9950-7D42637E390D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimPlan", "003 FosSimulator014\SimPlan.csproj", "{BEBD0B1B-231E-4AFE-9950-7D42637E390D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "003 FosSimulator016Tests", "003 FosSimulator016Tests\003 FosSimulator016Tests.csproj", "{0D21EF61-9E4A-47A4-A5B0-83F852A479A5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimPlanTests", "003 FosSimulator016Tests\SimPlanTests.csproj", "{0D21EF61-9E4A-47A4-A5B0-83F852A479A5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,6 +1,6 @@
-﻿using BCK.SmrSimulation.GeneralFunctions;
-using BCK.SmrSimulation.Main;
-using BCK.SmrSimulation.Main.Properties;
+﻿using BCK.SimPlan.GeneralFunctions;
+using BCK.SimPlan.Main;
+using BCK.SimPlan.Main.Properties;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -13,7 +13,7 @@ using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Media.Media3D;
 
-namespace BCK.SmrSimulation.finiteElementMethod
+namespace BCK.SimPlan.finiteElementMethod
 {
     public class FEM
     {

@@ -1,6 +1,6 @@
-﻿using BCK.SmrSimulation.Draw2D;
-using BCK.SmrSimulation.Draw3D;
-using BCK.SmrSimulation.finiteElementMethod;
+﻿using BCK.SimPlan.Draw2D;
+using BCK.SimPlan.Draw3D;
+using BCK.SimPlan.finiteElementMethod;
 using System;
 using System.Globalization;
 using System.Windows;
@@ -8,11 +8,11 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using bck.SmrSimulator.main.Properties;
-using bck.SmrSimulator.main;
+using BCK.SmrSimulator.main.Properties;
+using BCK.SmrSimulator.main;
 using System.Runtime.Remoting.Contexts;
 
-namespace BCK.SmrSimulation.Main
+namespace BCK.SimPlan.Main
 {
     partial class MainWindow : Window
     {
@@ -561,6 +561,13 @@ namespace BCK.SmrSimulation.Main
         private void ShowSectionWindow(object sender, RoutedEventArgs e)
         {
             OpenSectionWindow(sender, e);
+        }
+
+        private void ShowAboutWindow(object sender, RoutedEventArgs e)
+        {
+            BCK.SimPlan.main.AboutWindow aboutWindow = new BCK.SimPlan.main.AboutWindow();
+            aboutWindow.Show();
+
         }
     }
     partial class MainWindow : Window

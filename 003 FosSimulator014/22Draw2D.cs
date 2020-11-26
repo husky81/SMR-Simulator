@@ -1,5 +1,5 @@
-﻿using BCK.SmrSimulation.Draw3D;
-using BCK.SmrSimulation.GeneralFunctions;
+﻿using BCK.SimPlan.Draw3D;
+using BCK.SimPlan.GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 
-namespace BCK.SmrSimulation.Draw2D
+namespace BCK.SimPlan.Draw2D
 {
     class BckDraw2D
     {

@@ -1,7 +1,7 @@
-﻿using bck.SmrSimulator.main.Properties;
-using BCK.SmrSimulation.Draw2D;
-using BCK.SmrSimulation.Draw3D;
-using BCK.SmrSimulation.GeneralFunctions;
+﻿using BCK.SmrSimulator.main.Properties;
+using BCK.SimPlan.Draw2D;
+using BCK.SimPlan.Draw3D;
+using BCK.SimPlan.GeneralFunctions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -13,7 +13,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 
-namespace BCK.SmrSimulation.Main
+namespace BCK.SimPlan.Main
 {
     public class CommandWindow
     {
